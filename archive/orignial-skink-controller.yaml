@@ -1,0 +1,2352 @@
+# Board: Generic ESP32-C3 Board (Generic)
+# Definition: definitions/boards/generic-esp32c3/manifest.yaml
+
+esphome:
+  name: lumineze-controler-skink
+  friendly_name: LuminEZE Controler Skink
+  area: Skink House
+
+esp32:
+  variant: esp32c3
+  framework:
+    type: esp-idf
+
+logger:
+  level: DEBUG
+time:
+  - platform: sntp
+    id: controller_time
+    timezone: Europe/London
+    on_time_sync:
+      - text_sensor.template.publish:
+          id: controller_last_time_source
+          state: "SNTP"
+  - platform: homeassistant
+    id: homeassistant_time
+    timezone: Europe/London
+    on_time_sync:
+      - text_sensor.template.publish:
+          id: controller_last_time_source
+          state: "Home Assistant"
+api:
+  encryption:
+    key: !secret lumineze_controler_skink__encryption_key
+  reboot_timeout: 0s
+esp32_ble:
+  max_connections: 2
+  connection_timeout: 20s
+  
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  reboot_timeout: 0s
+  ap:
+    ssid: LuminEZE Contro Fallback Hotspot
+    password: !secret lumineze_controler_skink__ap_password
+    
+captive_portal:
+
+# Non-continuous scanning is preferable on the single-core ESP32-C3.
+# The BLE clients have fixed MAC addresses and connect only on command.
+esp32_ble_tracker:
+  scan_parameters:
+    continuous: false
+  software_coexistence: true
+
+
+globals:
+  - id: lamp_target
+    type: int[2]
+    restore_value: false
+    initial_value: '{0, 0}'
+  - id: lamp_inflight
+    type: int[2]
+    restore_value: false
+    initial_value: '{0, 0}'
+  - id: lamp_last_completed
+    type: int[2]
+    restore_value: false
+    initial_value: '{-1, -1}'
+  - id: lamp_last_reported
+    type: int[2]
+    restore_value: false
+    initial_value: '{-1, -1}'
+  - id: lamp_readback_received
+    type: bool[2]
+    restore_value: false
+    initial_value: '{false, false}'
+  - id: lamp_readback_fresh
+    type: bool[2]
+    restore_value: false
+    initial_value: '{false, false}'
+  - id: lamp_pending
+    type: bool[2]
+    restore_value: false
+    initial_value: '{false, false}'
+  - id: lamp_connected
+    type: bool[2]
+    restore_value: false
+    initial_value: '{false, false}'
+  - id: lamp_ever_attempted
+    type: bool[2]
+    restore_value: false
+    initial_value: '{false, false}'
+  - id: lamp_last_attempt_ms
+    type: uint32_t[2]
+    restore_value: false
+    initial_value: '{0, 0}'
+  - id: lamp_last_failure_ms
+    type: uint32_t[2]
+    restore_value: false
+    initial_value: '{0, 0}'
+  - id: lamp_retry_delay_ms
+    type: uint32_t[2]
+    restore_value: false
+    initial_value: '{0, 0}'
+  - id: lamp_attempts_for_request
+    type: int[2]
+    restore_value: false
+    initial_value: '{0, 0}'
+  - id: lamp_completed_count
+    type: uint32_t[2]
+    restore_value: false
+    initial_value: '{0, 0}'
+  - id: lamp_failure_count
+    type: uint32_t[2]
+    restore_value: false
+    initial_value: '{0, 0}'
+  - id: lamp_consecutive_failures
+    type: int[2]
+    restore_value: false
+    initial_value: '{0, 0}'
+  - id: transaction_active
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: active_lamp
+    type: int
+    restore_value: false
+    initial_value: '-1'
+  - id: transaction_started_ms
+    type: uint32_t
+    restore_value: false
+    initial_value: '0'
+  - id: transaction_write_completed
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: any_attempted
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: global_last_attempt_ms
+    type: uint32_t
+    restore_value: false
+    initial_value: '0'
+  - id: next_lamp
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: dispatch_choice
+    type: int
+    restore_value: false
+    initial_value: '-1'
+  - id: solar_calculation_valid
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: solar_source_day
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: solar_year_days
+    type: int
+    restore_value: false
+    initial_value: '365'
+  - id: solar_effective_day
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: solar_declination_degrees
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: solar_day_length_hours
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: solar_sunrise_minutes
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: solar_sunset_minutes
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: solar_elevation_degrees
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: solar_daylight_envelope
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: solar_evaluation_minutes
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: jungle_dawn_curve_fraction
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: jungle_dawn_season_factor
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: jungle_dawn_effective_peak
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: jungle_dawn_calculated_target
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: jungle_dawn_curve_last_queued
+    type: int
+    restore_value: false
+    initial_value: '-1'
+  - id: jungle_dawn_curve_has_queued
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: jungle_dawn_curve_should_queue
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: prot5_window_start_minutes
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: prot5_window_end_minutes
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: prot5_window_length_hours
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: prot5_window_envelope
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: prot5_curve_fraction
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: prot5_effective_peak
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: prot5_calculated_target
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: prot5_curve_last_queued
+    type: int
+    restore_value: false
+    initial_value: '-1'
+  - id: prot5_curve_has_queued
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: prot5_curve_should_queue
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: invalid_time_failsafe_sent
+    type: bool[2]
+    restore_value: false
+    initial_value: '{false, false}'
+
+ble_client:
+  - id: jungle_dawn_client
+    mac_address: !secret lumineze_controler_skink__vivarium_jungle_dawn_mac
+    auto_connect: false
+    on_connect:
+      then:
+        - lambda: id(lamp_connected)[0] = true;
+        - binary_sensor.template.publish:
+            id: jungle_dawn_connected
+            state: ON
+        - logger.log:
+            level: INFO
+            tag: lumenize
+            format: "JungleDawn BLE connected"
+    on_disconnect:
+      then:
+        - lambda: id(lamp_connected)[0] = false;
+        - binary_sensor.template.publish:
+            id: jungle_dawn_connected
+            state: OFF
+        - logger.log:
+            level: INFO
+            tag: lumenize
+            format: "JungleDawn BLE disconnected"
+        - if:
+            condition:
+              lambda: |-
+                return id(transaction_active) &&
+                       id(active_lamp) == 0 &&
+                       !id(transaction_write_completed);
+            then:
+              - script.execute:
+                  id: record_ble_failure
+                  lamp: 0
+
+  - id: prot5_client
+    mac_address: !secret lumineze_controler_skink__vivarium_prot5_mac
+    auto_connect: false
+    on_connect:
+      then:
+        - lambda: id(lamp_connected)[1] = true;
+        - binary_sensor.template.publish:
+            id: prot5_connected
+            state: ON
+        - logger.log:
+            level: INFO
+            tag: lumenize
+            format: "ProT5 BLE connected"
+    on_disconnect:
+      then:
+        - lambda: id(lamp_connected)[1] = false;
+        - binary_sensor.template.publish:
+            id: prot5_connected
+            state: OFF
+        - logger.log:
+            level: INFO
+            tag: lumenize
+            format: "ProT5 BLE disconnected"
+        - if:
+            condition:
+              lambda: |-
+                return id(transaction_active) &&
+                       id(active_lamp) == 1 &&
+                       !id(transaction_write_completed);
+            then:
+              - script.execute:
+                  id: record_ble_failure
+                  lamp: 1
+
+binary_sensor:
+  - platform: template
+    id: jungle_dawn_connected
+    name: "JungleDawn BLE Connected"
+    device_class: connectivity
+    entity_category: diagnostic
+  - platform: template
+    id: prot5_connected
+    name: "ProT5 BLE Connected"
+    device_class: connectivity
+    entity_category: diagnostic
+  - platform: template
+    name: "JungleDawn Command Pending"
+    entity_category: diagnostic
+    lambda: return id(lamp_pending)[0];
+  - platform: template
+    name: "ProT5 Command Pending"
+    entity_category: diagnostic
+    lambda: return id(lamp_pending)[1];
+  - platform: template
+    name: "JungleDawn Readback Fresh For Last Command"
+    entity_category: diagnostic
+    lambda: return id(lamp_readback_fresh)[0];
+  - platform: template
+    name: "ProT5 Readback Fresh For Last Command"
+    entity_category: diagnostic
+    lambda: return id(lamp_readback_fresh)[1];
+  - platform: template
+    name: "JungleDawn Readback Mismatch"
+    device_class: problem
+    entity_category: diagnostic
+    lambda: |-
+      return id(lamp_readback_fresh)[0] &&
+             id(lamp_last_reported)[0] != id(lamp_last_completed)[0];
+  - platform: template
+    name: "ProT5 Readback Mismatch"
+    device_class: problem
+    entity_category: diagnostic
+    lambda: |-
+      return id(lamp_readback_fresh)[1] &&
+             id(lamp_last_reported)[1] != id(lamp_last_completed)[1];
+
+
+
+
+    
+  - platform: template
+    name: "LumenIZE Transaction Active"
+    entity_category: diagnostic
+    lambda: return id(transaction_active);
+  - platform: template
+    name: "Controller Time Valid"
+    device_class: connectivity
+    entity_category: diagnostic
+    lambda: return id(controller_time).now().is_valid();
+  - platform: template
+    name: "Invalid Time Fail-Safe Active"
+    device_class: problem
+    entity_category: diagnostic
+    lambda: |-
+      const uint32_t grace_ms = static_cast<uint32_t>(
+          std::max(30.0f, id(invalid_time_grace_period).state) * 1000.0f);
+      return id(invalid_time_failsafe_enabled).state &&
+             !id(solar_test_mode).state &&
+             !id(controller_time).now().is_valid() && millis() >= grace_ms;
+  - platform: template
+    name: "JungleDawn Communication Fault"
+    device_class: problem
+    entity_category: diagnostic
+    lambda: |-
+      const int maximum = std::max(
+          1, static_cast<int>(id(ble_max_attempts).state));
+      return id(lamp_consecutive_failures)[0] > 0 &&
+             id(lamp_attempts_for_request)[0] >= maximum &&
+             !id(lamp_pending)[0] &&
+             (!id(transaction_active) || id(active_lamp) != 0);
+  - platform: template
+    name: "ProT5 Communication Fault"
+    device_class: problem
+    entity_category: diagnostic
+    lambda: |-
+      const int maximum = std::max(
+          1, static_cast<int>(id(ble_max_attempts).state));
+      return id(lamp_consecutive_failures)[1] > 0 &&
+             id(lamp_attempts_for_request)[1] >= maximum &&
+             !id(lamp_pending)[1] &&
+             (!id(transaction_active) || id(active_lamp) != 1);
+  - platform: template
+    name: "Solar Calculation Valid"
+    entity_category: diagnostic
+    lambda: return id(solar_calculation_valid);
+  - platform: template
+    name: "Simulated Sun Above Horizon"
+    device_class: light
+    entity_category: diagnostic
+    lambda: |-
+      return id(solar_calculation_valid) &&
+             id(solar_daylight_envelope) > 0.0f;
+  - platform: template
+    name: "ProT5 UVB Window Active"
+    icon: mdi:weather-sunny-alert
+    entity_category: diagnostic
+    lambda: |-
+      return id(solar_calculation_valid) &&
+             id(prot5_window_envelope) > 0.0f;
+
+switch:
+  - platform: template
+    id: solar_test_mode
+    name: "Solar Test Mode"
+    icon: mdi:test-tube
+    entity_category: config
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - lambda: |-
+          id(jungle_dawn_curve_should_queue) = false;
+          id(prot5_curve_should_queue) = false;
+          if (id(jungle_dawn_automatic_control).state &&
+              !id(jungle_dawn_manual_override).state &&
+              (!id(transaction_active) || id(active_lamp) != 0)) {
+            id(lamp_pending)[0] = false;
+          }
+          if (id(prot5_automatic_control).state &&
+              !id(prot5_manual_override).state &&
+              (!id(transaction_active) || id(active_lamp) != 1)) {
+            id(lamp_pending)[1] = false;
+          }
+      - script.execute: calculate_solar
+    on_turn_off:
+      - script.execute: calculate_solar
+  - platform: template
+    id: invalid_time_failsafe_enabled
+    name: "Invalid Time Fail-Safe"
+    icon: mdi:shield-clock
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_turn_on:
+      - script.execute: calculate_solar
+    on_turn_off:
+      - lambda: |-
+          id(invalid_time_failsafe_sent)[0] = false;
+          id(invalid_time_failsafe_sent)[1] = false;
+      - script.execute: calculate_solar
+  - platform: template
+    id: jungle_dawn_automatic_control
+    name: "JungleDawn Automatic Control"
+    icon: mdi:brightness-auto
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - lambda: |-
+          id(jungle_dawn_curve_has_queued) = false;
+          id(jungle_dawn_curve_should_queue) = false;
+          id(jungle_dawn_curve_status).publish_state(
+              "Automatic control enabled; awaiting solar calculation");
+      - script.execute: calculate_solar
+    on_turn_off:
+      - lambda: |-
+          id(jungle_dawn_curve_should_queue) = false;
+          if (!id(jungle_dawn_manual_override).state &&
+              (!id(transaction_active) || id(active_lamp) != 0)) {
+            id(lamp_pending)[0] = false;
+          }
+          id(jungle_dawn_curve_status).publish_state(
+              "Automatic control disabled; lamp state held");
+  - platform: template
+    id: prot5_automatic_control
+    name: "ProT5 Automatic Control"
+    icon: mdi:brightness-auto
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - lambda: |-
+          id(prot5_curve_has_queued) = false;
+          id(prot5_curve_should_queue) = false;
+          id(prot5_curve_status).publish_state(
+              "Automatic control enabled; awaiting solar calculation");
+      - script.execute: calculate_solar
+    on_turn_off:
+      - lambda: |-
+          id(prot5_curve_should_queue) = false;
+          if (!id(prot5_manual_override).state &&
+              (!id(transaction_active) || id(active_lamp) != 1)) {
+            id(lamp_pending)[1] = false;
+          }
+          id(prot5_curve_status).publish_state(
+              "Automatic control disabled; lamp state held");
+  - platform: template
+    id: jungle_dawn_manual_override
+    name: "JungleDawn Manual Override"
+    icon: mdi:hand-back-right
+    entity_category: config
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - lambda: |-
+          id(jungle_dawn_curve_should_queue) = false;
+          if (!id(transaction_active) || id(active_lamp) != 0) {
+            id(lamp_pending)[0] = false;
+          }
+          id(jungle_dawn_curve_status).publish_state(
+              "Manual override active; use Queue JungleDawn Level");
+    on_turn_off:
+      - lambda: |-
+          id(jungle_dawn_curve_has_queued) = false;
+          id(jungle_dawn_curve_should_queue) = false;
+          id(jungle_dawn_curve_status).publish_state(
+              "Manual override released; awaiting solar calculation");
+      - script.execute: calculate_solar
+  - platform: template
+    id: prot5_manual_override
+    name: "ProT5 Manual Override"
+    icon: mdi:hand-back-right
+    entity_category: config
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - lambda: |-
+          id(prot5_curve_should_queue) = false;
+          if (!id(transaction_active) || id(active_lamp) != 1) {
+            id(lamp_pending)[1] = false;
+          }
+          id(prot5_curve_status).publish_state(
+              "Manual override active; use Queue ProT5 Level");
+    on_turn_off:
+      - lambda: |-
+          id(prot5_curve_has_queued) = false;
+          id(prot5_curve_should_queue) = false;
+          id(prot5_curve_status).publish_state(
+              "Manual override released; awaiting solar calculation");
+      - script.execute: calculate_solar
+
+number:
+  - platform: template
+    id: jungle_dawn_test_level
+    name: "JungleDawn Requested Level"
+    unit_of_measurement: "%"
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 50
+    restore_value: false
+    optimistic: true
+    mode: slider
+  - platform: template
+    id: prot5_test_level
+    name: "ProT5 Requested Level"
+    unit_of_measurement: "%"
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 25
+    restore_value: false
+    optimistic: true
+    mode: slider
+  - platform: template
+    id: ble_min_lamp_interval
+    name: "BLE Minimum Same-Lamp Interval"
+    unit_of_measurement: "s"
+    entity_category: config
+    min_value: 5
+    max_value: 600
+    step: 5
+    initial_value: 30
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: ble_inter_lamp_quiet
+    name: "BLE Inter-Lamp Quiet Time"
+    unit_of_measurement: "s"
+    entity_category: config
+    min_value: 1
+    max_value: 30
+    step: 1
+    initial_value: 5
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: ble_retry_base_delay
+    name: "BLE Retry Base Delay"
+    unit_of_measurement: "s"
+    entity_category: config
+    min_value: 5
+    max_value: 300
+    step: 5
+    initial_value: 30
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: ble_max_attempts
+    name: "BLE Maximum Attempts"
+    entity_category: config
+    min_value: 1
+    max_value: 5
+    step: 1
+    initial_value: 3
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: ble_transaction_timeout
+    name: "BLE Transaction Timeout"
+    unit_of_measurement: "s"
+    entity_category: config
+    min_value: 25
+    max_value: 90
+    step: 5
+    initial_value: 35
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: automatic_recovery_interval
+    name: "BLE Automatic Recovery Interval"
+    unit_of_measurement: "s"
+    entity_category: config
+    min_value: 60
+    max_value: 3600
+    step: 60
+    initial_value: 900
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: invalid_time_grace_period
+    name: "Invalid Time Grace Period"
+    unit_of_measurement: "s"
+    entity_category: config
+    min_value: 30
+    max_value: 1800
+    step: 30
+    initial_value: 120
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: solar_simulated_latitude
+    name: "Simulated Latitude"
+    icon: mdi:latitude
+    unit_of_measurement: "°"
+    entity_category: config
+    min_value: -60
+    max_value: 60
+    step: 0.1
+    initial_value: -28.5
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: solar_noon_minutes
+    name: "Simulated Solar Noon"
+    icon: mdi:weather-sunny
+    unit_of_measurement: "min after midnight"
+    entity_category: config
+    min_value: 600
+    max_value: 840
+    step: 1
+    initial_value: 750
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: solar_phase_offset_days
+    name: "Season Phase Offset"
+    icon: mdi:calendar-sync
+    unit_of_measurement: "d"
+    entity_category: config
+    min_value: 0
+    max_value: 366
+    step: 0.1
+    initial_value: 182.6
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: solar_test_calendar_day
+    name: "Solar Test Calendar Day"
+    icon: mdi:calendar-today
+    unit_of_measurement: "day"
+    entity_category: config
+    min_value: 1
+    max_value: 366
+    step: 1
+    initial_value: 355
+    restore_value: false
+    optimistic: true
+    mode: box
+  - platform: template
+    id: solar_test_time_minutes
+    name: "Solar Test Time"
+    icon: mdi:clock-outline
+    unit_of_measurement: "min after midnight"
+    entity_category: config
+    min_value: 0
+    max_value: 1439
+    step: 1
+    initial_value: 750
+    restore_value: false
+    optimistic: true
+    mode: box
+  - platform: template
+    id: jungle_dawn_max_brightness
+    name: "JungleDawn Maximum Brightness"
+    icon: mdi:brightness-7
+    unit_of_measurement: "%"
+    entity_category: config
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 100
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: jungle_dawn_curve_exponent
+    name: "JungleDawn Curve Exponent"
+    icon: mdi:chart-bell-curve
+    entity_category: config
+    min_value: 0.25
+    max_value: 4
+    step: 0.05
+    initial_value: 1
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: jungle_dawn_winter_peak_scale
+    name: "JungleDawn Winter Peak Scale"
+    icon: mdi:snowflake
+    unit_of_measurement: "% of maximum"
+    entity_category: config
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 75
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: jungle_dawn_summer_peak_scale
+    name: "JungleDawn Summer Peak Scale"
+    icon: mdi:white-balance-sunny
+    unit_of_measurement: "% of maximum"
+    entity_category: config
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 100
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: jungle_dawn_minimum_automatic_change
+    name: "JungleDawn Minimum Automatic Change"
+    icon: mdi:delta
+    unit_of_measurement: "%"
+    entity_category: config
+    min_value: 1
+    max_value: 10
+    step: 1
+    initial_value: 2
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: prot5_max_brightness
+    name: "ProT5 Calibrated Maximum Brightness"
+    icon: mdi:shield-sun
+    unit_of_measurement: "%"
+    entity_category: config
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 0
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: prot5_start_offset_minutes
+    name: "ProT5 Start After Sunrise"
+    icon: mdi:weather-sunset-up
+    unit_of_measurement: "min"
+    entity_category: config
+    min_value: 0
+    max_value: 300
+    step: 5
+    initial_value: 90
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: prot5_end_offset_minutes
+    name: "ProT5 End Before Sunset"
+    icon: mdi:weather-sunset-down
+    unit_of_measurement: "min"
+    entity_category: config
+    min_value: 0
+    max_value: 300
+    step: 5
+    initial_value: 90
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: prot5_curve_exponent
+    name: "ProT5 Curve Exponent"
+    icon: mdi:chart-bell-curve
+    entity_category: config
+    min_value: 0.25
+    max_value: 4
+    step: 0.05
+    initial_value: 1
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: prot5_winter_peak_scale
+    name: "ProT5 Winter Peak Scale"
+    icon: mdi:snowflake
+    unit_of_measurement: "% of calibrated maximum"
+    entity_category: config
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 80
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: prot5_summer_peak_scale
+    name: "ProT5 Summer Peak Scale"
+    icon: mdi:white-balance-sunny
+    unit_of_measurement: "% of calibrated maximum"
+    entity_category: config
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 100
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: prot5_minimum_automatic_change
+    name: "ProT5 Minimum Automatic Change"
+    icon: mdi:delta
+    unit_of_measurement: "%"
+    entity_category: config
+    min_value: 1
+    max_value: 10
+    step: 1
+    initial_value: 2
+    restore_value: true
+    optimistic: true
+    mode: box
+
+sensor:
+  - platform: template
+    name: "JungleDawn Pending Target"
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: return id(lamp_target)[0];
+    update_interval: 1s
+  - platform: template
+    name: "ProT5 Pending Target"
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: return id(lamp_target)[1];
+    update_interval: 1s
+  - platform: template
+    name: "JungleDawn Last Completed Level"
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: |-
+      if (id(lamp_last_completed)[0] < 0) return NAN;
+      return static_cast<float>(id(lamp_last_completed)[0]);
+    update_interval: 5s
+  - platform: template
+    name: "ProT5 Last Completed Level"
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: |-
+      if (id(lamp_last_completed)[1] < 0) return NAN;
+      return static_cast<float>(id(lamp_last_completed)[1]);
+    update_interval: 5s
+  - platform: ble_client
+    type: characteristic
+    id: jungle_dawn_status_notification
+    ble_client_id: jungle_dawn_client
+    service_uuid: "0000FFF0"
+    characteristic_uuid: "0000FFF1"
+    internal: true
+    notify: true
+    update_interval: never
+    lambda: |-
+      // Arcadia response: 16 bytes, 02 F0, brightness percent at offset 3.
+      if (x.size() != 16 || x[0] != 0x02 || x[1] != 0xF0 || x[3] > 100)
+        return NAN;
+      return static_cast<float>(x[3]);
+    on_value:
+      then:
+        - lambda: |-
+            if (std::isnan(x)) return;  // ESPHome emits NaN on disconnect.
+            id(lamp_last_reported)[0] = static_cast<int>(x);
+            if (id(transaction_active) && id(active_lamp) == 0)
+              id(lamp_readback_received)[0] = true;
+            auto now = id(controller_time).now();
+            id(jungle_dawn_last_reported_time).publish_state(
+                now.is_valid() ? now.strftime("%Y-%m-%d %H:%M:%S")
+                               : std::string("Clock not synchronised"));
+            ESP_LOGI("lumenize", "JungleDawn lamp reported %d%%",
+                     id(lamp_last_reported)[0]);
+  - platform: ble_client
+    type: characteristic
+    id: prot5_status_notification
+    ble_client_id: prot5_client
+    service_uuid: "0000FFF0"
+    characteristic_uuid: "0000FFF1"
+    internal: true
+    notify: true
+    update_interval: never
+    lambda: |-
+      if (x.size() != 16 || x[0] != 0x02 || x[1] != 0xF0 || x[3] > 100)
+        return NAN;
+      return static_cast<float>(x[3]);
+    on_value:
+      then:
+        - lambda: |-
+            if (std::isnan(x)) return;
+            id(lamp_last_reported)[1] = static_cast<int>(x);
+            if (id(transaction_active) && id(active_lamp) == 1)
+              id(lamp_readback_received)[1] = true;
+            auto now = id(controller_time).now();
+            id(prot5_last_reported_time).publish_state(
+                now.is_valid() ? now.strftime("%Y-%m-%d %H:%M:%S")
+                               : std::string("Clock not synchronised"));
+            ESP_LOGI("lumenize", "ProT5 lamp reported %d%%",
+                     id(lamp_last_reported)[1]);
+  - platform: template
+    name: "JungleDawn Lamp-Reported Level"
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: |-
+      if (id(lamp_last_reported)[0] < 0) return NAN;
+      return static_cast<float>(id(lamp_last_reported)[0]);
+    update_interval: 5s
+  - platform: template
+    name: "ProT5 Lamp-Reported Level"
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: |-
+      if (id(lamp_last_reported)[1] < 0) return NAN;
+      return static_cast<float>(id(lamp_last_reported)[1]);
+    update_interval: 5s
+
+
+
+    
+  - platform: template
+    name: "JungleDawn Completed Transactions"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: return static_cast<float>(id(lamp_completed_count)[0]);
+    update_interval: 5s
+  - platform: template
+    name: "ProT5 Completed Transactions"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: return static_cast<float>(id(lamp_completed_count)[1]);
+    update_interval: 5s
+  - platform: template
+    name: "JungleDawn Failed Transactions"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: return static_cast<float>(id(lamp_failure_count)[0]);
+    update_interval: 5s
+  - platform: template
+    name: "ProT5 Failed Transactions"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: return static_cast<float>(id(lamp_failure_count)[1]);
+    update_interval: 5s
+  - platform: template
+    name: "Solar Calendar Day"
+    icon: mdi:calendar-today
+    unit_of_measurement: "day"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return static_cast<float>(id(solar_source_day));
+    update_interval: 10s
+  - platform: template
+    name: "Solar Effective Day"
+    icon: mdi:calendar-sync
+    unit_of_measurement: "day"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(solar_effective_day);
+    update_interval: 10s
+  - platform: template
+    name: "Solar Declination"
+    icon: mdi:angle-acute
+    unit_of_measurement: "°"
+    accuracy_decimals: 2
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(solar_declination_degrees);
+    update_interval: 10s
+  - platform: template
+    name: "Solar Day Length"
+    icon: mdi:theme-light-dark
+    unit_of_measurement: "h"
+    accuracy_decimals: 3
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(solar_day_length_hours);
+    update_interval: 10s
+  - platform: template
+    name: "Simulated Solar Elevation"
+    icon: mdi:sun-angle
+    unit_of_measurement: "°"
+    accuracy_decimals: 2
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(solar_elevation_degrees);
+    update_interval: 10s
+  - platform: template
+    name: "Solar Daylight Envelope"
+    icon: mdi:chart-bell-curve-cumulative
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(solar_daylight_envelope) * 100.0f;
+    update_interval: 10s
+  - platform: template
+    name: "JungleDawn Curve Fraction"
+    icon: mdi:chart-bell-curve
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(jungle_dawn_curve_fraction) * 100.0f;
+    update_interval: 10s
+  - platform: template
+    name: "JungleDawn Seasonal Position"
+    icon: mdi:calendar-range
+    unit_of_measurement: "% summer"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(jungle_dawn_season_factor) * 100.0f;
+    update_interval: 10s
+  - platform: template
+    name: "JungleDawn Effective Peak"
+    icon: mdi:brightness-7
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(jungle_dawn_effective_peak);
+    update_interval: 10s
+  - platform: template
+    name: "JungleDawn Calculated Target"
+    icon: mdi:brightness-percent
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return static_cast<float>(id(jungle_dawn_calculated_target));
+    update_interval: 10s
+  - platform: template
+    name: "JungleDawn Last Automatic Queued Target"
+    icon: mdi:playlist-check
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(jungle_dawn_curve_has_queued)) return NAN;
+      return static_cast<float>(id(jungle_dawn_curve_last_queued));
+    update_interval: 10s
+  - platform: template
+    name: "ProT5 UVB Window Length"
+    icon: mdi:timeline-clock-outline
+    unit_of_measurement: "h"
+    accuracy_decimals: 2
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(prot5_window_length_hours);
+    update_interval: 10s
+  - platform: template
+    name: "ProT5 Window Envelope"
+    icon: mdi:chart-bell-curve-cumulative
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(prot5_window_envelope) * 100.0f;
+    update_interval: 10s
+  - platform: template
+    name: "ProT5 Curve Fraction"
+    icon: mdi:chart-bell-curve
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(prot5_curve_fraction) * 100.0f;
+    update_interval: 10s
+  - platform: template
+    name: "ProT5 Effective Peak"
+    icon: mdi:shield-sun
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(prot5_effective_peak);
+    update_interval: 10s
+  - platform: template
+    name: "ProT5 Calculated Target"
+    icon: mdi:brightness-percent
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return static_cast<float>(id(prot5_calculated_target));
+    update_interval: 10s
+  - platform: template
+    name: "ProT5 Last Automatic Queued Target"
+    icon: mdi:playlist-check
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(prot5_curve_has_queued)) return NAN;
+      return static_cast<float>(id(prot5_curve_last_queued));
+    update_interval: 10s
+
+text_sensor:
+  - platform: template
+    id: controller_last_time_source
+    name: "Controller Last Time Sync Source"
+    icon: mdi:clock-check-outline
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: jungle_dawn_dispatch_status
+    name: "JungleDawn Dispatcher Status"
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: prot5_dispatch_status
+    name: "ProT5 Dispatcher Status"
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: jungle_dawn_last_completed_time
+    name: "JungleDawn Last Completed Time"
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: prot5_last_completed_time
+    name: "ProT5 Last Completed Time"
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: jungle_dawn_last_reported_time
+    name: "JungleDawn Last Lamp Report Time"
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: prot5_last_reported_time
+    name: "ProT5 Last Lamp Report Time"
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: jungle_dawn_readback_status
+    name: "JungleDawn Readback Status"
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: prot5_readback_status
+    name: "ProT5 Readback Status"
+    entity_category: diagnostic
+    update_interval: never
+
+
+
+
+    
+  - platform: template
+    id: solar_engine_status
+    name: "Solar Engine Status"
+    icon: mdi:information-outline
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: solar_evaluation_time_text
+    name: "Solar Evaluation Time"
+    icon: mdi:clock-outline
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: solar_sunrise_text
+    name: "Simulated Sunrise"
+    icon: mdi:weather-sunset-up
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: solar_noon_text
+    name: "Simulated Solar Noon Time"
+    icon: mdi:weather-sunny
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: solar_sunset_text
+    name: "Simulated Sunset"
+    icon: mdi:weather-sunset-down
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: solar_day_length_text
+    name: "Simulated Day Length"
+    icon: mdi:theme-light-dark
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: jungle_dawn_curve_status
+    name: "JungleDawn Curve Status"
+    icon: mdi:brightness-auto
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: prot5_curve_status
+    name: "ProT5 Curve Status"
+    icon: mdi:brightness-auto
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: prot5_window_start_text
+    name: "ProT5 Window Start"
+    icon: mdi:weather-sunset-up
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: prot5_window_end_text
+    name: "ProT5 Window End"
+    icon: mdi:weather-sunset-down
+    entity_category: diagnostic
+    update_interval: never
+
+button:
+  - platform: template
+    name: "Queue JungleDawn Level"
+    icon: mdi:playlist-plus
+    on_press:
+      - switch.turn_on: jungle_dawn_manual_override
+      - script.execute:
+          id: queue_lumenize_command
+          lamp: 0
+          level: !lambda return static_cast<int>(id(jungle_dawn_test_level).state);
+  - platform: template
+    name: "Queue ProT5 Level"
+    icon: mdi:playlist-plus
+    on_press:
+      - switch.turn_on: prot5_manual_override
+      - script.execute:
+          id: queue_lumenize_command
+          lamp: 1
+          level: !lambda return static_cast<int>(id(prot5_test_level).state);
+  - platform: template
+    name: "Queue Safe Off for Both Lamps"
+    icon: mdi:power-off
+    entity_category: config
+    on_press:
+      - switch.turn_off: jungle_dawn_automatic_control
+      - switch.turn_off: prot5_automatic_control
+      - switch.turn_off: jungle_dawn_manual_override
+      - switch.turn_off: prot5_manual_override
+      - script.execute:
+          id: queue_lumenize_command
+          lamp: 0
+          level: 0
+      - script.execute:
+          id: queue_lumenize_command
+          lamp: 1
+          level: 0
+  - platform: template
+    name: "Cancel Pending LumenIZE Commands"
+    icon: mdi:playlist-remove
+    entity_category: config
+    on_press:
+      - lambda: |-
+          id(lamp_pending)[0] = false;
+          id(lamp_pending)[1] = false;
+          id(jungle_dawn_dispatch_status).publish_state("Pending command cancelled");
+          id(prot5_dispatch_status).publish_state("Pending command cancelled");
+
+script:
+  - id: calculate_solar
+    mode: restart
+    then:
+      - lambda: |-
+          constexpr float PI_F = 3.14159265358979323846f;
+          constexpr float DEG_TO_RAD_F = PI_F / 180.0f;
+          constexpr float RAD_TO_DEG_F = 180.0f / PI_F;
+
+          const auto clock_now = id(controller_time).now();
+          const bool test_mode = id(solar_test_mode).state;
+          id(jungle_dawn_curve_should_queue) = false;
+          id(prot5_curve_should_queue) = false;
+
+          if (!test_mode && !clock_now.is_valid()) {
+            id(solar_calculation_valid) = false;
+            id(solar_daylight_envelope) = 0.0f;
+            id(jungle_dawn_curve_fraction) = 0.0f;
+            id(jungle_dawn_season_factor) = 0.0f;
+            id(jungle_dawn_effective_peak) = 0.0f;
+            id(jungle_dawn_calculated_target) = 0;
+            id(prot5_window_start_minutes) = 0.0f;
+            id(prot5_window_end_minutes) = 0.0f;
+            id(prot5_window_length_hours) = 0.0f;
+            id(prot5_window_envelope) = 0.0f;
+            id(prot5_curve_fraction) = 0.0f;
+            id(prot5_effective_peak) = 0.0f;
+            id(prot5_calculated_target) = 0;
+
+            const bool failsafe_enabled =
+                id(invalid_time_failsafe_enabled).state;
+            const uint32_t now_ms = millis();
+            const uint32_t grace_ms = static_cast<uint32_t>(
+                std::max(30.0f, id(invalid_time_grace_period).state) *
+                1000.0f);
+            const uint32_t recovery_ms = static_cast<uint32_t>(
+                std::max(60.0f, id(automatic_recovery_interval).state) *
+                1000.0f);
+            const int maximum_attempts = std::max(
+                1, static_cast<int>(id(ble_max_attempts).state));
+            const bool grace_elapsed = now_ms >= grace_ms;
+            const auto elapsed_ms = [now_ms](uint32_t since,
+                                             uint32_t required) {
+              return static_cast<uint32_t>(now_ms - since) >= required;
+            };
+            bool failsafe_recovery_due[2] = {false, false};
+            bool failsafe_request_due[2] = {false, false};
+
+            if (!failsafe_enabled) {
+              id(invalid_time_failsafe_sent)[0] = false;
+              id(invalid_time_failsafe_sent)[1] = false;
+            } else if (grace_elapsed) {
+              for (int lamp = 0; lamp < 2; lamp++) {
+                const bool transaction_for_lamp =
+                    id(transaction_active) && id(active_lamp) == lamp;
+                const bool request_lost =
+                    id(invalid_time_failsafe_sent)[lamp] &&
+                    id(lamp_last_completed)[lamp] != 0 &&
+                    !id(lamp_pending)[lamp] && !transaction_for_lamp &&
+                    id(lamp_attempts_for_request)[lamp] == 0 &&
+                    id(lamp_consecutive_failures)[lamp] == 0;
+                failsafe_recovery_due[lamp] =
+                    id(invalid_time_failsafe_sent)[lamp] &&
+                    id(lamp_last_completed)[lamp] != 0 &&
+                    !id(lamp_pending)[lamp] && !transaction_for_lamp &&
+                    id(lamp_attempts_for_request)[lamp] >= maximum_attempts &&
+                    id(lamp_consecutive_failures)[lamp] > 0 &&
+                    elapsed_ms(id(lamp_last_failure_ms)[lamp], recovery_ms);
+                failsafe_request_due[lamp] =
+                    !id(invalid_time_failsafe_sent)[lamp] || request_lost ||
+                    failsafe_recovery_due[lamp];
+                if (failsafe_request_due[lamp]) {
+                  id(invalid_time_failsafe_sent)[lamp] = true;
+                }
+              }
+              id(jungle_dawn_curve_should_queue) = failsafe_request_due[0];
+              id(prot5_curve_should_queue) = failsafe_request_due[1];
+            }
+
+            char engine_status[128];
+            if (!failsafe_enabled) {
+              snprintf(engine_status, sizeof(engine_status),
+                       "Waiting for valid SNTP time; fail-safe disabled; outputs held");
+            } else if (!grace_elapsed) {
+              const uint32_t remaining_seconds =
+                  (grace_ms - now_ms + 999U) / 1000U;
+              snprintf(engine_status, sizeof(engine_status),
+                       "Waiting for valid SNTP time; safe-off in %lus",
+                       static_cast<unsigned long>(remaining_seconds));
+            } else {
+              snprintf(engine_status, sizeof(engine_status),
+                       "No valid time; safe-off requested for both lamps");
+            }
+            id(solar_engine_status).publish_state(engine_status);
+
+            char jungle_status[128];
+            char prot5_status[128];
+            if (failsafe_request_due[0]) {
+              snprintf(
+                  jungle_status, sizeof(jungle_status), "%s",
+                  failsafe_recovery_due[0]
+                      ? "No valid time; recovery safe-off 0% queued"
+                      : "No valid time; safety target 0% queued");
+            } else if (failsafe_enabled && grace_elapsed) {
+              snprintf(jungle_status, sizeof(jungle_status),
+                       "No valid time; safe-off already requested");
+            } else {
+              snprintf(jungle_status, sizeof(jungle_status),
+                       "No valid time; output held while awaiting clock");
+            }
+            if (failsafe_request_due[1]) {
+              snprintf(
+                  prot5_status, sizeof(prot5_status), "%s",
+                  failsafe_recovery_due[1]
+                      ? "No valid time; recovery safe-off 0% queued"
+                      : "No valid time; safety target 0% queued");
+            } else if (failsafe_enabled && grace_elapsed) {
+              snprintf(prot5_status, sizeof(prot5_status),
+                       "No valid time; safe-off already requested");
+            } else {
+              snprintf(prot5_status, sizeof(prot5_status),
+                       "No valid time; output held while awaiting clock");
+            }
+            id(jungle_dawn_curve_status).publish_state(jungle_status);
+            id(prot5_curve_status).publish_state(prot5_status);
+            id(solar_evaluation_time_text).publish_state("Unavailable");
+            id(solar_sunrise_text).publish_state("Unavailable");
+            id(solar_noon_text).publish_state("Unavailable");
+            id(solar_sunset_text).publish_state("Unavailable");
+            id(solar_day_length_text).publish_state("Unavailable");
+            id(prot5_window_start_text).publish_state("Unavailable");
+            id(prot5_window_end_text).publish_state("Unavailable");
+            return;
+          }
+
+          id(invalid_time_failsafe_sent)[0] = false;
+          id(invalid_time_failsafe_sent)[1] = false;
+
+          int days_in_year = 365;
+          if (clock_now.is_valid()) {
+            const int year = clock_now.year;
+            const bool leap = (year % 4 == 0) &&
+                              ((year % 100 != 0) || (year % 400 == 0));
+            days_in_year = leap ? 366 : 365;
+          }
+
+          int calendar_day;
+          float evaluation_minutes;
+          if (test_mode) {
+            calendar_day = static_cast<int>(
+                std::lround(id(solar_test_calendar_day).state));
+            calendar_day = std::max(1, std::min(days_in_year, calendar_day));
+            evaluation_minutes = std::max(
+                0.0f, std::min(1439.0f, id(solar_test_time_minutes).state));
+          } else {
+            calendar_day = std::max(
+                1, std::min(days_in_year,
+                            static_cast<int>(clock_now.day_of_year)));
+            evaluation_minutes = static_cast<float>(clock_now.hour * 60 +
+                                                     clock_now.minute) +
+                                 static_cast<float>(clock_now.second) / 60.0f;
+          }
+
+          const float phase_offset = id(solar_phase_offset_days).state;
+          float effective_day = std::fmod(
+              static_cast<float>(calendar_day - 1) + phase_offset,
+              static_cast<float>(days_in_year));
+          if (effective_day < 0.0f) effective_day += days_in_year;
+          effective_day += 1.0f;
+
+          // NOAA fractional-year approximation, evaluated at simulated noon.
+          const float gamma = 2.0f * PI_F /
+                              static_cast<float>(days_in_year) *
+                              (effective_day - 1.0f);
+          const float declination =
+              0.006918f - 0.399912f * std::cos(gamma) +
+              0.070257f * std::sin(gamma) -
+              0.006758f * std::cos(2.0f * gamma) +
+              0.000907f * std::sin(2.0f * gamma) -
+              0.002697f * std::cos(3.0f * gamma) +
+              0.001480f * std::sin(3.0f * gamma);
+
+          const float latitude = std::max(
+              -60.0f, std::min(60.0f, id(solar_simulated_latitude).state));
+          const float latitude_rad = latitude * DEG_TO_RAD_F;
+          float cos_sunrise_hour_angle =
+              -std::tan(latitude_rad) * std::tan(declination);
+
+          float sunrise_hour_angle;
+          if (cos_sunrise_hour_angle >= 1.0f) {
+            sunrise_hour_angle = 0.0f;
+          } else if (cos_sunrise_hour_angle <= -1.0f) {
+            sunrise_hour_angle = PI_F;
+          } else {
+            sunrise_hour_angle = std::acos(cos_sunrise_hour_angle);
+          }
+
+          const float day_length_hours =
+              24.0f * sunrise_hour_angle / PI_F;
+          const float solar_noon = std::max(
+              600.0f, std::min(840.0f, id(solar_noon_minutes).state));
+          const float sunrise = solar_noon - day_length_hours * 30.0f;
+          const float sunset = solar_noon + day_length_hours * 30.0f;
+
+          const float hour_angle =
+              (evaluation_minutes - solar_noon) * 0.25f * DEG_TO_RAD_F;
+          float elevation_sine =
+              std::sin(latitude_rad) * std::sin(declination) +
+              std::cos(latitude_rad) * std::cos(declination) *
+                  std::cos(hour_angle);
+          elevation_sine = std::max(-1.0f, std::min(1.0f, elevation_sine));
+          const float elevation = std::asin(elevation_sine) * RAD_TO_DEG_F;
+
+          float daylight_envelope = 0.0f;
+          if (sunset > sunrise && evaluation_minutes > sunrise &&
+              evaluation_minutes < sunset) {
+            const float progress =
+                (evaluation_minutes - sunrise) / (sunset - sunrise);
+            daylight_envelope = std::sin(PI_F * progress);
+            daylight_envelope = std::max(
+                0.0f, std::min(1.0f, daylight_envelope));
+          }
+
+          const auto day_length_for_declination =
+              [latitude_rad, PI_F](float declination_rad) -> float {
+            float cosine_hour_angle =
+                -std::tan(latitude_rad) * std::tan(declination_rad);
+            float hour_angle;
+            if (cosine_hour_angle >= 1.0f) hour_angle = 0.0f;
+            else if (cosine_hour_angle <= -1.0f) hour_angle = PI_F;
+            else hour_angle = std::acos(cosine_hour_angle);
+            return 24.0f * hour_angle / PI_F;
+          };
+          const float axial_tilt = 23.4393f * DEG_TO_RAD_F;
+          const float solstice_length_a =
+              day_length_for_declination(axial_tilt);
+          const float solstice_length_b =
+              day_length_for_declination(-axial_tilt);
+          const float minimum_day_length = std::min(
+              solstice_length_a, solstice_length_b);
+          const float maximum_day_length = std::max(
+              solstice_length_a, solstice_length_b);
+          float season_factor = 0.5f;
+          if (maximum_day_length - minimum_day_length > 0.001f) {
+            season_factor = (day_length_hours - minimum_day_length) /
+                            (maximum_day_length - minimum_day_length);
+          }
+          season_factor = std::max(0.0f, std::min(1.0f, season_factor));
+
+          const float maximum_brightness = std::max(
+              0.0f, std::min(100.0f, id(jungle_dawn_max_brightness).state));
+          const float winter_peak_scale = std::max(
+              0.0f, std::min(100.0f,
+                             id(jungle_dawn_winter_peak_scale).state)) /
+              100.0f;
+          const float summer_peak_scale = std::max(
+              0.0f, std::min(100.0f,
+                             id(jungle_dawn_summer_peak_scale).state)) /
+              100.0f;
+          const float seasonal_peak_scale =
+              winter_peak_scale +
+              (summer_peak_scale - winter_peak_scale) * season_factor;
+          const float effective_peak =
+              maximum_brightness * seasonal_peak_scale;
+          const int effective_peak_target = static_cast<int>(
+              std::lround(effective_peak));
+          const float curve_exponent = std::max(
+              0.25f, std::min(4.0f, id(jungle_dawn_curve_exponent).state));
+          const float curve_fraction = std::pow(
+              daylight_envelope, curve_exponent);
+          const int calculated_target = std::max(
+              0, std::min(effective_peak_target, static_cast<int>(
+                  std::lround(effective_peak * curve_fraction))));
+
+          // ProT5 uses a narrower window inset from visible sunrise/sunset.
+          const float prot5_start_offset = std::max(
+              0.0f, std::min(300.0f,
+                             id(prot5_start_offset_minutes).state));
+          const float prot5_end_offset = std::max(
+              0.0f, std::min(300.0f,
+                             id(prot5_end_offset_minutes).state));
+          const float prot5_window_start = sunrise + prot5_start_offset;
+          const float prot5_window_end = sunset - prot5_end_offset;
+          const float prot5_window_minutes = std::max(
+              0.0f, prot5_window_end - prot5_window_start);
+
+          float prot5_envelope = 0.0f;
+          if (prot5_window_minutes > 0.0f &&
+              evaluation_minutes > prot5_window_start &&
+              evaluation_minutes < prot5_window_end) {
+            const float prot5_progress =
+                (evaluation_minutes - prot5_window_start) /
+                prot5_window_minutes;
+            prot5_envelope = std::sin(PI_F * prot5_progress);
+            prot5_envelope = std::max(
+                0.0f, std::min(1.0f, prot5_envelope));
+          }
+
+          const float prot5_maximum_brightness = std::max(
+              0.0f, std::min(100.0f, id(prot5_max_brightness).state));
+          const float prot5_winter_scale = std::max(
+              0.0f, std::min(100.0f,
+                             id(prot5_winter_peak_scale).state)) /
+              100.0f;
+          const float prot5_summer_scale = std::max(
+              0.0f, std::min(100.0f,
+                             id(prot5_summer_peak_scale).state)) /
+              100.0f;
+          const float prot5_seasonal_scale =
+              prot5_winter_scale +
+              (prot5_summer_scale - prot5_winter_scale) * season_factor;
+          const float prot5_effective_peak_value =
+              prot5_maximum_brightness * prot5_seasonal_scale;
+          const int prot5_effective_peak_target = static_cast<int>(
+              std::lround(prot5_effective_peak_value));
+          const float prot5_exponent = std::max(
+              0.25f, std::min(4.0f, id(prot5_curve_exponent).state));
+          const float prot5_fraction = std::pow(
+              prot5_envelope, prot5_exponent);
+          const int prot5_target = std::max(
+              0, std::min(prot5_effective_peak_target, static_cast<int>(
+                  std::lround(prot5_effective_peak_value * prot5_fraction))));
+
+          id(solar_source_day) = calendar_day;
+          id(solar_year_days) = days_in_year;
+          id(solar_effective_day) = effective_day;
+          id(solar_declination_degrees) = declination * RAD_TO_DEG_F;
+          id(solar_day_length_hours) = day_length_hours;
+          id(solar_sunrise_minutes) = sunrise;
+          id(solar_sunset_minutes) = sunset;
+          id(solar_elevation_degrees) = elevation;
+          id(solar_daylight_envelope) = daylight_envelope;
+          id(solar_evaluation_minutes) = evaluation_minutes;
+          id(jungle_dawn_curve_fraction) = curve_fraction;
+          id(jungle_dawn_season_factor) = season_factor;
+          id(jungle_dawn_effective_peak) = effective_peak;
+          id(jungle_dawn_calculated_target) = calculated_target;
+          id(prot5_window_start_minutes) = prot5_window_start;
+          id(prot5_window_end_minutes) = prot5_window_end;
+          id(prot5_window_length_hours) = prot5_window_minutes / 60.0f;
+          id(prot5_window_envelope) = prot5_envelope;
+          id(prot5_curve_fraction) = prot5_fraction;
+          id(prot5_effective_peak) = prot5_effective_peak_value;
+          id(prot5_calculated_target) = prot5_target;
+          id(solar_calculation_valid) = true;
+
+          const auto format_clock = [](float minutes, char *output,
+                                       size_t output_size) {
+            int rounded = static_cast<int>(std::lround(minutes));
+            rounded %= 1440;
+            if (rounded < 0) rounded += 1440;
+            snprintf(output, output_size, "%02d:%02d", rounded / 60,
+                     rounded % 60);
+          };
+
+          char evaluation_text[8];
+          char sunrise_text[8];
+          char noon_text[8];
+          char sunset_text[8];
+          format_clock(evaluation_minutes, evaluation_text,
+                       sizeof(evaluation_text));
+          format_clock(sunrise, sunrise_text, sizeof(sunrise_text));
+          format_clock(solar_noon, noon_text, sizeof(noon_text));
+          format_clock(sunset, sunset_text, sizeof(sunset_text));
+          id(solar_evaluation_time_text).publish_state(evaluation_text);
+          id(solar_sunrise_text).publish_state(sunrise_text);
+          id(solar_noon_text).publish_state(noon_text);
+          id(solar_sunset_text).publish_state(sunset_text);
+
+          if (prot5_window_minutes > 0.0f) {
+            char prot5_start_text[8];
+            char prot5_end_text[8];
+            format_clock(prot5_window_start, prot5_start_text,
+                         sizeof(prot5_start_text));
+            format_clock(prot5_window_end, prot5_end_text,
+                         sizeof(prot5_end_text));
+            id(prot5_window_start_text).publish_state(prot5_start_text);
+            id(prot5_window_end_text).publish_state(prot5_end_text);
+          } else {
+            id(prot5_window_start_text).publish_state("Collapsed");
+            id(prot5_window_end_text).publish_state("Collapsed");
+          }
+
+          const int daylight_minutes = static_cast<int>(
+              std::lround(day_length_hours * 60.0f));
+          char length_text[24];
+          snprintf(length_text, sizeof(length_text), "%dh %02dm",
+                   daylight_minutes / 60, daylight_minutes % 60);
+          id(solar_day_length_text).publish_state(length_text);
+
+          char status[112];
+          snprintf(status, sizeof(status),
+                   "%s | calendar day %d/%d | effective day %.1f",
+                   test_mode ? "TEST" : "LIVE", calendar_day, days_in_year,
+                   effective_day);
+          id(solar_engine_status).publish_state(status);
+
+          const uint32_t calculation_ms = millis();
+          const uint32_t recovery_interval_ms = static_cast<uint32_t>(
+              std::max(60.0f, id(automatic_recovery_interval).state) *
+              1000.0f);
+          const int configured_max_attempts = std::max(
+              1, static_cast<int>(id(ble_max_attempts).state));
+          const auto recovery_elapsed =
+              [calculation_ms](uint32_t since, uint32_t required) {
+                return static_cast<uint32_t>(calculation_ms - since) >=
+                       required;
+              };
+
+          const bool automatic_enabled =
+              id(jungle_dawn_automatic_control).state;
+          const bool manual_override_active =
+              id(jungle_dawn_manual_override).state;
+          const int minimum_change = std::max(
+              1, static_cast<int>(std::lround(
+                     id(jungle_dawn_minimum_automatic_change).state)));
+          const int requested_target = id(lamp_target)[0];
+          const int target_difference = std::abs(
+              calculated_target - requested_target);
+          const bool endpoint_change =
+              calculated_target != requested_target &&
+              (calculated_target == 0 ||
+               calculated_target == effective_peak_target);
+          const bool recovery_due =
+              automatic_enabled && !manual_override_active && !test_mode &&
+              id(lamp_last_completed)[0] != calculated_target &&
+              !id(lamp_pending)[0] &&
+              (!id(transaction_active) || id(active_lamp) != 0) &&
+              id(lamp_attempts_for_request)[0] >= configured_max_attempts &&
+              id(lamp_consecutive_failures)[0] > 0 &&
+              recovery_elapsed(id(lamp_last_failure_ms)[0],
+                               recovery_interval_ms);
+          const bool target_is_due =
+              !id(jungle_dawn_curve_has_queued) || endpoint_change ||
+              target_difference >= minimum_change || recovery_due;
+
+          char curve_status[128];
+          if (manual_override_active) {
+            snprintf(curve_status, sizeof(curve_status),
+                     "%s preview: %d%%; manual override active",
+                     test_mode ? "TEST" : "LIVE", calculated_target);
+          } else if (!automatic_enabled) {
+            snprintf(curve_status, sizeof(curve_status),
+                     "%s preview: %d%%; automatic control disabled",
+                     test_mode ? "TEST" : "LIVE", calculated_target);
+          } else if (test_mode) {
+            snprintf(curve_status, sizeof(curve_status),
+                     "TEST preview: %d%%; automatic BLE output paused",
+                     calculated_target);
+          } else if (recovery_due) {
+            id(jungle_dawn_curve_should_queue) = true;
+            snprintf(curve_status, sizeof(curve_status),
+                     "LIVE target: %d%%; recovery retry queued",
+                     calculated_target);
+          } else if (target_is_due) {
+            id(jungle_dawn_curve_should_queue) = true;
+            snprintf(curve_status, sizeof(curve_status),
+                     "LIVE target: %d%%; queued for dispatcher",
+                     calculated_target);
+          } else {
+            snprintf(curve_status, sizeof(curve_status),
+                     "LIVE target: %d%%; within %d%% change threshold",
+                     calculated_target, minimum_change);
+          }
+          id(jungle_dawn_curve_status).publish_state(curve_status);
+
+          const bool prot5_automatic_enabled =
+              id(prot5_automatic_control).state;
+          const bool prot5_manual_override_active =
+              id(prot5_manual_override).state;
+          const int prot5_minimum_change = std::max(
+              1, static_cast<int>(std::lround(
+                     id(prot5_minimum_automatic_change).state)));
+          const int prot5_requested_target = id(lamp_target)[1];
+          const int prot5_target_difference = std::abs(
+              prot5_target - prot5_requested_target);
+          const bool prot5_endpoint_change =
+              prot5_target != prot5_requested_target &&
+              (prot5_target == 0 ||
+               prot5_target == prot5_effective_peak_target);
+          const bool prot5_recovery_due =
+              prot5_automatic_enabled && !prot5_manual_override_active &&
+              !test_mode && id(lamp_last_completed)[1] != prot5_target &&
+              !id(lamp_pending)[1] &&
+              (!id(transaction_active) || id(active_lamp) != 1) &&
+              id(lamp_attempts_for_request)[1] >= configured_max_attempts &&
+              id(lamp_consecutive_failures)[1] > 0 &&
+              recovery_elapsed(id(lamp_last_failure_ms)[1],
+                               recovery_interval_ms);
+          const bool prot5_target_is_due =
+              !id(prot5_curve_has_queued) || prot5_endpoint_change ||
+              prot5_target_difference >= prot5_minimum_change ||
+              prot5_recovery_due;
+
+          char prot5_status[160];
+          if (prot5_manual_override_active) {
+            snprintf(prot5_status, sizeof(prot5_status),
+                     "%s preview: %d%%; manual override active",
+                     test_mode ? "TEST" : "LIVE", prot5_target);
+          } else if (!prot5_automatic_enabled) {
+            snprintf(prot5_status, sizeof(prot5_status),
+                     "%s preview: %d%%; automatic control disabled",
+                     test_mode ? "TEST" : "LIVE", prot5_target);
+          } else if (test_mode) {
+            snprintf(prot5_status, sizeof(prot5_status),
+                     "TEST preview: %d%%; automatic BLE output paused",
+                     prot5_target);
+          } else if (prot5_maximum_brightness <= 0.0f) {
+            if (prot5_target_is_due) {
+              id(prot5_curve_should_queue) = true;
+              if (prot5_recovery_due) {
+                snprintf(prot5_status, sizeof(prot5_status),
+                         "Safety target 0%%; recovery retry queued");
+              } else {
+                snprintf(prot5_status, sizeof(prot5_status),
+                         "LIVE safety target 0%% queued; set measured maximum before use");
+              }
+            } else {
+              snprintf(prot5_status, sizeof(prot5_status),
+                       "LIVE target 0%%; calibrated maximum is 0%%");
+            }
+          } else if (prot5_window_minutes <= 0.0f) {
+            if (prot5_target_is_due) {
+              id(prot5_curve_should_queue) = true;
+              if (prot5_recovery_due) {
+                snprintf(prot5_status, sizeof(prot5_status),
+                         "UVB window collapsed; recovery safe-off queued");
+              } else {
+                snprintf(prot5_status, sizeof(prot5_status),
+                         "UVB window collapsed; 0%% queued for safety");
+              }
+            } else {
+              snprintf(prot5_status, sizeof(prot5_status),
+                       "UVB window collapsed; reduce start/end offsets");
+            }
+          } else if (prot5_recovery_due) {
+            id(prot5_curve_should_queue) = true;
+            snprintf(prot5_status, sizeof(prot5_status),
+                     "LIVE target: %d%%; recovery retry queued",
+                     prot5_target);
+          } else if (prot5_target_is_due) {
+            id(prot5_curve_should_queue) = true;
+            snprintf(prot5_status, sizeof(prot5_status),
+                     "LIVE target: %d%%; queued for dispatcher",
+                     prot5_target);
+          } else {
+            snprintf(prot5_status, sizeof(prot5_status),
+                     "LIVE target: %d%%; within %d%% change threshold",
+                     prot5_target, prot5_minimum_change);
+          }
+          id(prot5_curve_status).publish_state(prot5_status);
+
+          ESP_LOGD("solar", "%s; sunrise %s, noon %s, sunset %s, elevation %.2f deg, envelope %.3f",
+                   status, sunrise_text, noon_text, sunset_text, elevation,
+                   daylight_envelope);
+          ESP_LOGD("jungle_dawn_curve", "%s; curve %.3f, season %.3f, effective peak %.1f%%, exponent %.2f",
+                   curve_status, curve_fraction, season_factor,
+                   effective_peak, curve_exponent);
+          ESP_LOGD("prot5_curve", "%s; window %.2fh, curve %.3f, season %.3f, effective peak %.1f%%, exponent %.2f",
+                   prot5_status, prot5_window_minutes / 60.0f,
+                   prot5_fraction, season_factor,
+                   prot5_effective_peak_value,
+                   prot5_exponent);
+
+      - if:
+          condition:
+            lambda: return id(jungle_dawn_curve_should_queue);
+          then:
+            - script.execute:
+                id: queue_lumenize_command
+                lamp: 0
+                level: !lambda return id(jungle_dawn_calculated_target);
+            - lambda: |-
+                id(jungle_dawn_curve_last_queued) =
+                    id(jungle_dawn_calculated_target);
+                id(jungle_dawn_curve_has_queued) = true;
+                id(jungle_dawn_curve_should_queue) = false;
+
+      - if:
+          condition:
+            lambda: return id(prot5_curve_should_queue);
+          then:
+            - script.execute:
+                id: queue_lumenize_command
+                lamp: 1
+                level: !lambda return id(prot5_calculated_target);
+            - lambda: |-
+                id(prot5_curve_last_queued) = id(prot5_calculated_target);
+                id(prot5_curve_has_queued) = true;
+                id(prot5_curve_should_queue) = false;
+
+  - id: queue_lumenize_command
+    mode: restart
+    parameters:
+      lamp: int
+      level: int
+    then:
+      - lambda: |-
+          if (lamp < 0 || lamp > 1) return;
+          const int requested = std::max(
+              0, std::min(100, static_cast<int>(level)));
+          const float configured_cap_value = lamp == 0
+              ? id(jungle_dawn_max_brightness).state
+              : id(prot5_max_brightness).state;
+          const int configured_cap = std::max(
+              0, std::min(100, static_cast<int>(
+                  std::lround(configured_cap_value))));
+          const int target = std::min(requested, configured_cap);
+          const bool duplicate_inflight =
+              id(transaction_active) && id(active_lamp) == lamp &&
+              id(lamp_inflight)[lamp] == target &&
+              id(lamp_target)[lamp] == target;
+          if (!duplicate_inflight) {
+            id(lamp_attempts_for_request)[lamp] = 0;
+            id(lamp_consecutive_failures)[lamp] = 0;
+            id(lamp_retry_delay_ms)[lamp] = 0;
+          }
+          id(lamp_target)[lamp] = target;
+          id(lamp_pending)[lamp] = true;
+          char status[96];
+          if (target != requested) {
+            snprintf(status, sizeof(status),
+                     "Pending target: %d%% (requested %d%%, safety-capped)",
+                     target, requested);
+          } else {
+            snprintf(status, sizeof(status),
+                     "Pending latest target: %d%%", target);
+          }
+          if (lamp == 0) id(jungle_dawn_dispatch_status).publish_state(status);
+          else id(prot5_dispatch_status).publish_state(status);
+          ESP_LOGI("lumenize", "%s target queued: %d%%",
+                   lamp == 0 ? "JungleDawn" : "ProT5", target);
+
+  - id: record_ble_failure
+    mode: single
+    parameters:
+      lamp: int
+    then:
+      - lambda: |-
+          if (lamp < 0 || lamp > 1) return;
+          if (!id(transaction_active) || id(active_lamp) != lamp) return;
+          const uint32_t now = millis();
+          const bool newer_target = id(lamp_target)[lamp] != id(lamp_inflight)[lamp];
+          id(lamp_failure_count)[lamp]++;
+          id(lamp_last_failure_ms)[lamp] = now;
+          id(lamp_connected)[lamp] = false;
+          id(transaction_active) = false;
+          id(active_lamp) = -1;
+          id(transaction_write_completed) = false;
+          id(next_lamp) = 1 - lamp;
+          char status[96];
+          if (newer_target) {
+            id(lamp_attempts_for_request)[lamp] = 0;
+            id(lamp_consecutive_failures)[lamp] = 0;
+            id(lamp_retry_delay_ms)[lamp] = 0;
+            id(lamp_pending)[lamp] = true;
+            snprintf(status, sizeof(status),
+                     "Previous target failed; newer %d%% target pending",
+                     id(lamp_target)[lamp]);
+          } else {
+            id(lamp_consecutive_failures)[lamp]++;
+            const int attempt = std::max(1, id(lamp_attempts_for_request)[lamp]);
+            const int maximum = std::max(1, static_cast<int>(id(ble_max_attempts).state));
+            const uint32_t base = static_cast<uint32_t>(
+                std::max(1.0f, id(ble_retry_base_delay).state) * 1000.0f);
+            const int shift = std::min(attempt - 1, 5);
+            const uint64_t calculated = static_cast<uint64_t>(base) << shift;
+            id(lamp_retry_delay_ms)[lamp] = static_cast<uint32_t>(
+                std::min<uint64_t>(calculated, 900000ULL));
+            if (attempt >= maximum) {
+              id(lamp_pending)[lamp] = false;
+              snprintf(status, sizeof(status),
+                       "Gave up after %d attempts at %d%%",
+                       attempt, id(lamp_inflight)[lamp]);
+            } else {
+              id(lamp_pending)[lamp] = true;
+              snprintf(status, sizeof(status),
+                       "Attempt %d/%d failed; retry in %lus",
+                       attempt, maximum,
+                       static_cast<unsigned long>(id(lamp_retry_delay_ms)[lamp] / 1000U));
+            }
+          }
+          if (lamp == 0) id(jungle_dawn_dispatch_status).publish_state(status);
+          else id(prot5_dispatch_status).publish_state(status);
+          if (lamp == 0) id(jungle_dawn_readback_status).publish_state(
+              "No readback; BLE command failed");
+          else id(prot5_readback_status).publish_state(
+              "No readback; BLE command failed");
+          ESP_LOGW("lumenize", "%s: %s",
+                   lamp == 0 ? "JungleDawn" : "ProT5", status);
+
+  - id: dispatcher_tick
+    mode: single
+    then:
+      - lambda: |-
+          id(dispatch_choice) = -1;
+          if (id(transaction_active)) return;
+          const uint32_t now = millis();
+          const uint32_t same_lamp_ms = static_cast<uint32_t>(
+              std::max(1.0f, id(ble_min_lamp_interval).state) * 1000.0f);
+          const uint32_t quiet_ms = static_cast<uint32_t>(
+              std::max(1.0f, id(ble_inter_lamp_quiet).state) * 1000.0f);
+          const auto elapsed = [now](uint32_t since, uint32_t required) {
+            return static_cast<uint32_t>(now - since) >= required;
+          };
+          const bool global_due = !id(any_attempted) ||
+              elapsed(id(global_last_attempt_ms), quiet_ms);
+          if (!global_due) return;
+          bool due[2] = {false, false};
+          for (int lamp = 0; lamp < 2; lamp++) {
+            const bool lamp_interval_due = !id(lamp_ever_attempted)[lamp] ||
+                elapsed(id(lamp_last_attempt_ms)[lamp], same_lamp_ms);
+            const bool retry_due = id(lamp_retry_delay_ms)[lamp] == 0 ||
+                elapsed(id(lamp_last_failure_ms)[lamp],
+                        id(lamp_retry_delay_ms)[lamp]);
+            due[lamp] = id(lamp_pending)[lamp] && lamp_interval_due && retry_due;
+          }
+          if (id(next_lamp) == 0 && due[0]) id(dispatch_choice) = 0;
+          else if (id(next_lamp) == 1 && due[1]) id(dispatch_choice) = 1;
+          else if (due[0]) id(dispatch_choice) = 0;
+          else if (due[1]) id(dispatch_choice) = 1;
+      - if:
+          condition:
+            lambda: return id(dispatch_choice) == 0;
+          then:
+            - script.execute: jungle_dawn_transaction
+          else:
+            - if:
+                condition:
+                  lambda: return id(dispatch_choice) == 1;
+                then:
+                  - script.execute: prot5_transaction
+
+  - id: jungle_dawn_transaction
+    mode: single
+    then:
+      - lambda: |-
+          const uint32_t now = millis();
+          id(transaction_active) = true;
+          id(active_lamp) = 0;
+          id(transaction_started_ms) = now;
+          id(transaction_write_completed) = false;
+          id(lamp_connected)[0] = false;
+          id(lamp_readback_received)[0] = false;
+          id(lamp_readback_fresh)[0] = false;
+          id(jungle_dawn_readback_status).publish_state(
+              "Connecting; awaiting lamp status");
+          id(lamp_inflight)[0] = id(lamp_target)[0];
+          id(lamp_attempts_for_request)[0]++;
+          id(lamp_ever_attempted)[0] = true;
+          id(lamp_last_attempt_ms)[0] = now;
+          id(any_attempted) = true;
+          id(global_last_attempt_ms) = now;
+          char status[64];
+          snprintf(status, sizeof(status), "Connecting for %d%% (attempt %d)",
+                   id(lamp_inflight)[0], id(lamp_attempts_for_request)[0]);
+          id(jungle_dawn_dispatch_status).publish_state(status);
+      - ble_client.connect: jungle_dawn_client
+      - delay: 1s
+      - ble_client.ble_write:
+          id: jungle_dawn_client
+          service_uuid: "0000FFF0"
+          characteristic_uuid: "0000FFF2"
+          value: [0x05, 0xF0, 0x00, 0x01, 0x02, 0x03, 0x04, 0x00,
+                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x50]
+      - delay: 200ms
+      - ble_client.ble_write:
+          id: jungle_dawn_client
+          service_uuid: "0000FFF0"
+          characteristic_uuid: "0000FFF2"
+          value: !lambda |-
+            return {0x02, 0xF1, 0x00,
+                    static_cast<uint8_t>(id(lamp_inflight)[0]),
+                    0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x20};
+      - delay: 300ms
+      - if:
+          condition:
+            lambda: return id(lamp_connected)[0];
+          then:
+            - lambda: id(transaction_write_completed) = true;
+            - lambda: id(lamp_readback_received)[0] = false;
+            - ble_client.ble_write:
+                id: jungle_dawn_client
+                service_uuid: "0000FFF0"
+                characteristic_uuid: "0000FFF2"
+                value: [0x02, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20]
+            - wait_until:
+                condition:
+                  lambda: |-
+                    return id(lamp_readback_received)[0] ||
+                           !id(lamp_connected)[0];
+                timeout: 1500ms
+            - ble_client.disconnect: jungle_dawn_client
+            - lambda: |-
+                const int completed = id(lamp_inflight)[0];
+                id(lamp_last_completed)[0] = completed;
+                id(lamp_completed_count)[0]++;
+                id(lamp_consecutive_failures)[0] = 0;
+                id(lamp_retry_delay_ms)[0] = 0;
+                id(lamp_readback_fresh)[0] = id(lamp_readback_received)[0];
+                if (id(lamp_readback_fresh)[0]) {
+                  char readback[96];
+                  const int observed = id(lamp_last_reported)[0];
+                  snprintf(readback, sizeof(readback),
+                           observed == completed
+                               ? "Confirmed: requested %d%%, lamp %d%%"
+                               : "Mismatch: requested %d%%, lamp %d%%",
+                           completed, observed);
+                  id(jungle_dawn_readback_status).publish_state(readback);
+                } else {
+                  id(jungle_dawn_readback_status).publish_state(
+                      "No status response; last lamp report may be stale");
+                }
+                if (id(lamp_target)[0] == completed) {
+                  id(lamp_pending)[0] = false;
+                  id(lamp_attempts_for_request)[0] = 0;
+                  char status[48];
+                  snprintf(status, sizeof(status), "Transaction completed: %d%%", completed);
+                  id(jungle_dawn_dispatch_status).publish_state(status);
+                } else {
+                  id(lamp_pending)[0] = true;
+                  id(jungle_dawn_dispatch_status).publish_state(
+                      "Transaction completed; newer target pending");
+                }
+                auto now = id(controller_time).now();
+                id(jungle_dawn_last_completed_time).publish_state(
+                    now.is_valid() ? now.strftime("%Y-%m-%d %H:%M:%S")
+                                   : std::string("Clock not synchronised"));
+                id(transaction_active) = false;
+                id(active_lamp) = -1;
+                id(transaction_write_completed) = false;
+                id(next_lamp) = 1;
+          else:
+            - script.execute:
+                id: record_ble_failure
+                lamp: 0
+
+  - id: prot5_transaction
+    mode: single
+    then:
+      - lambda: |-
+          const uint32_t now = millis();
+          id(transaction_active) = true;
+          id(active_lamp) = 1;
+          id(transaction_started_ms) = now;
+          id(transaction_write_completed) = false;
+          id(lamp_connected)[1] = false;
+          id(lamp_readback_received)[1] = false;
+          id(lamp_readback_fresh)[1] = false;
+          id(prot5_readback_status).publish_state(
+              "Connecting; awaiting lamp status");
+          id(lamp_inflight)[1] = id(lamp_target)[1];
+          id(lamp_attempts_for_request)[1]++;
+          id(lamp_ever_attempted)[1] = true;
+          id(lamp_last_attempt_ms)[1] = now;
+          id(any_attempted) = true;
+          id(global_last_attempt_ms) = now;
+          char status[64];
+          snprintf(status, sizeof(status), "Connecting for %d%% (attempt %d)",
+                   id(lamp_inflight)[1], id(lamp_attempts_for_request)[1]);
+          id(prot5_dispatch_status).publish_state(status);
+      - ble_client.connect: prot5_client
+      - delay: 1s
+      - ble_client.ble_write:
+          id: prot5_client
+          service_uuid: "0000FFF0"
+          characteristic_uuid: "0000FFF2"
+          value: [0x05, 0xF0, 0x00, 0x01, 0x02, 0x03, 0x04, 0x00,
+                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x50]
+      - delay: 200ms
+      - ble_client.ble_write:
+          id: prot5_client
+          service_uuid: "0000FFF0"
+          characteristic_uuid: "0000FFF2"
+          value: !lambda |-
+            return {0x02, 0xF1, 0x00,
+                    static_cast<uint8_t>(id(lamp_inflight)[1]),
+                    0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x20};
+      - delay: 300ms
+      - if:
+          condition:
+            lambda: return id(lamp_connected)[1];
+          then:
+            - lambda: id(transaction_write_completed) = true;
+            - lambda: id(lamp_readback_received)[1] = false;
+            - ble_client.ble_write:
+                id: prot5_client
+                service_uuid: "0000FFF0"
+                characteristic_uuid: "0000FFF2"
+                value: [0x02, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20]
+            - wait_until:
+                condition:
+                  lambda: |-
+                    return id(lamp_readback_received)[1] ||
+                           !id(lamp_connected)[1];
+                timeout: 1500ms
+            - ble_client.disconnect: prot5_client
+            - lambda: |-
+                const int completed = id(lamp_inflight)[1];
+                id(lamp_last_completed)[1] = completed;
+                id(lamp_completed_count)[1]++;
+                id(lamp_consecutive_failures)[1] = 0;
+                id(lamp_retry_delay_ms)[1] = 0;
+                id(lamp_readback_fresh)[1] = id(lamp_readback_received)[1];
+                if (id(lamp_readback_fresh)[1]) {
+                  char readback[96];
+                  const int observed = id(lamp_last_reported)[1];
+                  snprintf(readback, sizeof(readback),
+                           observed == completed
+                               ? "Confirmed: requested %d%%, lamp %d%%"
+                               : "Mismatch: requested %d%%, lamp %d%%",
+                           completed, observed);
+                  id(prot5_readback_status).publish_state(readback);
+                } else {
+                  id(prot5_readback_status).publish_state(
+                      "No status response; last lamp report may be stale");
+                }
+                if (id(lamp_target)[1] == completed) {
+                  id(lamp_pending)[1] = false;
+                  id(lamp_attempts_for_request)[1] = 0;
+                  char status[48];
+                  snprintf(status, sizeof(status), "Transaction completed: %d%%", completed);
+                  id(prot5_dispatch_status).publish_state(status);
+                } else {
+                  id(lamp_pending)[1] = true;
+                  id(prot5_dispatch_status).publish_state(
+                      "Transaction completed; newer target pending");
+                }
+                auto now = id(controller_time).now();
+                id(prot5_last_completed_time).publish_state(
+                    now.is_valid() ? now.strftime("%Y-%m-%d %H:%M:%S")
+                                   : std::string("Clock not synchronised"));
+                id(transaction_active) = false;
+                id(active_lamp) = -1;
+                id(transaction_write_completed) = false;
+                id(next_lamp) = 0;
+          else:
+            - script.execute:
+                id: record_ble_failure
+                lamp: 1
+
+interval:
+  - interval: 10s
+    startup_delay: 5s
+    then:
+      - script.execute: calculate_solar
+
+  - interval: 1s
+    startup_delay: 3s
+    then:
+      - if:
+          condition:
+            lambda: |-
+              if (!id(transaction_active)) return false;
+              const uint32_t timeout_ms = static_cast<uint32_t>(
+                  std::max(25.0f, id(ble_transaction_timeout).state) * 1000.0f);
+              return static_cast<uint32_t>(millis() - id(transaction_started_ms)) >=
+                     timeout_ms;
+          then:
+            - if:
+                condition:
+                  lambda: return id(active_lamp) == 0;
+                then:
+                  - script.stop: jungle_dawn_transaction
+                  - script.execute:
+                      id: record_ble_failure
+                      lamp: 0
+                  - if:
+                      condition:
+                        lambda: return id(lamp_connected)[0];
+                      then:
+                        - ble_client.disconnect: jungle_dawn_client
+                else:
+                  - script.stop: prot5_transaction
+                  - script.execute:
+                      id: record_ble_failure
+                      lamp: 1
+                  - if:
+                      condition:
+                        lambda: return id(lamp_connected)[1];
+                      then:
+                        - ble_client.disconnect: prot5_client
+      - script.execute: dispatcher_tick
