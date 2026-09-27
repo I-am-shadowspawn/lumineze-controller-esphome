@@ -1,0 +1,26 @@
+substitutions:
+  device_name: "my-vivarium"
+  friendly_name: "My Vivarium"
+  area_name: "Vivarium"
+
+  jungle_dawn_mac: !secret jungle_dawn_mac
+  prot5_mac: !secret prot5_mac
+  fallback_ap_ssid: !secret fallback_ap_ssid
+  fallback_ap_password: !secret fallback_ap_password
+  
+  
+
+packages:
+  lumineze:
+    url: https://github.com/I-am-shadowspawn/lumineze-controller-esphome
+    ref: v1.0.0
+    files:
+      - packages/lumineze-controller.yaml
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+api:
+  encryption:
+    key: !secret api_encryption_key
