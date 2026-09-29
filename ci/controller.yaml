@@ -1,0 +1,14 @@
+# CI-only values. No physical controller or real credentials are used.
+substitutions:
+  device_name: "lumineze-ci"
+  friendly_name: "LuminEZE CI"
+  enable_jungle_dawn: "true"
+  jungle_dawn_mac: "AA:BB:CC:DD:EE:01"
+  enable_prot5: "false"
+
+packages:
+  lumineze: !include ../packages/lumineze-controller.yaml
+
+wifi:
+  ssid: "ci-network"
+  password: "ci-password"
