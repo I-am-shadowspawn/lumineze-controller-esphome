@@ -5,6 +5,8 @@ substitutions:
 
   jungle_dawn_mac: "00:00:00:00:00:00"
   prot5_mac: "00:00:00:00:00:00"
+  enable_jungle_dawn: "false"
+  enable_prot5: "false"
 
   timezone: "Europe/London"
   logger_level: "DEBUG"
@@ -1972,6 +1974,8 @@ script:
     then:
       - lambda: |-
           if (lamp < 0 || lamp > 1) return;
+          if ((lamp == 0 && !${enable_jungle_dawn}) ||
+              (lamp == 1 && !${enable_prot5})) return;
           const int requested = std::max(
               0, std::min(100, static_cast<int>(level)));
           const float configured_cap_value = lamp == 0
