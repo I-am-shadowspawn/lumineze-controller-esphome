@@ -3,8 +3,10 @@ substitutions:
   friendly_name: "My Vivarium"
   area_name: "Vivarium"
 
+  enable_jungle_dawn: "true"
   jungle_dawn_mac: !secret jungle_dawn_mac
-  prot5_mac: !secret prot5_mac
+  enable_prot5: "false"
+  # prot5_mac: !secret prot5_mac  # Set enable_prot5 to "true" when connected.
   fallback_ap_ssid: !secret fallback_ap_ssid
   fallback_ap_password: !secret fallback_ap_password
   
