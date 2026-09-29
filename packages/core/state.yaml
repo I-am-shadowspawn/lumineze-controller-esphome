@@ -1,0 +1,213 @@
+globals:
+  - id: lamp_target
+    type: int[2]
+    restore_value: false
+    initial_value: '{0, 0}'
+  - id: lamp_inflight
+    type: int[2]
+    restore_value: false
+    initial_value: '{0, 0}'
+  - id: lamp_last_completed
+    type: int[2]
+    restore_value: false
+    initial_value: '{-1, -1}'
+  - id: lamp_last_reported
+    type: int[2]
+    restore_value: false
+    initial_value: '{-1, -1}'
+  - id: lamp_readback_received
+    type: bool[2]
+    restore_value: false
+    initial_value: '{false, false}'
+  - id: lamp_readback_fresh
+    type: bool[2]
+    restore_value: false
+    initial_value: '{false, false}'
+  - id: lamp_pending
+    type: bool[2]
+    restore_value: false
+    initial_value: '{false, false}'
+  - id: lamp_connected
+    type: bool[2]
+    restore_value: false
+    initial_value: '{false, false}'
+  - id: lamp_ever_attempted
+    type: bool[2]
+    restore_value: false
+    initial_value: '{false, false}'
+  - id: lamp_last_attempt_ms
+    type: uint32_t[2]
+    restore_value: false
+    initial_value: '{0, 0}'
+  - id: lamp_last_failure_ms
+    type: uint32_t[2]
+    restore_value: false
+    initial_value: '{0, 0}'
+  - id: lamp_retry_delay_ms
+    type: uint32_t[2]
+    restore_value: false
+    initial_value: '{0, 0}'
+  - id: lamp_attempts_for_request
+    type: int[2]
+    restore_value: false
+    initial_value: '{0, 0}'
+  - id: lamp_completed_count
+    type: uint32_t[2]
+    restore_value: false
+    initial_value: '{0, 0}'
+  - id: lamp_failure_count
+    type: uint32_t[2]
+    restore_value: false
+    initial_value: '{0, 0}'
+  - id: lamp_consecutive_failures
+    type: int[2]
+    restore_value: false
+    initial_value: '{0, 0}'
+  - id: transaction_active
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: active_lamp
+    type: int
+    restore_value: false
+    initial_value: '-1'
+  - id: transaction_started_ms
+    type: uint32_t
+    restore_value: false
+    initial_value: '0'
+  - id: transaction_write_completed
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: any_attempted
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: global_last_attempt_ms
+    type: uint32_t
+    restore_value: false
+    initial_value: '0'
+  - id: next_lamp
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: dispatch_choice
+    type: int
+    restore_value: false
+    initial_value: '-1'
+  - id: solar_calculation_valid
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: solar_source_day
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: solar_year_days
+    type: int
+    restore_value: false
+    initial_value: '365'
+  - id: solar_effective_day
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: solar_declination_degrees
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: solar_day_length_hours
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: solar_sunrise_minutes
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: solar_sunset_minutes
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: solar_elevation_degrees
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: solar_daylight_envelope
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: solar_evaluation_minutes
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: jungle_dawn_curve_fraction
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: jungle_dawn_season_factor
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: jungle_dawn_effective_peak
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: jungle_dawn_calculated_target
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: jungle_dawn_curve_last_queued
+    type: int
+    restore_value: false
+    initial_value: '-1'
+  - id: jungle_dawn_curve_has_queued
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: jungle_dawn_curve_should_queue
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: prot5_window_start_minutes
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: prot5_window_end_minutes
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: prot5_window_length_hours
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: prot5_window_envelope
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: prot5_curve_fraction
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: prot5_effective_peak
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: prot5_calculated_target
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: prot5_curve_last_queued
+    type: int
+    restore_value: false
+    initial_value: '-1'
+  - id: prot5_curve_has_queued
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: prot5_curve_should_queue
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: invalid_time_failsafe_sent
+    type: bool[2]
+    restore_value: false
+    initial_value: '{false, false}'

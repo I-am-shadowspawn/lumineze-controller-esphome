@@ -1,0 +1,15 @@
+time:
+  - platform: sntp
+    id: controller_time
+    timezone: ${timezone}
+    on_time_sync:
+      - text_sensor.template.publish:
+          id: controller_last_time_source
+          state: "SNTP"
+  - platform: homeassistant
+    id: homeassistant_time
+    timezone: ${timezone}
+    on_time_sync:
+      - text_sensor.template.publish:
+          id: controller_last_time_source
+          state: "Home Assistant"

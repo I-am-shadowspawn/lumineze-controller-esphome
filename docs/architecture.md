@@ -1,6 +1,6 @@
 # T03 — Ownership map and control contract
 
-Design checkpoint for the monolithic `packages/lumineze-controller.yaml` at source baseline `7cbc718`. This document assigns ownership for T05–T09; it does not claim that the current code is already separated. The first implementation mechanism is **parameterised ESPHome scripts plus explicitly owned globals**. A generic C++ framework is unnecessary for two fixed lamp slots.
+Design checkpoint written against the monolithic `packages/lumineze-controller.yaml` at source baseline `7cbc718`. T05 mechanically separated it as recorded in `docs/t05-extraction.md`; the common control contract below remains a T06 design, not current behaviour. The first implementation mechanism is **parameterised ESPHome scripts plus explicitly owned globals**. A generic C++ framework is unnecessary for two fixed lamp slots.
 
 ## Ownership map
 

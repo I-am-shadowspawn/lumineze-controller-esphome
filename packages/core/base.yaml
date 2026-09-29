@@ -1,0 +1,35 @@
+substitutions:
+  device_name: "lumineze-controller"
+  friendly_name: "LuminEZE Controller"
+  area_name: "Vivarium"
+
+  jungle_dawn_mac: "00:00:00:00:00:00"
+  prot5_mac: "00:00:00:00:00:00"
+  enable_jungle_dawn: "false"
+  enable_prot5: "false"
+
+  timezone: "Europe/London"
+  logger_level: "DEBUG"
+
+# Board: Generic ESP32-C3 Board (Generic)
+# Definition: definitions/boards/generic-esp32c3/manifest.yaml
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  area: ${area_name}
+
+esp32:
+  variant: esp32c3
+  framework:
+    type: esp-idf
+
+logger:
+  level: ${logger_level}
+api:
+  reboot_timeout: 0s
+ota:
+  - platform: esphome
+
+wifi:
+  reboot_timeout: 0s

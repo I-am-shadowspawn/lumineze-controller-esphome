@@ -1,0 +1,519 @@
+binary_sensor:
+  - platform: template
+    id: jungle_dawn_connected
+    name: "JungleDawn BLE Connected"
+    device_class: connectivity
+    entity_category: diagnostic
+  - platform: template
+    id: prot5_connected
+    name: "ProT5 BLE Connected"
+    device_class: connectivity
+    entity_category: diagnostic
+  - platform: template
+    name: "JungleDawn Command Pending"
+    entity_category: diagnostic
+    lambda: return id(lamp_pending)[0];
+  - platform: template
+    name: "ProT5 Command Pending"
+    entity_category: diagnostic
+    lambda: return id(lamp_pending)[1];
+  - platform: template
+    name: "JungleDawn Readback Fresh For Last Command"
+    entity_category: diagnostic
+    lambda: return id(lamp_readback_fresh)[0];
+  - platform: template
+    name: "ProT5 Readback Fresh For Last Command"
+    entity_category: diagnostic
+    lambda: return id(lamp_readback_fresh)[1];
+  - platform: template
+    name: "JungleDawn Readback Mismatch"
+    device_class: problem
+    entity_category: diagnostic
+    lambda: |-
+      return id(lamp_readback_fresh)[0] &&
+             id(lamp_last_reported)[0] != id(lamp_last_completed)[0];
+  - platform: template
+    name: "ProT5 Readback Mismatch"
+    device_class: problem
+    entity_category: diagnostic
+    lambda: |-
+      return id(lamp_readback_fresh)[1] &&
+             id(lamp_last_reported)[1] != id(lamp_last_completed)[1];
+
+
+
+
+
+  - platform: template
+    name: "LumenIZE Transaction Active"
+    entity_category: diagnostic
+    lambda: return id(transaction_active);
+  - platform: template
+    name: "Controller Time Valid"
+    device_class: connectivity
+    entity_category: diagnostic
+    lambda: return id(controller_time).now().is_valid();
+  - platform: template
+    name: "Invalid Time Fail-Safe Active"
+    device_class: problem
+    entity_category: diagnostic
+    lambda: |-
+      const uint32_t grace_ms = static_cast<uint32_t>(
+          std::max(30.0f, id(invalid_time_grace_period).state) * 1000.0f);
+      return id(invalid_time_failsafe_enabled).state &&
+             !id(solar_test_mode).state &&
+             !id(controller_time).now().is_valid() && millis() >= grace_ms;
+  - platform: template
+    name: "JungleDawn Communication Fault"
+    device_class: problem
+    entity_category: diagnostic
+    lambda: |-
+      const int maximum = std::max(
+          1, static_cast<int>(id(ble_max_attempts).state));
+      return id(lamp_consecutive_failures)[0] > 0 &&
+             id(lamp_attempts_for_request)[0] >= maximum &&
+             !id(lamp_pending)[0] &&
+             (!id(transaction_active) || id(active_lamp) != 0);
+  - platform: template
+    name: "ProT5 Communication Fault"
+    device_class: problem
+    entity_category: diagnostic
+    lambda: |-
+      const int maximum = std::max(
+          1, static_cast<int>(id(ble_max_attempts).state));
+      return id(lamp_consecutive_failures)[1] > 0 &&
+             id(lamp_attempts_for_request)[1] >= maximum &&
+             !id(lamp_pending)[1] &&
+             (!id(transaction_active) || id(active_lamp) != 1);
+  - platform: template
+    name: "Solar Calculation Valid"
+    entity_category: diagnostic
+    lambda: return id(solar_calculation_valid);
+  - platform: template
+    name: "Simulated Sun Above Horizon"
+    device_class: light
+    entity_category: diagnostic
+    lambda: |-
+      return id(solar_calculation_valid) &&
+             id(solar_daylight_envelope) > 0.0f;
+  - platform: template
+    name: "ProT5 UVB Window Active"
+    icon: mdi:weather-sunny-alert
+    entity_category: diagnostic
+    lambda: |-
+      return id(solar_calculation_valid) &&
+             id(prot5_window_envelope) > 0.0f;
+
+sensor:
+  - platform: template
+    name: "JungleDawn Pending Target"
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: return id(lamp_target)[0];
+    update_interval: 1s
+  - platform: template
+    name: "ProT5 Pending Target"
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: return id(lamp_target)[1];
+    update_interval: 1s
+  - platform: template
+    name: "JungleDawn Last Completed Level"
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: |-
+      if (id(lamp_last_completed)[0] < 0) return NAN;
+      return static_cast<float>(id(lamp_last_completed)[0]);
+    update_interval: 5s
+  - platform: template
+    name: "ProT5 Last Completed Level"
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: |-
+      if (id(lamp_last_completed)[1] < 0) return NAN;
+      return static_cast<float>(id(lamp_last_completed)[1]);
+    update_interval: 5s
+  - platform: ble_client
+    type: characteristic
+    id: jungle_dawn_status_notification
+    ble_client_id: jungle_dawn_client
+    service_uuid: "0000FFF0"
+    characteristic_uuid: "0000FFF1"
+    internal: true
+    notify: true
+    update_interval: never
+    lambda: |-
+      // Arcadia response: 16 bytes, 02 F0, brightness percent at offset 3.
+      if (x.size() != 16 || x[0] != 0x02 || x[1] != 0xF0 || x[3] > 100)
+        return NAN;
+      return static_cast<float>(x[3]);
+    on_value:
+      then:
+        - lambda: |-
+            if (std::isnan(x)) return;  // ESPHome emits NaN on disconnect.
+            id(lamp_last_reported)[0] = static_cast<int>(x);
+            if (id(transaction_active) && id(active_lamp) == 0)
+              id(lamp_readback_received)[0] = true;
+            auto now = id(controller_time).now();
+            id(jungle_dawn_last_reported_time).publish_state(
+                now.is_valid() ? now.strftime("%Y-%m-%d %H:%M:%S")
+                               : std::string("Clock not synchronised"));
+            ESP_LOGI("lumenize", "JungleDawn lamp reported %d%%",
+                     id(lamp_last_reported)[0]);
+  - platform: ble_client
+    type: characteristic
+    id: prot5_status_notification
+    ble_client_id: prot5_client
+    service_uuid: "0000FFF0"
+    characteristic_uuid: "0000FFF1"
+    internal: true
+    notify: true
+    update_interval: never
+    lambda: |-
+      if (x.size() != 16 || x[0] != 0x02 || x[1] != 0xF0 || x[3] > 100)
+        return NAN;
+      return static_cast<float>(x[3]);
+    on_value:
+      then:
+        - lambda: |-
+            if (std::isnan(x)) return;
+            id(lamp_last_reported)[1] = static_cast<int>(x);
+            if (id(transaction_active) && id(active_lamp) == 1)
+              id(lamp_readback_received)[1] = true;
+            auto now = id(controller_time).now();
+            id(prot5_last_reported_time).publish_state(
+                now.is_valid() ? now.strftime("%Y-%m-%d %H:%M:%S")
+                               : std::string("Clock not synchronised"));
+            ESP_LOGI("lumenize", "ProT5 lamp reported %d%%",
+                     id(lamp_last_reported)[1]);
+  - platform: template
+    name: "JungleDawn Lamp-Reported Level"
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: |-
+      if (id(lamp_last_reported)[0] < 0) return NAN;
+      return static_cast<float>(id(lamp_last_reported)[0]);
+    update_interval: 5s
+  - platform: template
+    name: "ProT5 Lamp-Reported Level"
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: |-
+      if (id(lamp_last_reported)[1] < 0) return NAN;
+      return static_cast<float>(id(lamp_last_reported)[1]);
+    update_interval: 5s
+
+
+
+
+  - platform: template
+    name: "JungleDawn Completed Transactions"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: return static_cast<float>(id(lamp_completed_count)[0]);
+    update_interval: 5s
+  - platform: template
+    name: "ProT5 Completed Transactions"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: return static_cast<float>(id(lamp_completed_count)[1]);
+    update_interval: 5s
+  - platform: template
+    name: "JungleDawn Failed Transactions"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: return static_cast<float>(id(lamp_failure_count)[0]);
+    update_interval: 5s
+  - platform: template
+    name: "ProT5 Failed Transactions"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: return static_cast<float>(id(lamp_failure_count)[1]);
+    update_interval: 5s
+  - platform: template
+    name: "Solar Calendar Day"
+    icon: mdi:calendar-today
+    unit_of_measurement: "day"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return static_cast<float>(id(solar_source_day));
+    update_interval: 10s
+  - platform: template
+    name: "Solar Effective Day"
+    icon: mdi:calendar-sync
+    unit_of_measurement: "day"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(solar_effective_day);
+    update_interval: 10s
+  - platform: template
+    name: "Solar Declination"
+    icon: mdi:angle-acute
+    unit_of_measurement: "°"
+    accuracy_decimals: 2
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(solar_declination_degrees);
+    update_interval: 10s
+  - platform: template
+    name: "Solar Day Length"
+    icon: mdi:theme-light-dark
+    unit_of_measurement: "h"
+    accuracy_decimals: 3
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(solar_day_length_hours);
+    update_interval: 10s
+  - platform: template
+    name: "Simulated Solar Elevation"
+    icon: mdi:sun-angle
+    unit_of_measurement: "°"
+    accuracy_decimals: 2
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(solar_elevation_degrees);
+    update_interval: 10s
+  - platform: template
+    name: "Solar Daylight Envelope"
+    icon: mdi:chart-bell-curve-cumulative
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(solar_daylight_envelope) * 100.0f;
+    update_interval: 10s
+  - platform: template
+    name: "JungleDawn Curve Fraction"
+    icon: mdi:chart-bell-curve
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(jungle_dawn_curve_fraction) * 100.0f;
+    update_interval: 10s
+  - platform: template
+    name: "JungleDawn Seasonal Position"
+    icon: mdi:calendar-range
+    unit_of_measurement: "% summer"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(jungle_dawn_season_factor) * 100.0f;
+    update_interval: 10s
+  - platform: template
+    name: "JungleDawn Effective Peak"
+    icon: mdi:brightness-7
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(jungle_dawn_effective_peak);
+    update_interval: 10s
+  - platform: template
+    name: "JungleDawn Calculated Target"
+    icon: mdi:brightness-percent
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return static_cast<float>(id(jungle_dawn_calculated_target));
+    update_interval: 10s
+  - platform: template
+    name: "JungleDawn Last Automatic Queued Target"
+    icon: mdi:playlist-check
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(jungle_dawn_curve_has_queued)) return NAN;
+      return static_cast<float>(id(jungle_dawn_curve_last_queued));
+    update_interval: 10s
+  - platform: template
+    name: "ProT5 UVB Window Length"
+    icon: mdi:timeline-clock-outline
+    unit_of_measurement: "h"
+    accuracy_decimals: 2
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(prot5_window_length_hours);
+    update_interval: 10s
+  - platform: template
+    name: "ProT5 Window Envelope"
+    icon: mdi:chart-bell-curve-cumulative
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(prot5_window_envelope) * 100.0f;
+    update_interval: 10s
+  - platform: template
+    name: "ProT5 Curve Fraction"
+    icon: mdi:chart-bell-curve
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(prot5_curve_fraction) * 100.0f;
+    update_interval: 10s
+  - platform: template
+    name: "ProT5 Effective Peak"
+    icon: mdi:shield-sun
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(prot5_effective_peak);
+    update_interval: 10s
+  - platform: template
+    name: "ProT5 Calculated Target"
+    icon: mdi:brightness-percent
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return static_cast<float>(id(prot5_calculated_target));
+    update_interval: 10s
+  - platform: template
+    name: "ProT5 Last Automatic Queued Target"
+    icon: mdi:playlist-check
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(prot5_curve_has_queued)) return NAN;
+      return static_cast<float>(id(prot5_curve_last_queued));
+    update_interval: 10s
+
+text_sensor:
+  - platform: template
+    id: controller_last_time_source
+    name: "Controller Last Time Sync Source"
+    icon: mdi:clock-check-outline
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: jungle_dawn_dispatch_status
+    name: "JungleDawn Dispatcher Status"
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: prot5_dispatch_status
+    name: "ProT5 Dispatcher Status"
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: jungle_dawn_last_completed_time
+    name: "JungleDawn Last Completed Time"
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: prot5_last_completed_time
+    name: "ProT5 Last Completed Time"
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: jungle_dawn_last_reported_time
+    name: "JungleDawn Last Lamp Report Time"
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: prot5_last_reported_time
+    name: "ProT5 Last Lamp Report Time"
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: jungle_dawn_readback_status
+    name: "JungleDawn Readback Status"
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: prot5_readback_status
+    name: "ProT5 Readback Status"
+    entity_category: diagnostic
+    update_interval: never
+
+
+
+
+
+  - platform: template
+    id: solar_engine_status
+    name: "Solar Engine Status"
+    icon: mdi:information-outline
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: solar_evaluation_time_text
+    name: "Solar Evaluation Time"
+    icon: mdi:clock-outline
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: solar_sunrise_text
+    name: "Simulated Sunrise"
+    icon: mdi:weather-sunset-up
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: solar_noon_text
+    name: "Simulated Solar Noon Time"
+    icon: mdi:weather-sunny
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: solar_sunset_text
+    name: "Simulated Sunset"
+    icon: mdi:weather-sunset-down
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: solar_day_length_text
+    name: "Simulated Day Length"
+    icon: mdi:theme-light-dark
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: jungle_dawn_curve_status
+    name: "JungleDawn Curve Status"
+    icon: mdi:brightness-auto
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: prot5_curve_status
+    name: "ProT5 Curve Status"
+    icon: mdi:brightness-auto
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: prot5_window_start_text
+    name: "ProT5 Window Start"
+    icon: mdi:weather-sunset-up
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: prot5_window_end_text
+    name: "ProT5 Window End"
+    icon: mdi:weather-sunset-down
+    entity_category: diagnostic
+    update_interval: never

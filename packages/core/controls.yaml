@@ -1,0 +1,502 @@
+switch:
+  - platform: template
+    id: solar_test_mode
+    name: "Solar Test Mode"
+    icon: mdi:test-tube
+    entity_category: config
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - lambda: |-
+          id(jungle_dawn_curve_should_queue) = false;
+          id(prot5_curve_should_queue) = false;
+          if (id(jungle_dawn_automatic_control).state &&
+              !id(jungle_dawn_manual_override).state &&
+              (!id(transaction_active) || id(active_lamp) != 0)) {
+            id(lamp_pending)[0] = false;
+          }
+          if (id(prot5_automatic_control).state &&
+              !id(prot5_manual_override).state &&
+              (!id(transaction_active) || id(active_lamp) != 1)) {
+            id(lamp_pending)[1] = false;
+          }
+      - script.execute: calculate_solar
+    on_turn_off:
+      - script.execute: calculate_solar
+  - platform: template
+    id: invalid_time_failsafe_enabled
+    name: "Invalid Time Fail-Safe"
+    icon: mdi:shield-clock
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_turn_on:
+      - script.execute: calculate_solar
+    on_turn_off:
+      - lambda: |-
+          id(invalid_time_failsafe_sent)[0] = false;
+          id(invalid_time_failsafe_sent)[1] = false;
+      - script.execute: calculate_solar
+  - platform: template
+    id: jungle_dawn_automatic_control
+    name: "JungleDawn Automatic Control"
+    icon: mdi:brightness-auto
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - lambda: |-
+          id(jungle_dawn_curve_has_queued) = false;
+          id(jungle_dawn_curve_should_queue) = false;
+          id(jungle_dawn_curve_status).publish_state(
+              "Automatic control enabled; awaiting solar calculation");
+      - script.execute: calculate_solar
+    on_turn_off:
+      - lambda: |-
+          id(jungle_dawn_curve_should_queue) = false;
+          if (!id(jungle_dawn_manual_override).state &&
+              (!id(transaction_active) || id(active_lamp) != 0)) {
+            id(lamp_pending)[0] = false;
+          }
+          id(jungle_dawn_curve_status).publish_state(
+              "Automatic control disabled; lamp state held");
+  - platform: template
+    id: prot5_automatic_control
+    name: "ProT5 Automatic Control"
+    icon: mdi:brightness-auto
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - lambda: |-
+          id(prot5_curve_has_queued) = false;
+          id(prot5_curve_should_queue) = false;
+          id(prot5_curve_status).publish_state(
+              "Automatic control enabled; awaiting solar calculation");
+      - script.execute: calculate_solar
+    on_turn_off:
+      - lambda: |-
+          id(prot5_curve_should_queue) = false;
+          if (!id(prot5_manual_override).state &&
+              (!id(transaction_active) || id(active_lamp) != 1)) {
+            id(lamp_pending)[1] = false;
+          }
+          id(prot5_curve_status).publish_state(
+              "Automatic control disabled; lamp state held");
+  - platform: template
+    id: jungle_dawn_manual_override
+    name: "JungleDawn Manual Override"
+    icon: mdi:hand-back-right
+    entity_category: config
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - lambda: |-
+          id(jungle_dawn_curve_should_queue) = false;
+          if (!id(transaction_active) || id(active_lamp) != 0) {
+            id(lamp_pending)[0] = false;
+          }
+          id(jungle_dawn_curve_status).publish_state(
+              "Manual override active; use Queue JungleDawn Level");
+    on_turn_off:
+      - lambda: |-
+          id(jungle_dawn_curve_has_queued) = false;
+          id(jungle_dawn_curve_should_queue) = false;
+          id(jungle_dawn_curve_status).publish_state(
+              "Manual override released; awaiting solar calculation");
+      - script.execute: calculate_solar
+  - platform: template
+    id: prot5_manual_override
+    name: "ProT5 Manual Override"
+    icon: mdi:hand-back-right
+    entity_category: config
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - lambda: |-
+          id(prot5_curve_should_queue) = false;
+          if (!id(transaction_active) || id(active_lamp) != 1) {
+            id(lamp_pending)[1] = false;
+          }
+          id(prot5_curve_status).publish_state(
+              "Manual override active; use Queue ProT5 Level");
+    on_turn_off:
+      - lambda: |-
+          id(prot5_curve_has_queued) = false;
+          id(prot5_curve_should_queue) = false;
+          id(prot5_curve_status).publish_state(
+              "Manual override released; awaiting solar calculation");
+      - script.execute: calculate_solar
+
+number:
+  - platform: template
+    id: jungle_dawn_test_level
+    name: "JungleDawn Requested Level"
+    unit_of_measurement: "%"
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 50
+    restore_value: false
+    optimistic: true
+    mode: slider
+  - platform: template
+    id: prot5_test_level
+    name: "ProT5 Requested Level"
+    unit_of_measurement: "%"
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 25
+    restore_value: false
+    optimistic: true
+    mode: slider
+  - platform: template
+    id: ble_min_lamp_interval
+    name: "BLE Minimum Same-Lamp Interval"
+    unit_of_measurement: "s"
+    entity_category: config
+    min_value: 5
+    max_value: 600
+    step: 5
+    initial_value: 30
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: ble_inter_lamp_quiet
+    name: "BLE Inter-Lamp Quiet Time"
+    unit_of_measurement: "s"
+    entity_category: config
+    min_value: 1
+    max_value: 30
+    step: 1
+    initial_value: 5
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: ble_retry_base_delay
+    name: "BLE Retry Base Delay"
+    unit_of_measurement: "s"
+    entity_category: config
+    min_value: 5
+    max_value: 300
+    step: 5
+    initial_value: 30
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: ble_max_attempts
+    name: "BLE Maximum Attempts"
+    entity_category: config
+    min_value: 1
+    max_value: 5
+    step: 1
+    initial_value: 3
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: ble_transaction_timeout
+    name: "BLE Transaction Timeout"
+    unit_of_measurement: "s"
+    entity_category: config
+    min_value: 25
+    max_value: 90
+    step: 5
+    initial_value: 35
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: automatic_recovery_interval
+    name: "BLE Automatic Recovery Interval"
+    unit_of_measurement: "s"
+    entity_category: config
+    min_value: 60
+    max_value: 3600
+    step: 60
+    initial_value: 900
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: invalid_time_grace_period
+    name: "Invalid Time Grace Period"
+    unit_of_measurement: "s"
+    entity_category: config
+    min_value: 30
+    max_value: 1800
+    step: 30
+    initial_value: 120
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: solar_simulated_latitude
+    name: "Simulated Latitude"
+    icon: mdi:latitude
+    unit_of_measurement: "°"
+    entity_category: config
+    min_value: -60
+    max_value: 60
+    step: 0.1
+    initial_value: -28.5
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: solar_noon_minutes
+    name: "Simulated Solar Noon"
+    icon: mdi:weather-sunny
+    unit_of_measurement: "min after midnight"
+    entity_category: config
+    min_value: 600
+    max_value: 840
+    step: 1
+    initial_value: 750
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: solar_phase_offset_days
+    name: "Season Phase Offset"
+    icon: mdi:calendar-sync
+    unit_of_measurement: "d"
+    entity_category: config
+    min_value: 0
+    max_value: 366
+    step: 0.1
+    initial_value: 182.6
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: solar_test_calendar_day
+    name: "Solar Test Calendar Day"
+    icon: mdi:calendar-today
+    unit_of_measurement: "day"
+    entity_category: config
+    min_value: 1
+    max_value: 366
+    step: 1
+    initial_value: 355
+    restore_value: false
+    optimistic: true
+    mode: box
+  - platform: template
+    id: solar_test_time_minutes
+    name: "Solar Test Time"
+    icon: mdi:clock-outline
+    unit_of_measurement: "min after midnight"
+    entity_category: config
+    min_value: 0
+    max_value: 1439
+    step: 1
+    initial_value: 750
+    restore_value: false
+    optimistic: true
+    mode: box
+  - platform: template
+    id: jungle_dawn_max_brightness
+    name: "JungleDawn Maximum Brightness"
+    icon: mdi:brightness-7
+    unit_of_measurement: "%"
+    entity_category: config
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 100
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: jungle_dawn_curve_exponent
+    name: "JungleDawn Curve Exponent"
+    icon: mdi:chart-bell-curve
+    entity_category: config
+    min_value: 0.25
+    max_value: 4
+    step: 0.05
+    initial_value: 1
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: jungle_dawn_winter_peak_scale
+    name: "JungleDawn Winter Peak Scale"
+    icon: mdi:snowflake
+    unit_of_measurement: "% of maximum"
+    entity_category: config
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 75
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: jungle_dawn_summer_peak_scale
+    name: "JungleDawn Summer Peak Scale"
+    icon: mdi:white-balance-sunny
+    unit_of_measurement: "% of maximum"
+    entity_category: config
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 100
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: jungle_dawn_minimum_automatic_change
+    name: "JungleDawn Minimum Automatic Change"
+    icon: mdi:delta
+    unit_of_measurement: "%"
+    entity_category: config
+    min_value: 1
+    max_value: 10
+    step: 1
+    initial_value: 2
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: prot5_max_brightness
+    name: "ProT5 Calibrated Maximum Brightness"
+    icon: mdi:shield-sun
+    unit_of_measurement: "%"
+    entity_category: config
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 0
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: prot5_start_offset_minutes
+    name: "ProT5 Start After Sunrise"
+    icon: mdi:weather-sunset-up
+    unit_of_measurement: "min"
+    entity_category: config
+    min_value: 0
+    max_value: 300
+    step: 5
+    initial_value: 90
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: prot5_end_offset_minutes
+    name: "ProT5 End Before Sunset"
+    icon: mdi:weather-sunset-down
+    unit_of_measurement: "min"
+    entity_category: config
+    min_value: 0
+    max_value: 300
+    step: 5
+    initial_value: 90
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: prot5_curve_exponent
+    name: "ProT5 Curve Exponent"
+    icon: mdi:chart-bell-curve
+    entity_category: config
+    min_value: 0.25
+    max_value: 4
+    step: 0.05
+    initial_value: 1
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: prot5_winter_peak_scale
+    name: "ProT5 Winter Peak Scale"
+    icon: mdi:snowflake
+    unit_of_measurement: "% of calibrated maximum"
+    entity_category: config
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 80
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: prot5_summer_peak_scale
+    name: "ProT5 Summer Peak Scale"
+    icon: mdi:white-balance-sunny
+    unit_of_measurement: "% of calibrated maximum"
+    entity_category: config
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 100
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: prot5_minimum_automatic_change
+    name: "ProT5 Minimum Automatic Change"
+    icon: mdi:delta
+    unit_of_measurement: "%"
+    entity_category: config
+    min_value: 1
+    max_value: 10
+    step: 1
+    initial_value: 2
+    restore_value: true
+    optimistic: true
+    mode: box
+
+button:
+  - platform: template
+    name: "Queue JungleDawn Level"
+    icon: mdi:playlist-plus
+    on_press:
+      - switch.turn_on: jungle_dawn_manual_override
+      - script.execute:
+          id: queue_lumenize_command
+          lamp: 0
+          level: !lambda return static_cast<int>(id(jungle_dawn_test_level).state);
+  - platform: template
+    name: "Queue ProT5 Level"
+    icon: mdi:playlist-plus
+    on_press:
+      - switch.turn_on: prot5_manual_override
+      - script.execute:
+          id: queue_lumenize_command
+          lamp: 1
+          level: !lambda return static_cast<int>(id(prot5_test_level).state);
+  - platform: template
+    name: "Queue Safe Off for Both Lamps"
+    icon: mdi:power-off
+    entity_category: config
+    on_press:
+      - switch.turn_off: jungle_dawn_automatic_control
+      - switch.turn_off: prot5_automatic_control
+      - switch.turn_off: jungle_dawn_manual_override
+      - switch.turn_off: prot5_manual_override
+      - script.execute:
+          id: queue_lumenize_command
+          lamp: 0
+          level: 0
+      - script.execute:
+          id: queue_lumenize_command
+          lamp: 1
+          level: 0
+  - platform: template
+    name: "Cancel Pending LumenIZE Commands"
+    icon: mdi:playlist-remove
+    entity_category: config
+    on_press:
+      - lambda: |-
+          id(lamp_pending)[0] = false;
+          id(lamp_pending)[1] = false;
+          id(jungle_dawn_dispatch_status).publish_state("Pending command cancelled");
+          id(prot5_dispatch_status).publish_state("Pending command cancelled");

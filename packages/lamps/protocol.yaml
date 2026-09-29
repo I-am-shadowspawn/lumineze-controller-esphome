@@ -1,0 +1,212 @@
+script:
+  - id: jungle_dawn_transaction
+    mode: single
+    then:
+      - lambda: |-
+          const uint32_t now = millis();
+          id(transaction_active) = true;
+          id(active_lamp) = 0;
+          id(transaction_started_ms) = now;
+          id(transaction_write_completed) = false;
+          id(lamp_connected)[0] = false;
+          id(lamp_readback_received)[0] = false;
+          id(lamp_readback_fresh)[0] = false;
+          id(jungle_dawn_readback_status).publish_state(
+              "Connecting; awaiting lamp status");
+          id(lamp_inflight)[0] = id(lamp_target)[0];
+          id(lamp_attempts_for_request)[0]++;
+          id(lamp_ever_attempted)[0] = true;
+          id(lamp_last_attempt_ms)[0] = now;
+          id(any_attempted) = true;
+          id(global_last_attempt_ms) = now;
+          char status[64];
+          snprintf(status, sizeof(status), "Connecting for %d%% (attempt %d)",
+                   id(lamp_inflight)[0], id(lamp_attempts_for_request)[0]);
+          id(jungle_dawn_dispatch_status).publish_state(status);
+      - ble_client.connect: jungle_dawn_client
+      - delay: 1s
+      - ble_client.ble_write:
+          id: jungle_dawn_client
+          service_uuid: "0000FFF0"
+          characteristic_uuid: "0000FFF2"
+          value: [0x05, 0xF0, 0x00, 0x01, 0x02, 0x03, 0x04, 0x00,
+                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x50]
+      - delay: 200ms
+      - ble_client.ble_write:
+          id: jungle_dawn_client
+          service_uuid: "0000FFF0"
+          characteristic_uuid: "0000FFF2"
+          value: !lambda |-
+            return {0x02, 0xF1, 0x00,
+                    static_cast<uint8_t>(id(lamp_inflight)[0]),
+                    0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x20};
+      - delay: 300ms
+      - if:
+          condition:
+            lambda: return id(lamp_connected)[0];
+          then:
+            - lambda: id(transaction_write_completed) = true;
+            - lambda: id(lamp_readback_received)[0] = false;
+            - ble_client.ble_write:
+                id: jungle_dawn_client
+                service_uuid: "0000FFF0"
+                characteristic_uuid: "0000FFF2"
+                value: [0x02, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20]
+            - wait_until:
+                condition:
+                  lambda: |-
+                    return id(lamp_readback_received)[0] ||
+                           !id(lamp_connected)[0];
+                timeout: 1500ms
+            - ble_client.disconnect: jungle_dawn_client
+            - lambda: |-
+                const int completed = id(lamp_inflight)[0];
+                id(lamp_last_completed)[0] = completed;
+                id(lamp_completed_count)[0]++;
+                id(lamp_consecutive_failures)[0] = 0;
+                id(lamp_retry_delay_ms)[0] = 0;
+                id(lamp_readback_fresh)[0] = id(lamp_readback_received)[0];
+                if (id(lamp_readback_fresh)[0]) {
+                  char readback[96];
+                  const int observed = id(lamp_last_reported)[0];
+                  snprintf(readback, sizeof(readback),
+                           observed == completed
+                               ? "Confirmed: requested %d%%, lamp %d%%"
+                               : "Mismatch: requested %d%%, lamp %d%%",
+                           completed, observed);
+                  id(jungle_dawn_readback_status).publish_state(readback);
+                } else {
+                  id(jungle_dawn_readback_status).publish_state(
+                      "No status response; last lamp report may be stale");
+                }
+                if (id(lamp_target)[0] == completed) {
+                  id(lamp_pending)[0] = false;
+                  id(lamp_attempts_for_request)[0] = 0;
+                  char status[48];
+                  snprintf(status, sizeof(status), "Transaction completed: %d%%", completed);
+                  id(jungle_dawn_dispatch_status).publish_state(status);
+                } else {
+                  id(lamp_pending)[0] = true;
+                  id(jungle_dawn_dispatch_status).publish_state(
+                      "Transaction completed; newer target pending");
+                }
+                auto now = id(controller_time).now();
+                id(jungle_dawn_last_completed_time).publish_state(
+                    now.is_valid() ? now.strftime("%Y-%m-%d %H:%M:%S")
+                                   : std::string("Clock not synchronised"));
+                id(transaction_active) = false;
+                id(active_lamp) = -1;
+                id(transaction_write_completed) = false;
+                id(next_lamp) = 1;
+          else:
+            - script.execute:
+                id: record_ble_failure
+                lamp: 0
+
+  - id: prot5_transaction
+    mode: single
+    then:
+      - lambda: |-
+          const uint32_t now = millis();
+          id(transaction_active) = true;
+          id(active_lamp) = 1;
+          id(transaction_started_ms) = now;
+          id(transaction_write_completed) = false;
+          id(lamp_connected)[1] = false;
+          id(lamp_readback_received)[1] = false;
+          id(lamp_readback_fresh)[1] = false;
+          id(prot5_readback_status).publish_state(
+              "Connecting; awaiting lamp status");
+          id(lamp_inflight)[1] = id(lamp_target)[1];
+          id(lamp_attempts_for_request)[1]++;
+          id(lamp_ever_attempted)[1] = true;
+          id(lamp_last_attempt_ms)[1] = now;
+          id(any_attempted) = true;
+          id(global_last_attempt_ms) = now;
+          char status[64];
+          snprintf(status, sizeof(status), "Connecting for %d%% (attempt %d)",
+                   id(lamp_inflight)[1], id(lamp_attempts_for_request)[1]);
+          id(prot5_dispatch_status).publish_state(status);
+      - ble_client.connect: prot5_client
+      - delay: 1s
+      - ble_client.ble_write:
+          id: prot5_client
+          service_uuid: "0000FFF0"
+          characteristic_uuid: "0000FFF2"
+          value: [0x05, 0xF0, 0x00, 0x01, 0x02, 0x03, 0x04, 0x00,
+                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x50]
+      - delay: 200ms
+      - ble_client.ble_write:
+          id: prot5_client
+          service_uuid: "0000FFF0"
+          characteristic_uuid: "0000FFF2"
+          value: !lambda |-
+            return {0x02, 0xF1, 0x00,
+                    static_cast<uint8_t>(id(lamp_inflight)[1]),
+                    0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x20};
+      - delay: 300ms
+      - if:
+          condition:
+            lambda: return id(lamp_connected)[1];
+          then:
+            - lambda: id(transaction_write_completed) = true;
+            - lambda: id(lamp_readback_received)[1] = false;
+            - ble_client.ble_write:
+                id: prot5_client
+                service_uuid: "0000FFF0"
+                characteristic_uuid: "0000FFF2"
+                value: [0x02, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20]
+            - wait_until:
+                condition:
+                  lambda: |-
+                    return id(lamp_readback_received)[1] ||
+                           !id(lamp_connected)[1];
+                timeout: 1500ms
+            - ble_client.disconnect: prot5_client
+            - lambda: |-
+                const int completed = id(lamp_inflight)[1];
+                id(lamp_last_completed)[1] = completed;
+                id(lamp_completed_count)[1]++;
+                id(lamp_consecutive_failures)[1] = 0;
+                id(lamp_retry_delay_ms)[1] = 0;
+                id(lamp_readback_fresh)[1] = id(lamp_readback_received)[1];
+                if (id(lamp_readback_fresh)[1]) {
+                  char readback[96];
+                  const int observed = id(lamp_last_reported)[1];
+                  snprintf(readback, sizeof(readback),
+                           observed == completed
+                               ? "Confirmed: requested %d%%, lamp %d%%"
+                               : "Mismatch: requested %d%%, lamp %d%%",
+                           completed, observed);
+                  id(prot5_readback_status).publish_state(readback);
+                } else {
+                  id(prot5_readback_status).publish_state(
+                      "No status response; last lamp report may be stale");
+                }
+                if (id(lamp_target)[1] == completed) {
+                  id(lamp_pending)[1] = false;
+                  id(lamp_attempts_for_request)[1] = 0;
+                  char status[48];
+                  snprintf(status, sizeof(status), "Transaction completed: %d%%", completed);
+                  id(prot5_dispatch_status).publish_state(status);
+                } else {
+                  id(lamp_pending)[1] = true;
+                  id(prot5_dispatch_status).publish_state(
+                      "Transaction completed; newer target pending");
+                }
+                auto now = id(controller_time).now();
+                id(prot5_last_completed_time).publish_state(
+                    now.is_valid() ? now.strftime("%Y-%m-%d %H:%M:%S")
+                                   : std::string("Clock not synchronised"));
+                id(transaction_active) = false;
+                id(active_lamp) = -1;
+                id(transaction_write_completed) = false;
+                id(next_lamp) = 0;
+          else:
+            - script.execute:
+                id: record_ble_failure
+                lamp: 1
