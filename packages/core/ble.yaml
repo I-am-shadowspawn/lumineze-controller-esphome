@@ -1,0 +1,80 @@
+esp32_ble:
+  max_connections: 2
+  connection_timeout: 20s
+
+# Non-continuous scanning is preferable on the single-core ESP32-C3.
+# The BLE clients have fixed MAC addresses and connect only on command.
+esp32_ble_tracker:
+  scan_parameters:
+    continuous: false
+  software_coexistence: true
+
+
+ble_client:
+  - id: jungle_dawn_client
+    mac_address: ${jungle_dawn_mac}
+    auto_connect: false
+    on_connect:
+      then:
+        - lambda: id(lamp_connected)[0] = true;
+        - binary_sensor.template.publish:
+            id: jungle_dawn_connected
+            state: ON
+        - logger.log:
+            level: INFO
+            tag: lumenize
+            format: "JungleDawn BLE connected"
+    on_disconnect:
+      then:
+        - lambda: id(lamp_connected)[0] = false;
+        - binary_sensor.template.publish:
+            id: jungle_dawn_connected
+            state: OFF
+        - logger.log:
+            level: INFO
+            tag: lumenize
+            format: "JungleDawn BLE disconnected"
+        - if:
+            condition:
+              lambda: |-
+                return id(transaction_active) &&
+                       id(active_lamp) == 0 &&
+                       !id(transaction_write_completed);
+            then:
+              - script.execute:
+                  id: record_ble_failure
+                  lamp: 0
+
+  - id: prot5_client
+    mac_address: ${prot5_mac}
+    auto_connect: false
+    on_connect:
+      then:
+        - lambda: id(lamp_connected)[1] = true;
+        - binary_sensor.template.publish:
+            id: prot5_connected
+            state: ON
+        - logger.log:
+            level: INFO
+            tag: lumenize
+            format: "ProT5 BLE connected"
+    on_disconnect:
+      then:
+        - lambda: id(lamp_connected)[1] = false;
+        - binary_sensor.template.publish:
+            id: prot5_connected
+            state: OFF
+        - logger.log:
+            level: INFO
+            tag: lumenize
+            format: "ProT5 BLE disconnected"
+        - if:
+            condition:
+              lambda: |-
+                return id(transaction_active) &&
+                       id(active_lamp) == 1 &&
+                       !id(transaction_write_completed);
+            then:
+              - script.execute:
+                  id: record_ble_failure
+                  lamp: 1

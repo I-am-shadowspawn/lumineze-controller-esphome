@@ -1,0 +1,590 @@
+script:
+  - id: calculate_solar
+    mode: restart
+    then:
+      - lambda: |-
+          constexpr float PI_F = 3.14159265358979323846f;
+          constexpr float DEG_TO_RAD_F = PI_F / 180.0f;
+          constexpr float RAD_TO_DEG_F = 180.0f / PI_F;
+
+          const auto clock_now = id(controller_time).now();
+          const bool test_mode = id(solar_test_mode).state;
+          id(jungle_dawn_curve_should_queue) = false;
+          id(prot5_curve_should_queue) = false;
+
+          if (!test_mode && !clock_now.is_valid()) {
+            id(solar_calculation_valid) = false;
+            id(solar_daylight_envelope) = 0.0f;
+            id(jungle_dawn_curve_fraction) = 0.0f;
+            id(jungle_dawn_season_factor) = 0.0f;
+            id(jungle_dawn_effective_peak) = 0.0f;
+            id(jungle_dawn_calculated_target) = 0;
+            id(prot5_window_start_minutes) = 0.0f;
+            id(prot5_window_end_minutes) = 0.0f;
+            id(prot5_window_length_hours) = 0.0f;
+            id(prot5_window_envelope) = 0.0f;
+            id(prot5_curve_fraction) = 0.0f;
+            id(prot5_effective_peak) = 0.0f;
+            id(prot5_calculated_target) = 0;
+
+            const bool failsafe_enabled =
+                id(invalid_time_failsafe_enabled).state;
+            const uint32_t now_ms = millis();
+            const uint32_t grace_ms = static_cast<uint32_t>(
+                std::max(30.0f, id(invalid_time_grace_period).state) *
+                1000.0f);
+            const uint32_t recovery_ms = static_cast<uint32_t>(
+                std::max(60.0f, id(automatic_recovery_interval).state) *
+                1000.0f);
+            const int maximum_attempts = std::max(
+                1, static_cast<int>(id(ble_max_attempts).state));
+            const bool grace_elapsed = now_ms >= grace_ms;
+            const auto elapsed_ms = [now_ms](uint32_t since,
+                                             uint32_t required) {
+              return static_cast<uint32_t>(now_ms - since) >= required;
+            };
+            bool failsafe_recovery_due[2] = {false, false};
+            bool failsafe_request_due[2] = {false, false};
+
+            if (!failsafe_enabled) {
+              id(invalid_time_failsafe_sent)[0] = false;
+              id(invalid_time_failsafe_sent)[1] = false;
+            } else if (grace_elapsed) {
+              for (int lamp = 0; lamp < 2; lamp++) {
+                const bool transaction_for_lamp =
+                    id(transaction_active) && id(active_lamp) == lamp;
+                const bool request_lost =
+                    id(invalid_time_failsafe_sent)[lamp] &&
+                    id(lamp_last_completed)[lamp] != 0 &&
+                    !id(lamp_pending)[lamp] && !transaction_for_lamp &&
+                    id(lamp_attempts_for_request)[lamp] == 0 &&
+                    id(lamp_consecutive_failures)[lamp] == 0;
+                failsafe_recovery_due[lamp] =
+                    id(invalid_time_failsafe_sent)[lamp] &&
+                    id(lamp_last_completed)[lamp] != 0 &&
+                    !id(lamp_pending)[lamp] && !transaction_for_lamp &&
+                    id(lamp_attempts_for_request)[lamp] >= maximum_attempts &&
+                    id(lamp_consecutive_failures)[lamp] > 0 &&
+                    elapsed_ms(id(lamp_last_failure_ms)[lamp], recovery_ms);
+                failsafe_request_due[lamp] =
+                    !id(invalid_time_failsafe_sent)[lamp] || request_lost ||
+                    failsafe_recovery_due[lamp];
+                if (failsafe_request_due[lamp]) {
+                  id(invalid_time_failsafe_sent)[lamp] = true;
+                }
+              }
+              id(jungle_dawn_curve_should_queue) = failsafe_request_due[0];
+              id(prot5_curve_should_queue) = failsafe_request_due[1];
+            }
+
+            char engine_status[128];
+            if (!failsafe_enabled) {
+              snprintf(engine_status, sizeof(engine_status),
+                       "Waiting for valid SNTP time; fail-safe disabled; outputs held");
+            } else if (!grace_elapsed) {
+              const uint32_t remaining_seconds =
+                  (grace_ms - now_ms + 999U) / 1000U;
+              snprintf(engine_status, sizeof(engine_status),
+                       "Waiting for valid SNTP time; safe-off in %lus",
+                       static_cast<unsigned long>(remaining_seconds));
+            } else {
+              snprintf(engine_status, sizeof(engine_status),
+                       "No valid time; safe-off requested for both lamps");
+            }
+            id(solar_engine_status).publish_state(engine_status);
+
+            char jungle_status[128];
+            char prot5_status[128];
+            if (failsafe_request_due[0]) {
+              snprintf(
+                  jungle_status, sizeof(jungle_status), "%s",
+                  failsafe_recovery_due[0]
+                      ? "No valid time; recovery safe-off 0% queued"
+                      : "No valid time; safety target 0% queued");
+            } else if (failsafe_enabled && grace_elapsed) {
+              snprintf(jungle_status, sizeof(jungle_status),
+                       "No valid time; safe-off already requested");
+            } else {
+              snprintf(jungle_status, sizeof(jungle_status),
+                       "No valid time; output held while awaiting clock");
+            }
+            if (failsafe_request_due[1]) {
+              snprintf(
+                  prot5_status, sizeof(prot5_status), "%s",
+                  failsafe_recovery_due[1]
+                      ? "No valid time; recovery safe-off 0% queued"
+                      : "No valid time; safety target 0% queued");
+            } else if (failsafe_enabled && grace_elapsed) {
+              snprintf(prot5_status, sizeof(prot5_status),
+                       "No valid time; safe-off already requested");
+            } else {
+              snprintf(prot5_status, sizeof(prot5_status),
+                       "No valid time; output held while awaiting clock");
+            }
+            id(jungle_dawn_curve_status).publish_state(jungle_status);
+            id(prot5_curve_status).publish_state(prot5_status);
+            id(solar_evaluation_time_text).publish_state("Unavailable");
+            id(solar_sunrise_text).publish_state("Unavailable");
+            id(solar_noon_text).publish_state("Unavailable");
+            id(solar_sunset_text).publish_state("Unavailable");
+            id(solar_day_length_text).publish_state("Unavailable");
+            id(prot5_window_start_text).publish_state("Unavailable");
+            id(prot5_window_end_text).publish_state("Unavailable");
+            return;
+          }
+
+          id(invalid_time_failsafe_sent)[0] = false;
+          id(invalid_time_failsafe_sent)[1] = false;
+
+          int days_in_year = 365;
+          if (clock_now.is_valid()) {
+            const int year = clock_now.year;
+            const bool leap = (year % 4 == 0) &&
+                              ((year % 100 != 0) || (year % 400 == 0));
+            days_in_year = leap ? 366 : 365;
+          }
+
+          int calendar_day;
+          float evaluation_minutes;
+          if (test_mode) {
+            calendar_day = static_cast<int>(
+                std::lround(id(solar_test_calendar_day).state));
+            calendar_day = std::max(1, std::min(days_in_year, calendar_day));
+            evaluation_minutes = std::max(
+                0.0f, std::min(1439.0f, id(solar_test_time_minutes).state));
+          } else {
+            calendar_day = std::max(
+                1, std::min(days_in_year,
+                            static_cast<int>(clock_now.day_of_year)));
+            evaluation_minutes = static_cast<float>(clock_now.hour * 60 +
+                                                     clock_now.minute) +
+                                 static_cast<float>(clock_now.second) / 60.0f;
+          }
+
+          const float phase_offset = id(solar_phase_offset_days).state;
+          float effective_day = std::fmod(
+              static_cast<float>(calendar_day - 1) + phase_offset,
+              static_cast<float>(days_in_year));
+          if (effective_day < 0.0f) effective_day += days_in_year;
+          effective_day += 1.0f;
+
+          // NOAA fractional-year approximation, evaluated at simulated noon.
+          const float gamma = 2.0f * PI_F /
+                              static_cast<float>(days_in_year) *
+                              (effective_day - 1.0f);
+          const float declination =
+              0.006918f - 0.399912f * std::cos(gamma) +
+              0.070257f * std::sin(gamma) -
+              0.006758f * std::cos(2.0f * gamma) +
+              0.000907f * std::sin(2.0f * gamma) -
+              0.002697f * std::cos(3.0f * gamma) +
+              0.001480f * std::sin(3.0f * gamma);
+
+          const float latitude = std::max(
+              -60.0f, std::min(60.0f, id(solar_simulated_latitude).state));
+          const float latitude_rad = latitude * DEG_TO_RAD_F;
+          float cos_sunrise_hour_angle =
+              -std::tan(latitude_rad) * std::tan(declination);
+
+          float sunrise_hour_angle;
+          if (cos_sunrise_hour_angle >= 1.0f) {
+            sunrise_hour_angle = 0.0f;
+          } else if (cos_sunrise_hour_angle <= -1.0f) {
+            sunrise_hour_angle = PI_F;
+          } else {
+            sunrise_hour_angle = std::acos(cos_sunrise_hour_angle);
+          }
+
+          const float day_length_hours =
+              24.0f * sunrise_hour_angle / PI_F;
+          const float solar_noon = std::max(
+              600.0f, std::min(840.0f, id(solar_noon_minutes).state));
+          const float sunrise = solar_noon - day_length_hours * 30.0f;
+          const float sunset = solar_noon + day_length_hours * 30.0f;
+
+          const float hour_angle =
+              (evaluation_minutes - solar_noon) * 0.25f * DEG_TO_RAD_F;
+          float elevation_sine =
+              std::sin(latitude_rad) * std::sin(declination) +
+              std::cos(latitude_rad) * std::cos(declination) *
+                  std::cos(hour_angle);
+          elevation_sine = std::max(-1.0f, std::min(1.0f, elevation_sine));
+          const float elevation = std::asin(elevation_sine) * RAD_TO_DEG_F;
+
+          float daylight_envelope = 0.0f;
+          if (sunset > sunrise && evaluation_minutes > sunrise &&
+              evaluation_minutes < sunset) {
+            const float progress =
+                (evaluation_minutes - sunrise) / (sunset - sunrise);
+            daylight_envelope = std::sin(PI_F * progress);
+            daylight_envelope = std::max(
+                0.0f, std::min(1.0f, daylight_envelope));
+          }
+
+          const auto day_length_for_declination =
+              [latitude_rad, PI_F](float declination_rad) -> float {
+            float cosine_hour_angle =
+                -std::tan(latitude_rad) * std::tan(declination_rad);
+            float hour_angle;
+            if (cosine_hour_angle >= 1.0f) hour_angle = 0.0f;
+            else if (cosine_hour_angle <= -1.0f) hour_angle = PI_F;
+            else hour_angle = std::acos(cosine_hour_angle);
+            return 24.0f * hour_angle / PI_F;
+          };
+          const float axial_tilt = 23.4393f * DEG_TO_RAD_F;
+          const float solstice_length_a =
+              day_length_for_declination(axial_tilt);
+          const float solstice_length_b =
+              day_length_for_declination(-axial_tilt);
+          const float minimum_day_length = std::min(
+              solstice_length_a, solstice_length_b);
+          const float maximum_day_length = std::max(
+              solstice_length_a, solstice_length_b);
+          float season_factor = 0.5f;
+          if (maximum_day_length - minimum_day_length > 0.001f) {
+            season_factor = (day_length_hours - minimum_day_length) /
+                            (maximum_day_length - minimum_day_length);
+          }
+          season_factor = std::max(0.0f, std::min(1.0f, season_factor));
+
+          const float maximum_brightness = std::max(
+              0.0f, std::min(100.0f, id(jungle_dawn_max_brightness).state));
+          const float winter_peak_scale = std::max(
+              0.0f, std::min(100.0f,
+                             id(jungle_dawn_winter_peak_scale).state)) /
+              100.0f;
+          const float summer_peak_scale = std::max(
+              0.0f, std::min(100.0f,
+                             id(jungle_dawn_summer_peak_scale).state)) /
+              100.0f;
+          const float seasonal_peak_scale =
+              winter_peak_scale +
+              (summer_peak_scale - winter_peak_scale) * season_factor;
+          const float effective_peak =
+              maximum_brightness * seasonal_peak_scale;
+          const int effective_peak_target = static_cast<int>(
+              std::lround(effective_peak));
+          const float curve_exponent = std::max(
+              0.25f, std::min(4.0f, id(jungle_dawn_curve_exponent).state));
+          const float curve_fraction = std::pow(
+              daylight_envelope, curve_exponent);
+          const int calculated_target = std::max(
+              0, std::min(effective_peak_target, static_cast<int>(
+                  std::lround(effective_peak * curve_fraction))));
+
+          // ProT5 uses a narrower window inset from visible sunrise/sunset.
+          const float prot5_start_offset = std::max(
+              0.0f, std::min(300.0f,
+                             id(prot5_start_offset_minutes).state));
+          const float prot5_end_offset = std::max(
+              0.0f, std::min(300.0f,
+                             id(prot5_end_offset_minutes).state));
+          const float prot5_window_start = sunrise + prot5_start_offset;
+          const float prot5_window_end = sunset - prot5_end_offset;
+          const float prot5_window_minutes = std::max(
+              0.0f, prot5_window_end - prot5_window_start);
+
+          float prot5_envelope = 0.0f;
+          if (prot5_window_minutes > 0.0f &&
+              evaluation_minutes > prot5_window_start &&
+              evaluation_minutes < prot5_window_end) {
+            const float prot5_progress =
+                (evaluation_minutes - prot5_window_start) /
+                prot5_window_minutes;
+            prot5_envelope = std::sin(PI_F * prot5_progress);
+            prot5_envelope = std::max(
+                0.0f, std::min(1.0f, prot5_envelope));
+          }
+
+          const float prot5_maximum_brightness = std::max(
+              0.0f, std::min(100.0f, id(prot5_max_brightness).state));
+          const float prot5_winter_scale = std::max(
+              0.0f, std::min(100.0f,
+                             id(prot5_winter_peak_scale).state)) /
+              100.0f;
+          const float prot5_summer_scale = std::max(
+              0.0f, std::min(100.0f,
+                             id(prot5_summer_peak_scale).state)) /
+              100.0f;
+          const float prot5_seasonal_scale =
+              prot5_winter_scale +
+              (prot5_summer_scale - prot5_winter_scale) * season_factor;
+          const float prot5_effective_peak_value =
+              prot5_maximum_brightness * prot5_seasonal_scale;
+          const int prot5_effective_peak_target = static_cast<int>(
+              std::lround(prot5_effective_peak_value));
+          const float prot5_exponent = std::max(
+              0.25f, std::min(4.0f, id(prot5_curve_exponent).state));
+          const float prot5_fraction = std::pow(
+              prot5_envelope, prot5_exponent);
+          const int prot5_target = std::max(
+              0, std::min(prot5_effective_peak_target, static_cast<int>(
+                  std::lround(prot5_effective_peak_value * prot5_fraction))));
+
+          id(solar_source_day) = calendar_day;
+          id(solar_year_days) = days_in_year;
+          id(solar_effective_day) = effective_day;
+          id(solar_declination_degrees) = declination * RAD_TO_DEG_F;
+          id(solar_day_length_hours) = day_length_hours;
+          id(solar_sunrise_minutes) = sunrise;
+          id(solar_sunset_minutes) = sunset;
+          id(solar_elevation_degrees) = elevation;
+          id(solar_daylight_envelope) = daylight_envelope;
+          id(solar_evaluation_minutes) = evaluation_minutes;
+          id(jungle_dawn_curve_fraction) = curve_fraction;
+          id(jungle_dawn_season_factor) = season_factor;
+          id(jungle_dawn_effective_peak) = effective_peak;
+          id(jungle_dawn_calculated_target) = calculated_target;
+          id(prot5_window_start_minutes) = prot5_window_start;
+          id(prot5_window_end_minutes) = prot5_window_end;
+          id(prot5_window_length_hours) = prot5_window_minutes / 60.0f;
+          id(prot5_window_envelope) = prot5_envelope;
+          id(prot5_curve_fraction) = prot5_fraction;
+          id(prot5_effective_peak) = prot5_effective_peak_value;
+          id(prot5_calculated_target) = prot5_target;
+          id(solar_calculation_valid) = true;
+
+          const auto format_clock = [](float minutes, char *output,
+                                       size_t output_size) {
+            int rounded = static_cast<int>(std::lround(minutes));
+            rounded %= 1440;
+            if (rounded < 0) rounded += 1440;
+            snprintf(output, output_size, "%02d:%02d", rounded / 60,
+                     rounded % 60);
+          };
+
+          char evaluation_text[8];
+          char sunrise_text[8];
+          char noon_text[8];
+          char sunset_text[8];
+          format_clock(evaluation_minutes, evaluation_text,
+                       sizeof(evaluation_text));
+          format_clock(sunrise, sunrise_text, sizeof(sunrise_text));
+          format_clock(solar_noon, noon_text, sizeof(noon_text));
+          format_clock(sunset, sunset_text, sizeof(sunset_text));
+          id(solar_evaluation_time_text).publish_state(evaluation_text);
+          id(solar_sunrise_text).publish_state(sunrise_text);
+          id(solar_noon_text).publish_state(noon_text);
+          id(solar_sunset_text).publish_state(sunset_text);
+
+          if (prot5_window_minutes > 0.0f) {
+            char prot5_start_text[8];
+            char prot5_end_text[8];
+            format_clock(prot5_window_start, prot5_start_text,
+                         sizeof(prot5_start_text));
+            format_clock(prot5_window_end, prot5_end_text,
+                         sizeof(prot5_end_text));
+            id(prot5_window_start_text).publish_state(prot5_start_text);
+            id(prot5_window_end_text).publish_state(prot5_end_text);
+          } else {
+            id(prot5_window_start_text).publish_state("Collapsed");
+            id(prot5_window_end_text).publish_state("Collapsed");
+          }
+
+          const int daylight_minutes = static_cast<int>(
+              std::lround(day_length_hours * 60.0f));
+          char length_text[24];
+          snprintf(length_text, sizeof(length_text), "%dh %02dm",
+                   daylight_minutes / 60, daylight_minutes % 60);
+          id(solar_day_length_text).publish_state(length_text);
+
+          char status[112];
+          snprintf(status, sizeof(status),
+                   "%s | calendar day %d/%d | effective day %.1f",
+                   test_mode ? "TEST" : "LIVE", calendar_day, days_in_year,
+                   effective_day);
+          id(solar_engine_status).publish_state(status);
+
+          const uint32_t calculation_ms = millis();
+          const uint32_t recovery_interval_ms = static_cast<uint32_t>(
+              std::max(60.0f, id(automatic_recovery_interval).state) *
+              1000.0f);
+          const int configured_max_attempts = std::max(
+              1, static_cast<int>(id(ble_max_attempts).state));
+          const auto recovery_elapsed =
+              [calculation_ms](uint32_t since, uint32_t required) {
+                return static_cast<uint32_t>(calculation_ms - since) >=
+                       required;
+              };
+
+          const bool automatic_enabled =
+              id(jungle_dawn_automatic_control).state;
+          const bool manual_override_active =
+              id(jungle_dawn_manual_override).state;
+          const int minimum_change = std::max(
+              1, static_cast<int>(std::lround(
+                     id(jungle_dawn_minimum_automatic_change).state)));
+          const int requested_target = id(lamp_target)[0];
+          const int target_difference = std::abs(
+              calculated_target - requested_target);
+          const bool endpoint_change =
+              calculated_target != requested_target &&
+              (calculated_target == 0 ||
+               calculated_target == effective_peak_target);
+          const bool recovery_due =
+              automatic_enabled && !manual_override_active && !test_mode &&
+              id(lamp_last_completed)[0] != calculated_target &&
+              !id(lamp_pending)[0] &&
+              (!id(transaction_active) || id(active_lamp) != 0) &&
+              id(lamp_attempts_for_request)[0] >= configured_max_attempts &&
+              id(lamp_consecutive_failures)[0] > 0 &&
+              recovery_elapsed(id(lamp_last_failure_ms)[0],
+                               recovery_interval_ms);
+          const bool target_is_due =
+              !id(jungle_dawn_curve_has_queued) || endpoint_change ||
+              target_difference >= minimum_change || recovery_due;
+
+          char curve_status[128];
+          if (manual_override_active) {
+            snprintf(curve_status, sizeof(curve_status),
+                     "%s preview: %d%%; manual override active",
+                     test_mode ? "TEST" : "LIVE", calculated_target);
+          } else if (!automatic_enabled) {
+            snprintf(curve_status, sizeof(curve_status),
+                     "%s preview: %d%%; automatic control disabled",
+                     test_mode ? "TEST" : "LIVE", calculated_target);
+          } else if (test_mode) {
+            snprintf(curve_status, sizeof(curve_status),
+                     "TEST preview: %d%%; automatic BLE output paused",
+                     calculated_target);
+          } else if (recovery_due) {
+            id(jungle_dawn_curve_should_queue) = true;
+            snprintf(curve_status, sizeof(curve_status),
+                     "LIVE target: %d%%; recovery retry queued",
+                     calculated_target);
+          } else if (target_is_due) {
+            id(jungle_dawn_curve_should_queue) = true;
+            snprintf(curve_status, sizeof(curve_status),
+                     "LIVE target: %d%%; queued for dispatcher",
+                     calculated_target);
+          } else {
+            snprintf(curve_status, sizeof(curve_status),
+                     "LIVE target: %d%%; within %d%% change threshold",
+                     calculated_target, minimum_change);
+          }
+          id(jungle_dawn_curve_status).publish_state(curve_status);
+
+          const bool prot5_automatic_enabled =
+              id(prot5_automatic_control).state;
+          const bool prot5_manual_override_active =
+              id(prot5_manual_override).state;
+          const int prot5_minimum_change = std::max(
+              1, static_cast<int>(std::lround(
+                     id(prot5_minimum_automatic_change).state)));
+          const int prot5_requested_target = id(lamp_target)[1];
+          const int prot5_target_difference = std::abs(
+              prot5_target - prot5_requested_target);
+          const bool prot5_endpoint_change =
+              prot5_target != prot5_requested_target &&
+              (prot5_target == 0 ||
+               prot5_target == prot5_effective_peak_target);
+          const bool prot5_recovery_due =
+              prot5_automatic_enabled && !prot5_manual_override_active &&
+              !test_mode && id(lamp_last_completed)[1] != prot5_target &&
+              !id(lamp_pending)[1] &&
+              (!id(transaction_active) || id(active_lamp) != 1) &&
+              id(lamp_attempts_for_request)[1] >= configured_max_attempts &&
+              id(lamp_consecutive_failures)[1] > 0 &&
+              recovery_elapsed(id(lamp_last_failure_ms)[1],
+                               recovery_interval_ms);
+          const bool prot5_target_is_due =
+              !id(prot5_curve_has_queued) || prot5_endpoint_change ||
+              prot5_target_difference >= prot5_minimum_change ||
+              prot5_recovery_due;
+
+          char prot5_status[160];
+          if (prot5_manual_override_active) {
+            snprintf(prot5_status, sizeof(prot5_status),
+                     "%s preview: %d%%; manual override active",
+                     test_mode ? "TEST" : "LIVE", prot5_target);
+          } else if (!prot5_automatic_enabled) {
+            snprintf(prot5_status, sizeof(prot5_status),
+                     "%s preview: %d%%; automatic control disabled",
+                     test_mode ? "TEST" : "LIVE", prot5_target);
+          } else if (test_mode) {
+            snprintf(prot5_status, sizeof(prot5_status),
+                     "TEST preview: %d%%; automatic BLE output paused",
+                     prot5_target);
+          } else if (prot5_maximum_brightness <= 0.0f) {
+            if (prot5_target_is_due) {
+              id(prot5_curve_should_queue) = true;
+              if (prot5_recovery_due) {
+                snprintf(prot5_status, sizeof(prot5_status),
+                         "Safety target 0%%; recovery retry queued");
+              } else {
+                snprintf(prot5_status, sizeof(prot5_status),
+                         "LIVE safety target 0%% queued; set measured maximum before use");
+              }
+            } else {
+              snprintf(prot5_status, sizeof(prot5_status),
+                       "LIVE target 0%%; calibrated maximum is 0%%");
+            }
+          } else if (prot5_window_minutes <= 0.0f) {
+            if (prot5_target_is_due) {
+              id(prot5_curve_should_queue) = true;
+              if (prot5_recovery_due) {
+                snprintf(prot5_status, sizeof(prot5_status),
+                         "UVB window collapsed; recovery safe-off queued");
+              } else {
+                snprintf(prot5_status, sizeof(prot5_status),
+                         "UVB window collapsed; 0%% queued for safety");
+              }
+            } else {
+              snprintf(prot5_status, sizeof(prot5_status),
+                       "UVB window collapsed; reduce start/end offsets");
+            }
+          } else if (prot5_recovery_due) {
+            id(prot5_curve_should_queue) = true;
+            snprintf(prot5_status, sizeof(prot5_status),
+                     "LIVE target: %d%%; recovery retry queued",
+                     prot5_target);
+          } else if (prot5_target_is_due) {
+            id(prot5_curve_should_queue) = true;
+            snprintf(prot5_status, sizeof(prot5_status),
+                     "LIVE target: %d%%; queued for dispatcher",
+                     prot5_target);
+          } else {
+            snprintf(prot5_status, sizeof(prot5_status),
+                     "LIVE target: %d%%; within %d%% change threshold",
+                     prot5_target, prot5_minimum_change);
+          }
+          id(prot5_curve_status).publish_state(prot5_status);
+
+          ESP_LOGD("solar", "%s; sunrise %s, noon %s, sunset %s, elevation %.2f deg, envelope %.3f",
+                   status, sunrise_text, noon_text, sunset_text, elevation,
+                   daylight_envelope);
+          ESP_LOGD("jungle_dawn_curve", "%s; curve %.3f, season %.3f, effective peak %.1f%%, exponent %.2f",
+                   curve_status, curve_fraction, season_factor,
+                   effective_peak, curve_exponent);
+          ESP_LOGD("prot5_curve", "%s; window %.2fh, curve %.3f, season %.3f, effective peak %.1f%%, exponent %.2f",
+                   prot5_status, prot5_window_minutes / 60.0f,
+                   prot5_fraction, season_factor,
+                   prot5_effective_peak_value,
+                   prot5_exponent);
+
+      - if:
+          condition:
+            lambda: return id(jungle_dawn_curve_should_queue);
+          then:
+            - script.execute:
+                id: queue_lumenize_command
+                lamp: 0
+                level: !lambda return id(jungle_dawn_calculated_target);
+            - lambda: |-
+                id(jungle_dawn_curve_last_queued) =
+                    id(jungle_dawn_calculated_target);
+                id(jungle_dawn_curve_has_queued) = true;
+                id(jungle_dawn_curve_should_queue) = false;
+
+      - if:
+          condition:
+            lambda: return id(prot5_curve_should_queue);
+          then:
+            - script.execute:
+                id: queue_lumenize_command
+                lamp: 1
+                level: !lambda return id(prot5_calculated_target);
+            - lambda: |-
+                id(prot5_curve_last_queued) = id(prot5_calculated_target);
+                id(prot5_curve_has_queued) = true;
+                id(prot5_curve_should_queue) = false;

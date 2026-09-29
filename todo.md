@@ -1,7 +1,7 @@
 # LuminEZE implementation roadmap
 
 Prepared: 29 September 2026  
-Status: implementation underway. T01–T04 have source/build evidence; live hardware and settings observations remain for Gate A.
+Status: implementation underway. T01–T05 have source/build evidence; live hardware and settings observations remain for Gate A.
 
 ## Purpose and starting point
 
@@ -73,7 +73,7 @@ Work in the listed order by default. Dependencies identify prerequisites, not pe
 - [x] T02 — Establish the repository, private configuration boundary and build environment. Evidence: `docs/build.md`, `requirements-ci.txt`, clean local fixture build.
 - [x] T03 — Define module ownership and the common control contract. Evidence: `docs/architecture.md`, including every explicit ID.
 - [x] T04 — Create a reusable package and the first automated build fixture. Evidence: local full compile and passing push/PR builds in `docs/build.md`.
-- [ ] T05 — Split the implementation into functional modules without changing behaviour.
+- [x] T05 — Split the implementation into functional modules without changing behaviour. Evidence: `docs/t05-extraction.md`, identical pre/post resolved fixtures, remote package import and full local/CI builds.
 - [ ] T06 — Separate control policy from the selected algorithm and BLE transport.
 - [ ] T07 — Isolate simulated inputs and development test controls.
 - [ ] T08 — Separate operational diagnostics from verbose development diagnostics.
