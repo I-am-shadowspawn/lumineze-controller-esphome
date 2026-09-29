@@ -1,7 +1,7 @@
 # T01 — Repository baseline and recovery record
 
-Recorded 29 September 2026 from `master` at `7cbc7189a84a6f9c3cc52692ef148e1cf2009211`.
-This is a **source baseline**, not proof of the firmware currently on either controller.
+Repository source recorded 29 September 2026 from `master` at `7cbc7189a84a6f9c3cc52692ef148e1cf2009211`; deployed configuration details were subsequently supplied by the owner.
+This is an **owner-reported deployment and reproducible source baseline**, not a readback of the binary or runtime state on the controller.
 Keep any exact live YAML, secrets, settings export and firmware backup outside this public repository.
 
 ## Sources and identity
@@ -9,13 +9,15 @@ Keep any exact live YAML, secrets, settings export and firmware backup outside t
 | Item | Evidence | Status |
 | --- | --- | --- |
 | Archived original | `archive/orignial-skink-controller.yaml`, SHA-256 `5c9aeac67ac4f28aef4b11dad2b10bdab8bfdc2b534f0327895307f4398df272` | Public source reference; deployment unconfirmed |
-| Shared package | `packages/lumineze-controller.yaml`, SHA-256 `e05c6f467e71256d8c3b572ce32f5db984cc104604d72c3620830518d09faaea` | Current repository implementation |
-| Reported new controller | User reported flashing a `my-vivarium` local YAML using the GitHub package on `master`, JungleDawn MAC from a secret, ProT5 omitted | Flash succeeded; exact Git commit, runtime settings and current firmware unconfirmed |
+| Deployed package source | Tag `v1.0.0` resolves to commit `1c054c734efe0b494f591f73146b2b2ca934cc15`; its package SHA-256 is `e05c6f467e71256d8c3b572ce32f5db984cc104604d72c3620830518d09faaea` | Owner reports the live YAML pins this immutable tag; actual binary not read from device |
+| Deployed local YAML | `device_name: my-vivarium`, `friendly_name: My Vivarium`, `area_name: Vivarium`; JungleDawn explicitly enabled with MAC from `my_vivarium_jungle_dawn_mac`; ProT5 disabled with no local MAC; Wi-Fi and API encryption from local secrets; package ref `v1.0.0` | Owner-provided configuration; actual secret values and restored runtime settings remain private/uncaptured |
 | Archived device identity | `lumineze-controler-skink`, friendly name `LuminEZE Controler Skink`, area `Skink House` | Preserve spelling when migrating that installation |
-| Hardware declaration | Generic ESP32-C3, ESP-IDF, two BLE clients | Actual board revision and flash capacity unconfirmed |
-| Build environment | Existing CI installs ESPHome 2026.9.0 and generates source | Deployed ESPHome/ESP-IDF versions and compiled size unconfirmed |
+| Hardware declaration | Owner confirms `esp32` variant `esp32c3`, framework type `esp-idf` | Actual board revision and physical flash capacity unconfirmed |
+| Build environment | Owner reports ESPHome Device Builder currently at 2026.9.0; a local build with that version resolved ESP-IDF 5.5.5 | Version used for the already-flashed binary and its measured size remain unconfirmed |
 
-The archive and package differ at the device identity, logger/timezone substitutions, local Wi-Fi/API settings, fallback AP settings, MAC substitutions, and explicit lamp-enable queue guard. The 2,300-line control implementation otherwise remains in the shared package; a repository diff is the authoritative exact comparison. Tag `v1.0.0` points at merge commit `1c054c7`; confirm which ref was flashed before using that tag as a recovery source.
+The archive and `v1.0.0` package differ at the device identity, logger/timezone substitutions, local Wi-Fi/API settings, fallback AP settings, MAC substitutions, and explicit lamp-enable queue guard. The 2,300-line control implementation otherwise remains in the shared package; a repository diff is the authoritative exact comparison. The later T04 package moves fallback AP configuration into local YAML; it is **not** the source of the reported deployed build.
+
+The owner has kept the fallback AP substitutions commented out. In `v1.0.0`, that means the package supplies its public default SSID `LuminEZE Controller Fallback` and password `fallbackpassword`. Set private local overrides before the next `v1.0.0` build if the fallback AP is retained. When updating to the T04 package, move those values under local `wifi.ap` and add local `captive_portal:` as described in `docs/build.md`.
 
 ## Current code behaviour to preserve or deliberately change
 
@@ -43,12 +45,12 @@ These are required observations, **not measured outputs**. Capture the current t
 
 ## Private backup and recovery checklist
 
-Before changing a live controller, save privately: (1) its exact local YAML and any local includes, (2) referenced secrets and both real lamp MACs, (3) screenshots/export of restored numbers and switches, (4) installed ESPHome and framework versions plus build logs, (5) the current binary if available, and (6) the known-working USB/serial or OTA recovery route. Keep the backup and credentials out of Git and CI artifacts. A source rollback can use the verified Git ref plus that private configuration; whether the device can actually be recovered by OTA or USB remains to be demonstrated.
+Before changing a live controller, save privately: (1) its exact local YAML and any local includes, (2) referenced secrets and real JungleDawn MAC, (3) screenshots/export of restored numbers and switches, (4) the build log and current binary if available, and (5) the known-working USB/serial or OTA recovery route. Keep the backup and credentials out of Git and CI artifacts. The owner identifies `v1.0.0` as the recovery source: keep the local YAML pinned to that ref, rebuild with ESPHome 2026.9.0 and the private secrets, then install using the previously working Device Builder route. A secret-free copy of this configuration validated and fully compiled locally against the **remote `v1.0.0` tag** with ESP-IDF 5.5.5 (image 1,438,586 bytes; static RAM estimate 148,380 bytes). This proves a source recovery build is available; physical OTA/USB recovery remains untested here.
 
 ## Open evidence
 
-- Which exact YAML/ref is currently deployed on each controller, and whether local edits differ from the repository.
-- Actual board/flash variant, installed ESPHome/ESP-IDF versions, binary size, free heap, uptime and BLE connection observations.
+- A private copy of the exact secret values and confirmation that no additional local includes or unreported edits are present.
+- Actual board revision/flash capacity, installed binary's build version/size, free heap, uptime and BLE connection observations.
 - Current persisted control settings and measured outputs for the cases above.
 - A private recovery backup and tested physical flash/recovery method; spare-controller availability.
 

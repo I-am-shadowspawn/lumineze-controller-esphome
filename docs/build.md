@@ -1,6 +1,6 @@
 # T02 — Build and private configuration boundary
 
-Repository: public `I-am-shadowspawn/lumineze-controller-esphome`, default branch `master`. No licence file is present, so the repository currently grants no explicit reuse licence; add one only after the owner chooses it. This task retains the existing repository name and visibility.
+Repository: public `I-am-shadowspawn/lumineze-controller-esphome`, default branch `master`. The owner added an MIT `LICENSE` after the initial T02 checkpoint. This task retains the existing repository name and visibility.
 
 ## Supported checkpoint
 

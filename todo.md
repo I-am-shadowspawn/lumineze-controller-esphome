@@ -1,7 +1,7 @@
 # LuminEZE implementation roadmap
 
 Prepared: 29 September 2026  
-Status: implementation underway. T02–T04 have repository/CI evidence; T01 awaits live-controller evidence.
+Status: implementation underway. T01–T04 have source/build evidence; live hardware and settings observations remain for Gate A.
 
 ## Purpose and starting point
 
@@ -69,7 +69,7 @@ Work in the listed order by default. Dependencies identify prerequisites, not pe
 
 ### A — Establish a modular seasonal controller
 
-- [ ] T01 — Capture the current working baseline and recovery information. Repository source baseline and recovery checklist: `docs/baseline.md`; exact deployed build, saved settings and physical recovery still need owner evidence.
+- [x] T01 — Capture the current working baseline and recovery information. Owner-reported deployed YAML, `v1.0.0` recovery source, local build and remaining field-evidence gaps: `docs/baseline.md`.
 - [x] T02 — Establish the repository, private configuration boundary and build environment. Evidence: `docs/build.md`, `requirements-ci.txt`, clean local fixture build.
 - [x] T03 — Define module ownership and the common control contract. Evidence: `docs/architecture.md`, including every explicit ID.
 - [x] T04 — Create a reusable package and the first automated build fixture. Evidence: local full compile and passing push/PR builds in `docs/build.md`.
