@@ -1,7 +1,7 @@
 # LuminEZE implementation roadmap
 
 Prepared: 29 September 2026  
-Status: planning backlog; all implementation tasks remain open.
+Status: implementation underway. T02–T04 have repository/CI evidence; T01 awaits live-controller evidence.
 
 ## Purpose and starting point
 
@@ -69,10 +69,10 @@ Work in the listed order by default. Dependencies identify prerequisites, not pe
 
 ### A — Establish a modular seasonal controller
 
-- [ ] T01 — Capture the current working baseline and recovery information.
-- [ ] T02 — Establish the repository, private configuration boundary and build environment.
-- [ ] T03 — Define module ownership and the common control contract.
-- [ ] T04 — Create a reusable package and the first automated build fixture.
+- [ ] T01 — Capture the current working baseline and recovery information. Repository source baseline and recovery checklist: `docs/baseline.md`; exact deployed build, saved settings and physical recovery still need owner evidence.
+- [x] T02 — Establish the repository, private configuration boundary and build environment. Evidence: `docs/build.md`, `requirements-ci.txt`, clean local fixture build.
+- [x] T03 — Define module ownership and the common control contract. Evidence: `docs/architecture.md`, including every explicit ID.
+- [x] T04 — Create a reusable package and the first automated build fixture. Evidence: local full compile and passing push/PR builds in `docs/build.md`.
 - [ ] T05 — Split the implementation into functional modules without changing behaviour.
 - [ ] T06 — Separate control policy from the selected algorithm and BLE transport.
 - [ ] T07 — Isolate simulated inputs and development test controls.

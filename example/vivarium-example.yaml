@@ -7,8 +7,6 @@ substitutions:
   jungle_dawn_mac: !secret jungle_dawn_mac
   enable_prot5: "false"
   # prot5_mac: !secret prot5_mac  # Set enable_prot5 to "true" when connected.
-  fallback_ap_ssid: !secret fallback_ap_ssid
-  fallback_ap_password: !secret fallback_ap_password
   
   
 
@@ -22,6 +20,11 @@ packages:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+  ap:
+    ssid: !secret fallback_ap_ssid
+    password: !secret fallback_ap_password
+
+captive_portal:
 
 api:
   encryption:

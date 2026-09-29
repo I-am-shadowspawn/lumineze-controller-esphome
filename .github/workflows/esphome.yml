@@ -16,12 +16,12 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install ESPHome
-        run: python -m pip install esphome==2026.9.0
+        run: python -m pip install -r requirements-ci.txt
       - name: Validate light combinations
         run: |
           esphome -s enable_jungle_dawn false config ci/controller.yaml > /dev/null
           esphome config ci/controller.yaml > /dev/null
           esphome -s enable_jungle_dawn false -s enable_prot5 true -s prot5_mac AA:BB:CC:DD:EE:02 config ci/controller.yaml > /dev/null
           esphome -s enable_prot5 true -s prot5_mac AA:BB:CC:DD:EE:02 config ci/controller.yaml > /dev/null
-      - name: Generate firmware source
-        run: esphome -s enable_prot5 true -s prot5_mac AA:BB:CC:DD:EE:02 compile --only-generate ci/controller.yaml
+      - name: Compile firmware
+        run: esphome -s enable_prot5 true -s prot5_mac AA:BB:CC:DD:EE:02 compile ci/controller.yaml

@@ -10,8 +10,6 @@ substitutions:
 
   timezone: "Europe/London"
   logger_level: "DEBUG"
-  fallback_ap_ssid: "LuminEZE Controller Fallback"
-  fallback_ap_password: "fallbackpassword"
   
 # Board: Generic ESP32-C3 Board (Generic)
 # Definition: definitions/boards/generic-esp32c3/manifest.yaml
@@ -38,7 +36,7 @@ time:
           state: "SNTP"
   - platform: homeassistant
     id: homeassistant_time
-    timezone: Europe/London
+    timezone: ${timezone}
     on_time_sync:
       - text_sensor.template.publish:
           id: controller_last_time_source
@@ -53,14 +51,8 @@ ota:
   - platform: esphome
 
 wifi:
-
   reboot_timeout: 0s
-  ap:
-    ssid: ${fallback_ap_ssid}
-    password: ${fallback_ap_password}
     
-captive_portal:
-
 # Non-continuous scanning is preferable on the single-core ESP32-C3.
 # The BLE clients have fixed MAC addresses and connect only on command.
 esp32_ble_tracker:

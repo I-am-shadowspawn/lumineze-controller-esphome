@@ -12,3 +12,13 @@ packages:
 wifi:
   ssid: "ci-network"
   password: "ci-password"
+  ap:
+    ssid: "LuminEZE Controller Fallback"
+    password: "fallbackpassword"
+
+captive_portal:
+
+api:
+  encryption:
+    # Public dummy key for compilation only; never use on a real controller.
+    key: "dnRG2D8Cd5ETYvaQMYcP799ZuAjfSvZk6o1liVjo7qw="
