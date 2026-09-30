@@ -8,6 +8,12 @@
 
 namespace lumineze_topology {
 
+inline void update_group_demand(GroupState &group, float demand, bool valid) {
+  if (!valid) return;
+  if (group.demand != demand) group.revision++;
+  group.demand = demand;
+}
+
 inline Source resolve_source(bool safety_active, bool fixture_manual,
                              Source group_source) {
   if (safety_active) return SAFETY;

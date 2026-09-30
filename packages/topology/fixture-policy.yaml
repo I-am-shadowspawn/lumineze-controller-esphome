@@ -36,11 +36,9 @@ script:
               demand = context.desired[binding.role];
               valid = std::isfinite(demand) && demand >= 0.0f && demand <= 1.0f;
             }
-            if (group.source != source || group.valid != valid ||
-                (valid && group.demand != demand)) group.revision++;
+            update_group_demand(group, demand, valid);
             group.source = source;
             group.valid = valid;
-            group.demand = demand;
             group.context_revision = context.revision;
           }
 
@@ -52,6 +50,8 @@ script:
             const auto &context = id(topology_contexts)[group_binding.context];
             const bool in_flight = id(topology_dispatch).active &&
                 id(topology_dispatch).active_slot == slot;
+            // Group/controller safe-off is held while its controls stay off.
+            // A deliberate manual/automatic request replaces it unless clock safety is active.
             const Source source = resolve_source(
                 safety_active, fixture.manual, group.source);
             const bool cap_valid = std::isfinite(fixture.maximum) &&
@@ -99,11 +99,7 @@ script:
               continue;
             }
             fixture.limit_applied = decision.limit_applied;
-            if (!decision.submit) {
-              if (fixture.source == source)
-                fixture.decision_revision = group.revision;
-              continue;
-            }
+            if (!decision.submit) continue;
             accept_target(fixture, decision.target, source, group.revision,
                           in_flight);
             status(slot, "Latest authorised target pending");

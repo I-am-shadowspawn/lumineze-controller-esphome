@@ -1,6 +1,6 @@
-# Explicit off actions submit fresh 0% requests. Group/controller off also
-# disable automatic/manual controls; a later deliberate control change may
-# supersede the request. Invalid-time safety remains highest priority.
+# Explicit off actions submit fresh 0% requests. Group/controller off disable
+# automatic/manual controls, so policy holds that request until a deliberate
+# manual or automatic re-enable; active invalid-time safety still takes priority.
 script:
   - id: topology_safe_off_group
     mode: single

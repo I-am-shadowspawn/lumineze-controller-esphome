@@ -53,7 +53,9 @@ establish reliable four-lamp operation on ESP32-C3 hardware.
   controls, releases member overrides and queues 0% to each member; controller
   off does so for all groups. Fixture off activates that fixture's 0% local
   override. An off request is a command, not proof that an unavailable lamp is
-  dark.
+  dark. Group/controller off remains requested while controls stay disabled;
+  a deliberate manual request or automatic re-enable supersedes it on the next
+  policy evaluation. Active invalid-time safety cannot be overridden.
 - Targets have a source, group revision and per-fixture generation. Repeated
   unchanged automatic evaluations do not reset retry backoff. Cap reductions,
   manual and safety commands bypass the usual automatic change threshold.

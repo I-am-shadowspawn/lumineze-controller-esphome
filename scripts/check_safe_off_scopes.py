@@ -66,6 +66,30 @@ int main() {
   }
   assert(state.topology_fixtures[1].target == 70);
   assert(lumineze_topology::fixture_off_count[1] == 0);
+
+  auto &overridden = state.topology_fixtures[0];
+  overridden.manual = true;
+  overridden.manual_level = 35;
+  assert(overridden.target == 0);
+  const auto manual_source = lumineze_topology::resolve_source(
+      false, overridden.manual, state.topology_groups[0].source);
+  const auto manual = lumineze_topology::convert_fixture({
+      manual_source, 100.0f, 0.0f, 0.0f, 0.0f, overridden.manual_level,
+      overridden.target, 2, false, false, false, false,
+      overridden.source != manual_source});
+  assert(manual.valid && manual.submit && manual.target == 35);
+  lumineze_topology::accept_target(
+      overridden, manual.target, manual_source,
+      state.topology_groups[0].revision, false);
+  assert(overridden.target == 35 &&
+         overridden.source == lumineze_topology::FIXTURE_MANUAL);
+
+  const auto safety_source = lumineze_topology::resolve_source(
+      true, overridden.manual, state.topology_groups[0].source);
+  const auto safety = lumineze_topology::convert_fixture({
+      safety_source, 100.0f, 0.0f, 0.0f, 0.0f, 0, overridden.target, 2,
+      false, false, false, false, overridden.source != safety_source});
+  assert(safety.valid && safety.target == 0);
   off_all();
   for (int group = 0; group < 2; ++group)
     assert(!state.topology_groups[group].automatic &&

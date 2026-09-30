@@ -107,4 +107,47 @@ int main() {
   assert(fail_transaction(fixture, arbiter, 3, arbiter.token,
                           900, 2, 30000) == NEWER_PENDING);
   assert(fixture.pending && fixture.target == 20 && fixture.attempts == 0);
+
+  GroupState group;
+  group.source = AUTOMATIC;
+  group.valid = true;
+  update_group_demand(group, 0.5f, true);
+  const auto accepted_revision = group.revision;
+  group.source = HOLD;
+  group.valid = false;
+  update_group_demand(group, 0.0f, false);
+  update_group_demand(group, 0.5f, true);
+  assert(group.revision == accepted_revision);
+  update_group_demand(group, 0.6f, true);
+  assert(group.revision == accepted_revision + 1);
+
+  FixtureState reevaluated;
+  DispatchState reevaluation_dispatch;
+  accept_target(reevaluated, 50, AUTOMATIC, 1, false);
+  begin_transaction(reevaluated, reevaluation_dispatch, 0, 1000);
+  const ConversionInput unchanged_input{
+      AUTOMATIC, 100.0f, 0.5f, 0.5f, 1.0f, 0, reevaluated.target, 2,
+      reevaluated.automatic_queued, false, false, false, false};
+  for (int evaluation = 0; evaluation < 2; ++evaluation) {
+    const auto unchanged = convert_fixture(unchanged_input);
+    assert(unchanged.valid && !unchanged.submit);
+    assert(reevaluated.attempts == 1);
+    assert(reevaluated.in_flight_generation == reevaluated.generation);
+  }
+  const auto completed_token = reevaluation_dispatch.token;
+  assert(complete_transaction(reevaluated, reevaluation_dispatch, 0,
+                              completed_token));
+  assert(reevaluated.completed_count == 1 && reevaluated.attempts == 0);
+
+  FixtureState coalesced;
+  DispatchState coalesced_dispatch;
+  accept_target(coalesced, 50, AUTOMATIC, 1, false);
+  begin_transaction(coalesced, coalesced_dispatch, 0, 2000);
+  accept_target(coalesced, 60, AUTOMATIC, 2, true);
+  accept_target(coalesced, 70, AUTOMATIC, 3, true);
+  assert(fail_transaction(coalesced, coalesced_dispatch, 0,
+                          coalesced_dispatch.token, 2100, 3, 30000) ==
+         NEWER_PENDING);
+  assert(coalesced.target == 70 && coalesced.pending &&
+         coalesced.attempts == 0);
 }

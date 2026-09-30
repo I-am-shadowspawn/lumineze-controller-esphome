@@ -47,6 +47,8 @@ jobs:
         run: python scripts/check_seasonal_parity.py
       - name: Check production safe-off scopes
         run: python scripts/check_safe_off_scopes.py
+      - name: Check topology dispatcher timeout cleanup
+        run: python scripts/check_topology_dispatcher_timeout.py
       - name: Compile firmware
         run: |
           esphome -s enable_prot5 true -s prot5_mac AA:BB:CC:DD:EE:02 compile ci/controller.yaml

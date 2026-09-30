@@ -161,10 +161,13 @@ disables all groups' automatic/manual controls, clears fixture overrides and
 submits 0% to all enabled fixtures. Group safe-off does the same within that
 group. Fixture safe-off activates that fixture's local override at 0%, leaving
 other group members alone. A later deliberate manual request or automatic-enable
-can supersede explicit safe-off, subject to active invalid-time safety. A disabled
-group's periodic hold decision cannot overwrite the pending off request. These
-scope extensions preserve T06's controller-button semantics; do not introduce
-persistent safety latches or new Resume entities in this refactor.
+can supersede explicit safe-off on the next policy evaluation, subject to active
+invalid-time safety. Until then, the policy retains the pending 0% safety request
+while the disabled group resolves to hold; that hold must not revoke the off
+request. Active invalid-time safety remains highest priority and cannot be
+overridden by manual or automatic controls. These scope extensions preserve
+T06's controller-button semantics; do not introduce persistent safety latches or
+new Resume entities in this refactor.
 
 Retain T06's live-clock behavior: invalid clock grace is elapsed controller uptime,
 not time since the last clock failure; invalid time after grace with fail-safe
