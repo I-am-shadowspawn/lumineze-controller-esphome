@@ -1,13 +1,6 @@
-# v1 public composition. Its fixed product/slot mapping is isolated here while
-# existing installations remain on packages/lumineze-controller.yaml.
+# v1 fixed product/slot composition retained as a compatibility wrapper.
+substitutions:
+  evaluation_snapshot_provider: capture_live_evaluation_snapshot
 packages:
-  base: !include ../core/base.yaml
-  time: !include ../core/time.yaml
-  ble: !include ../core/ble.yaml
-  state: !include ../core/state.yaml
-  diagnostics: !include ../features/diagnostics.yaml
-  controls: !include ../core/controls.yaml
-  seasonal: !include ../modes/seasonal.yaml
-  control_policy: !include ../core/control.yaml
-  dispatcher: !include ../core/dispatcher.yaml
-  lamp_protocol: !include ../lamps/protocol.yaml
+  controller: !include ../lumineze-controller-core.yaml
+  evaluation_input: !include ../inputs/real-time.yaml

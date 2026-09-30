@@ -24,6 +24,7 @@ script:
             fixture.generation++;
             fixture.target = 0;
             fixture.source = SAFETY;
+            fixture.target_simulated = false;
             fixture.decision_revision = group.revision;
             fixture.pending = true;
             fixture.attempts = 0;
@@ -52,6 +53,7 @@ script:
             fixture.generation++;
             fixture.target = 0;
             fixture.source = SAFETY;
+            fixture.target_simulated = false;
             fixture.decision_revision = id(topology_groups)[binding.group].revision;
             fixture.pending = true;
             fixture.attempts = 0;

@@ -1,0 +1,23 @@
+time:
+  - platform: sntp
+    id: controller_time
+    timezone: ${timezone}
+
+script:
+  - id: capture_topology_real_snapshot
+    mode: single
+    then:
+      - lambda: |-
+          auto &snapshot = id(topology_snapshot);
+          const auto now = id(controller_time).now();
+          snapshot.valid = now.is_valid();
+          snapshot.simulated = false;
+          snapshot.simulated_output_enabled = false;
+          if (!snapshot.valid) return;
+          snapshot.year = now.year;
+          snapshot.day_of_year = now.day_of_year;
+          snapshot.days_in_year = ((snapshot.year % 4 == 0) &&
+              ((snapshot.year % 100 != 0) || (snapshot.year % 400 == 0)))
+              ? 366 : 365;
+          snapshot.minutes = static_cast<float>(now.hour * 60 + now.minute) +
+              static_cast<float>(now.second) / 60.0f;

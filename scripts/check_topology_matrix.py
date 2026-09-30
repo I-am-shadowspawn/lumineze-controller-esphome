@@ -18,14 +18,19 @@ ROOT = Path(__file__).resolve().parents[1]
 CI = ROOT / "ci"
 
 
-def compose(name, contexts, groups, fixtures, *, experimental=False, reserved=()):
+def compose(name, contexts, groups, fixtures, *, experimental=False, reserved=(),
+            development=False):
+    controller_package = (
+        "../packages/lumineze-topology-development.yaml"
+        if development else "../packages/lumineze-topology.yaml"
+    )
     lines = [
         f"# Generated CI fixture: {name}",
         "substitutions:",
         f"  device_name: topology-{name}",
         f"  ble_connection_slots: '{max(2, len(fixtures))}'",
         "packages:",
-        "  controller: !include ../packages/lumineze-topology.yaml",
+        f"  controller: !include {controller_package}",
     ]
     for context in contexts:
         lines.extend(
@@ -64,6 +69,7 @@ def compose(name, contexts, groups, fixtures, *, experimental=False, reserved=()
             "lumineze_topology:",
             "  topology_version: 1",
             "  engine_family: seasonal",
+            f"  input_provider: {'development' if development else 'real'}",
             f"  allow_experimental_topology: {'true' if experimental else 'false'}",
             "  contexts:",
         ]
@@ -172,6 +178,15 @@ CASES = [
         True,
         [],
     ),
+    (
+        "development-input",
+        ["shared"],
+        [("visible", "shared", "visible")],
+        [("jungle", 0, "jungle_dawn", "visible", MACS[0])],
+        False,
+        [],
+        True,
+    ),
 ]
 
 
@@ -183,9 +198,12 @@ def main():
     if not arguments:
         raise SystemExit("pass an ESPHome command")
     assignment_maps = {}
-    for name, contexts, groups, fixtures, experimental, reserved in CASES:
+    for case in CASES:
+        name, contexts, groups, fixtures, experimental, reserved = case[:6]
+        development = case[6] if len(case) > 6 else False
         source = compose(name, contexts, groups, fixtures,
-                         experimental=experimental, reserved=reserved)
+                         experimental=experimental, reserved=reserved,
+                         development=development)
         with tempfile.NamedTemporaryFile(
             mode="w", suffix=".yaml", prefix="topology-matrix-", dir=CI
         ) as temporary:

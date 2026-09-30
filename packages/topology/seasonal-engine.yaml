@@ -1,29 +1,32 @@
-# One orchestrator captures the clock once, evaluates each context once, then
-# invokes group/fixture policy. Context math has no MAC, slot or fixture cap.
+# One orchestrator captures the selected immutable snapshot once, evaluates
+# each context once, then invokes group/fixture policy.
 script:
   - id: evaluate_topology
     mode: restart
     then:
+      - script.execute: ${topology_snapshot_provider}
       - lambda: |-
           constexpr float pi = 3.14159265358979323846f;
           constexpr float deg_to_rad = pi / 180.0f;
-          const auto clock_now = id(controller_time).now();
-          id(topology_snapshot_valid) = clock_now.is_valid();
-          const int year = clock_now.year;
-          const int days_in_year = ((year % 4 == 0) &&
-              ((year % 100 != 0) || (year % 400 == 0))) ? 366 : 365;
-          const int calendar_day = std::max(1, std::min(days_in_year,
-              static_cast<int>(clock_now.day_of_year)));
-          const float minutes = static_cast<float>(clock_now.hour * 60 +
-              clock_now.minute) + static_cast<float>(clock_now.second) / 60.0f;
+          const auto &snapshot = id(topology_snapshot);
+          id(topology_snapshot_valid) = snapshot.valid;
+          const int days_in_year = snapshot.days_in_year;
+          const int calendar_day = snapshot.day_of_year;
+          const float minutes = snapshot.minutes;
           for (int index = 0; index < lumineze_topology::context_count; ++index) {
             auto &context = id(topology_contexts)[index];
             context.revision++;
             context.valid = false;
+            context.simulated = snapshot.simulated;
+            context.simulated_output_enabled =
+                snapshot.simulated_output_enabled;
             context.desired[0] = context.desired[1] = 0.0f;
             context.peak[0] = context.peak[1] = 0.0f;
             context.curve[0] = context.curve[1] = 0.0f;
-            if (!id(topology_snapshot_valid)) continue;
+            if (!snapshot.valid || days_in_year < 365 || days_in_year > 366 ||
+                calendar_day < 1 || calendar_day > days_in_year ||
+                !std::isfinite(minutes) || minutes < 0.0f || minutes >= 1440.0f)
+              continue;
             if (!std::isfinite(context.latitude) ||
                 !std::isfinite(context.noon_minutes) ||
                 !std::isfinite(context.phase_days) ||

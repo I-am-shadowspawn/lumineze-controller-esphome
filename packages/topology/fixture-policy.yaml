@@ -7,7 +7,8 @@ script:
       - lambda: |-
           using namespace lumineze_topology;
           const uint32_t now = millis();
-          const bool invalid_clock = !id(topology_snapshot_valid);
+          const bool invalid_clock = invalid_real_clock(
+              id(topology_snapshot_valid), id(topology_snapshot).simulated);
           const uint32_t grace_ms = static_cast<uint32_t>(
               std::max(30.0f, id(topology_invalid_time_grace).state) * 1000.0f);
           if (now >= grace_ms) id(topology_grace_expired) = true;
@@ -62,6 +63,13 @@ script:
             fixture.last_maximum = fixture.maximum;
             fixture.invalid_output = false;
             fixture.limit_applied = false;
+            if (source == AUTOMATIC && !automatic_output_allowed(
+                    context.simulated, context.simulated_output_enabled)) {
+              if (fixture.pending && fixture.source == AUTOMATIC)
+                revoke_pending(fixture);
+              status(slot, "Simulation is calculation-only; output not enabled");
+              continue;
+            }
             if (source != HOLD && source != SAFETY &&
                 source != FIXTURE_MANUAL && !group.valid) {
               fixture.invalid_output = true;
@@ -88,7 +96,9 @@ script:
                 context.curve[group_binding.role], fixture.manual_level,
                 fixture.target, fixture.minimum_change,
                 fixture.automatic_queued, cap_reduced, previous_invalid,
-                recovery_due, fixture.source != source};
+                recovery_due, fixture.source != source ||
+                    automatic_refresh_required(
+                        fixture.target_simulated, context.simulated)};
             const ConversionResult decision = convert_fixture(input);
             if (!decision.valid) {
               fixture.invalid_output = true;
@@ -101,7 +111,7 @@ script:
             fixture.limit_applied = decision.limit_applied;
             if (!decision.submit) continue;
             accept_target(fixture, decision.target, source, group.revision,
-                          in_flight);
+                          in_flight, context.simulated);
             status(slot, "Latest authorised target pending");
           }
 

@@ -8,7 +8,8 @@
 namespace lumineze_topology {
 
 inline void accept_target(FixtureState &fixture, int target, Source source,
-                          uint32_t decision_revision, bool in_flight) {
+                          uint32_t decision_revision, bool in_flight,
+                          bool simulated = false) {
   const bool same_in_flight = in_flight && fixture.in_flight == target &&
       fixture.in_flight_source == source &&
       fixture.in_flight_generation == fixture.generation;
@@ -20,6 +21,7 @@ inline void accept_target(FixtureState &fixture, int target, Source source,
   }
   fixture.target = target;
   fixture.source = source;
+  fixture.target_simulated = source == AUTOMATIC && simulated;
   fixture.decision_revision = decision_revision;
   fixture.pending = true;
   if (source == AUTOMATIC) {

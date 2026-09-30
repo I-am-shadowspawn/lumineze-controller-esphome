@@ -1,27 +1,5 @@
 switch:
   - platform: template
-    id: solar_test_mode
-    name: "Solar Test Mode"
-    icon: mdi:test-tube
-    entity_category: config
-    optimistic: true
-    restore_mode: ALWAYS_OFF
-    on_turn_on:
-      - lambda: |-
-          if (id(jungle_dawn_automatic_control).state &&
-              !id(jungle_dawn_manual_override).state) {
-            id(lamp_pending)[0] = false;
-            id(lamp_request_generation)[0]++;
-          }
-          if (id(prot5_automatic_control).state &&
-              !id(prot5_manual_override).state) {
-            id(lamp_pending)[1] = false;
-            id(lamp_request_generation)[1]++;
-          }
-      - script.execute: calculate_solar
-    on_turn_off:
-      - script.execute: calculate_solar
-  - platform: template
     id: invalid_time_failsafe_enabled
     name: "Invalid Time Fail-Safe"
     icon: mdi:shield-clock
@@ -118,7 +96,7 @@ switch:
 
 number:
   - platform: template
-    id: jungle_dawn_test_level
+    id: jungle_dawn_manual_level
     name: "JungleDawn Requested Level"
     unit_of_measurement: "%"
     min_value: 0
@@ -129,7 +107,7 @@ number:
     optimistic: true
     mode: slider
   - platform: template
-    id: prot5_test_level
+    id: prot5_manual_level
     name: "ProT5 Requested Level"
     unit_of_measurement: "%"
     min_value: 0
@@ -259,32 +237,6 @@ number:
     step: 0.1
     initial_value: 182.6
     restore_value: true
-    optimistic: true
-    mode: box
-  - platform: template
-    id: solar_test_calendar_day
-    name: "Solar Test Calendar Day"
-    icon: mdi:calendar-today
-    unit_of_measurement: "day"
-    entity_category: config
-    min_value: 1
-    max_value: 366
-    step: 1
-    initial_value: 355
-    restore_value: false
-    optimistic: true
-    mode: box
-  - platform: template
-    id: solar_test_time_minutes
-    name: "Solar Test Time"
-    icon: mdi:clock-outline
-    unit_of_measurement: "min after midnight"
-    entity_category: config
-    min_value: 0
-    max_value: 1439
-    step: 1
-    initial_value: 750
-    restore_value: false
     optimistic: true
     mode: box
   - platform: template
@@ -453,7 +405,7 @@ button:
           lamp: 0
           source: 1
           fraction: 0.0
-          level: !lambda return static_cast<int>(id(jungle_dawn_test_level).state);
+          level: !lambda return static_cast<int>(id(jungle_dawn_manual_level).state);
   - platform: template
     name: "Queue ProT5 Level"
     icon: mdi:playlist-plus
@@ -464,7 +416,7 @@ button:
           lamp: 1
           source: 1
           fraction: 0.0
-          level: !lambda return static_cast<int>(id(prot5_test_level).state);
+          level: !lambda return static_cast<int>(id(prot5_manual_level).state);
   - platform: template
     name: "Queue Safe Off for Both Lamps"
     icon: mdi:power-off

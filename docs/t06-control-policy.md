@@ -27,7 +27,7 @@ supported package.
 | Automatic switched off | Pending automatic request is cancelled; physical state is held. No off command is implied. |
 | Manual override switched on | Pending automatic request is cancelled. The requested manual level is capped by the configured maximum; override lasts until switched off and is not restored after reboot. |
 | Explicit safe-off | Automatic and manual modes are switched off, then 0% is queued for each enabled lamp. This is a request, not proof of physical output. |
-| Simulated solar input | Automatic BLE output is paused; manual controls remain available. As in the baseline, simulated input also bypasses invalid-clock fail-safe; T07 must isolate this development facility from production. |
+| Simulated solar input | Production has no simulation provider. Development simulation is calculation-only by default; an explicit bench-output switch is required for simulated automatic BLE requests. Manual controls remain available. Invalid simulated input does not trigger invalid-clock safe-off. |
 | Unavailable lamp | Its retries and eventual communication fault remain per lamp; the other lamp can dispatch after the shared quiet time. No request to an unavailable lamp is treated as a confirmed state. |
 
 Automatic fractions are multiplied by the configured maximum and rounded once

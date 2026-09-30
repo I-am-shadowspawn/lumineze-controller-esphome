@@ -28,11 +28,6 @@ ota:
 wifi:
   reboot_timeout: 0s
 
-time:
-  - platform: sntp
-    id: controller_time
-    timezone: ${timezone}
-
 esp32_ble:
   max_connections: ${ble_connection_slots}
   connection_timeout: 20s
@@ -46,6 +41,10 @@ globals:
     type: bool
     restore_value: false
     initial_value: 'false'
+  - id: topology_snapshot
+    type: lumineze_topology::EvaluationSnapshot
+    restore_value: false
+    initial_value: 'lumineze_topology::EvaluationSnapshot{}'
   - id: topology_grace_expired
     type: bool
     restore_value: false

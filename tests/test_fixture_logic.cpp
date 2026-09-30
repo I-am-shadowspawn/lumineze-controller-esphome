@@ -120,6 +120,15 @@ int main() {
   assert(group.revision == accepted_revision);
   update_group_demand(group, 0.6f, true);
   assert(group.revision == accepted_revision + 1);
+  assert(!automatic_output_allowed(true, false));
+  assert(automatic_output_allowed(true, true));
+  assert(automatic_output_allowed(false, false));
+  assert(!invalid_real_clock(false, true));
+  assert(invalid_real_clock(false, false));
+  assert(!invalid_real_clock(true, false));
+  assert(automatic_refresh_required(true, false));
+  assert(!automatic_refresh_required(true, true));
+  assert(!automatic_refresh_required(false, false));
 
   FixtureState reevaluated;
   DispatchState reevaluation_dispatch;
@@ -150,4 +159,16 @@ int main() {
          NEWER_PENDING);
   assert(coalesced.target == 70 && coalesced.pending &&
          coalesced.attempts == 0);
+
+  FixtureState simulated_target;
+  accept_target(simulated_target, 50, AUTOMATIC, 1, false, true);
+  const ConversionInput live_recalculation{
+      AUTOMATIC, 100.0f, 0.51f, 0.8f, 0.6375f, 0, simulated_target.target,
+      2, true, false, false, false,
+      automatic_refresh_required(simulated_target.target_simulated, false)};
+  const auto live_decision = convert_fixture(live_recalculation);
+  assert(live_decision.valid && live_decision.submit);
+  accept_target(simulated_target, live_decision.target, AUTOMATIC, 2, false,
+                false);
+  assert(!simulated_target.target_simulated);
 }

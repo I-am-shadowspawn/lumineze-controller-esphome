@@ -1,13 +1,13 @@
 # LuminEZE implementation roadmap
 
 Prepared: 29 September 2026  
-Status: implementation underway. T01–T06 have source/build evidence; live hardware and settings observations remain for Gate A. T05R/T06R have a generic static-topology implementation and software matrix; physical multi-fixture evidence remains outstanding.
+Status: implementation underway. T01–T07 have source/build evidence; live hardware and settings observations remain for Gate A. T05R/T06R have a generic static-topology implementation and software matrix; physical multi-fixture evidence remains outstanding.
 
 Planning update, 30 September 2026: the [fixture/group architecture](docs/plans/fixture-topology-architecture.md)
 and [unattended implementation runbook](docs/plans/fixture-topology-implementation.md)
-supersede fixed two-lamp topology assumptions in this roadmap. Complete R0–R4
-before further T07 implementation, R5 alongside T07/T08, and the seasonal R6 gate
-with T09. Keep original T05/T06 completion evidence intact.
+supersede fixed two-lamp topology assumptions in this roadmap. R0–R4 are
+complete; coordinate R5 across T07/T08 and the seasonal R6 gate with T09. Keep
+original T05/T06 completion evidence intact.
 
 ## Purpose and starting point
 
@@ -84,7 +84,7 @@ Work in the listed order by default. Dependencies identify prerequisites, not pe
 - [x] T06 — Separate control policy from the selected algorithm and BLE transport. Evidence: `docs/t06-control-policy.md`, simulated transport transitions, all four configuration fixtures and a two-light firmware build.
 - [x] T05R — Rework topology/composition and generic fixture ownership (R0–R2 in the [runbook](docs/plans/fixture-topology-implementation.md)); retain the legacy pair as a regression case. Software implementation and compile matrix are in the fixture-topology refactor PR; hardware support remains gated.
 - [x] T06R — Introduce context outputs, control groups, fixture routing and generic authorization/dispatch (R3–R4 in the runbook). Software implementation and policy/transport tests are in the fixture-topology refactor PR; R5–R6 and physical evidence continue with T07–T09.
-- [ ] T07 — Isolate simulated inputs and development test controls.
+- [x] T07 — Isolate simulated inputs and development test controls. Production and development snapshot providers are separate; development simulation and bench-output controls reset off, and seasonal code consumes only the captured snapshot.
 - [ ] T08 — Separate operational diagnostics from verbose development diagnostics.
 - [ ] T09 — Assemble and verify both seasonal profiles.
 

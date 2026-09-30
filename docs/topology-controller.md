@@ -8,6 +8,15 @@ installation/migration**; it does not import v1 Home Assistant entities or
 settings automatically. Keep a known-good v1 tag and its private YAML for
 recovery.
 
+Production uses the real-clock snapshot provider. Development topologies use
+`packages/lumineze-topology-development.yaml` with
+`input_provider: development`; their simulation enable and simulated-output
+switches reset off, and simulated automatic output remains calculation-only
+until explicitly enabled for bench use. The fixed two-fixture development
+composition is `packages/lumineze-controller-development.yaml`. The seasonal
+algorithm consumes the same captured snapshot in either profile, while
+transaction, retry and safety timers remain monotonic real-time clocks.
+
 ## Device Builder composition
 
 Copy `example/topology-two-lamps.yaml` and provide its secrets. Pin

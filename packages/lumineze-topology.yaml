@@ -1,8 +1,7 @@
 # Generic entry point. A device YAML also includes one context/group/fixture
 # fragment per enabled descriptor and the matching external component revision.
+substitutions:
+  topology_snapshot_provider: capture_topology_real_snapshot
 packages:
-  base: !include topology/base.yaml
-  seasonal_engine: !include topology/seasonal-engine.yaml
-  fixture_policy: !include topology/fixture-policy.yaml
-  dispatcher: !include topology/dispatcher.yaml
-  safe_off: !include topology/safe-off.yaml
+  controller: !include topology/controller-core.yaml
+  input_provider: !include topology/input-real.yaml
