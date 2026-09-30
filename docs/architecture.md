@@ -1,5 +1,11 @@
 # T03 — Ownership map and control contract
 
+For the planned removal of product-specific physical slots, read the
+[fixture/group architecture](plans/fixture-topology-architecture.md) and
+[T05R/T06R execution runbook](plans/fixture-topology-implementation.md).
+They supersede this document's fixed two-slot assumptions for future work.
+The description below remains the existing T05/T06 checkpoint, not the new implementation.
+
 Design checkpoint written against the monolithic `packages/lumineze-controller.yaml` at source baseline `7cbc718`. T05 mechanically separated it as recorded in `docs/t05-extraction.md`. T06 implemented the shared control boundary in `core/control.yaml`; the current policy, deviations and evidence are recorded in `docs/t06-control-policy.md`. The implementation uses **parameterised ESPHome scripts plus explicitly owned globals**. A generic C++ framework is unnecessary for two fixed lamp slots.
 
 ## Ownership map

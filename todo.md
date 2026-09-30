@@ -1,7 +1,13 @@
 # LuminEZE implementation roadmap
 
 Prepared: 29 September 2026  
-Status: implementation underway. T01–T05 have source/build evidence; live hardware and settings observations remain for Gate A.
+Status: implementation underway. T01–T06 have source/build evidence; live hardware and settings observations remain for Gate A. T05R/T06R topology refactoring is planned, not implemented.
+
+Planning update, 30 September 2026: the [fixture/group architecture](docs/plans/fixture-topology-architecture.md)
+and [unattended implementation runbook](docs/plans/fixture-topology-implementation.md)
+supersede fixed two-lamp topology assumptions in this roadmap. Complete R0–R4
+before further T07 implementation, R5 alongside T07/T08, and the seasonal R6 gate
+with T09. Keep original T05/T06 completion evidence intact.
 
 ## Purpose and starting point
 
@@ -18,16 +24,17 @@ Turn the existing ESPHome vivarium controller into a reusable, modular project w
 
 This roadmap is based on the supplied design discussion. The original controller YAML, repository, firmware and hardware measurements were not available when it was written. Descriptions of the current implementation are therefore assumptions to verify in T01, not a completed code review. Existing identifiers mentioned in the discussion, including `calculate_solar` and `solar_test_mode`, are investigation leads rather than requirements to rename anything.
 
-The starting assumptions are an ESP32-C3 using ESP-IDF, two statically configured BLE lamp clients, JungleDawn at lamp index 0 and ProT5 at index 1, an existing seasonal engine, and Home Assistant configuration entities. Preserve that hardware and lamp topology for this work unless inspection proves these assumptions wrong.
+The recorded baseline is an ESP32-C3 using ESP-IDF with JungleDawn at index 0 and ProT5 at index 1. Preserve it as a compatibility fixture. The planned architecture gives physical slots no product/role meaning and introduces contexts, groups and explicit routing, initially bounded at four fixtures with hardware support gated separately.
 
 ## Intended boundaries
 
 | Concern | Intended responsibility |
 | --- | --- |
-| Local device YAML | Identity, enclosure/area, chosen profile, timezone, two lamp MAC addresses, and local credentials |
+| Local device YAML | Device identity, chosen profile, timezone, explicit fixture/group/context topology, per-fixture MACs/location labels, and local credentials |
 | Shared platform configuration | Board/framework, common networking behaviour, logger, API and OTA support |
 | Clock and evaluation input | Supply a coherent date/time/validity snapshot to the selected engine |
-| Selected engine | Calculate desired levels for both lamps; contain only that mode's settings and calculations |
+| Selected engine | Calculate role-labelled logical outputs per context; contain only that mode's settings and calculations |
+| Control groups and routing | Share or isolate control decisions and route them to explicit fixture members |
 | Control policy | Resolve automatic/manual requests, limits, commissioning state and invalid-input behaviour |
 | Dispatcher and BLE transport | Queueing, ordering, retry, timeout, reconnection, writes, notifications and readback |
 | Production diagnostics | Explain controller health and what is requested versus actually confirmed |
@@ -35,7 +42,7 @@ The starting assumptions are an ESP32-C3 using ESP-IDF, two statically configure
 | Profile | Compose one supported combination of the above |
 | Bootstrap/adoption | Provision and identify a new controller before normal operation is commissioned |
 
-The intended data flow is: evaluation input → selected engine → control policy → dispatcher → BLE lamps. Lamp readback feeds diagnostics and transaction state; it must not be confused with the requested output.
+The intended data flow is: evaluation snapshot → engine context → logical output → group decision → fixture routing → fixture policy/limits → dispatcher → BLE fixture. Lamp readback feeds diagnostics and transaction state; it must not be confused with the requested output.
 
 Runtime settings should include the selected mode's times/levels or seasonal parameters, calibration and maximum brightness, automatic control and supported manual override. Review existing retry settings: retain runtime controls where useful and safely bounded, without exposing every protocol constant as a user setting.
 
@@ -75,6 +82,8 @@ Work in the listed order by default. Dependencies identify prerequisites, not pe
 - [x] T04 — Create a reusable package and the first automated build fixture. Evidence: local full compile and passing push/PR builds in `docs/build.md`.
 - [x] T05 — Split the implementation into functional modules without changing behaviour. Evidence: `docs/t05-extraction.md`, identical pre/post resolved fixtures, remote package import and full local/CI builds.
 - [x] T06 — Separate control policy from the selected algorithm and BLE transport. Evidence: `docs/t06-control-policy.md`, simulated transport transitions, all four configuration fixtures and a two-light firmware build.
+- [ ] T05R — Rework topology/composition and generic fixture ownership (R0–R2 in the [runbook](docs/plans/fixture-topology-implementation.md)); retain the legacy pair as a regression case.
+- [ ] T06R — Introduce context outputs, control groups, fixture routing and generic authorization/dispatch (R3–R4 in the runbook); complete compatibility and profile evidence through R5–R6 with T07–T09.
 - [ ] T07 — Isolate simulated inputs and development test controls.
 - [ ] T08 — Separate operational diagnostics from verbose development diagnostics.
 - [ ] T09 — Assemble and verify both seasonal profiles.
@@ -106,14 +115,14 @@ Work in the listed order by default. Dependencies identify prerequisites, not pe
 
 ## Proposed repository layout
 
-Use meaningful ownership boundaries. Merge small, tightly coupled files when that is clearer; avoid forcing a file count or introducing generic frameworks for only two lamps.
+Use meaningful ownership boundaries. Merge small, tightly coupled files when that is clearer. The T05R/T06R plan's module ownership table supersedes topology-specific rows in this original layout; retain the remaining profile/release boundaries.
 
 | Path | Intended contents |
 | --- | --- |
 | `packages/core/base.yaml` | Shared platform/network defaults; no installation credentials |
 | `packages/core/time.yaml` | Real clock sources, validity and timezone handling |
 | `packages/core/control.yaml` | Mode-independent evaluation orchestration and request arbitration |
-| `packages/core/ble.yaml` | BLE tracker, two clients and notification plumbing |
+| `packages/core/ble.yaml` | Shared BLE/tracker setup; static per-fixture adapters move under the planned transport boundary |
 | `packages/core/dispatcher.yaml` | Transaction state, queueing, retries and readback processing |
 | `packages/core/safety.yaml` | Common limits and fault policy; may initially live in `control.yaml` |
 | `packages/lamps/` | Lamp-specific protocol details and common user-facing lamp controls |
@@ -242,7 +251,7 @@ Do not commit private live-device YAML or raw backups merely to fit this layout.
 
 ### T07 — Isolate simulated inputs and development test controls
 
-**Depends on:** T06.  
+**Depends on:** T06 and T05R/T06R steps R0–R4; coordinate R5.
 **Intent:** allow production builds to omit test functionality completely without duplicating the seasonal algorithm.
 
 **Planning must settle:** how a profile selects exactly one evaluation-input provider, which current controls are operational versus test-only, and whether simulated evaluations can drive physical lamps.
@@ -260,7 +269,7 @@ Do not commit private live-device YAML or raw backups merely to fit this layout.
 
 ### T08 — Separate operational diagnostics from verbose development diagnostics
 
-**Depends on:** T06–T07.  
+**Depends on:** T06–T07 and the T05R/T06R model; coordinate R5.
 **Intent:** keep production understandable during faults without carrying all development reporting.
 
 **Planning must settle:** a minimum health contract, reporting intervals, and which mode-specific calculated values are genuinely useful for normal operation.
@@ -335,6 +344,7 @@ Do not commit private live-device YAML or raw backups merely to fit this layout.
 **Work:**
 
 - Run configuration validation and full ESP32-C3 compilation for all four profiles on the pinned supported toolchain.
+- Extend coverage using the T05R/T06R topology matrix: repeated products, swapped/sparse slots, shared/independent groups and expected-invalid configurations. Keep compiled versus physically verified topology support distinct.
 - Use local includes from the checked-out commit. Keep separate, explicit checks for consumption through a remote Git reference.
 - Check expected entity/component inventories and mutually exclusive providers/engines. Detect production references to test-only state and unintended seasonal/schedule cross-dependencies.
 - Run meaningful deterministic cases from the baseline and schedule specifications. Avoid tests that merely duplicate the implementation's arithmetic without an independent expected result.
@@ -371,7 +381,7 @@ Do not commit private live-device YAML or raw backups merely to fit this layout.
 
 - Provide a minimal example for each supported profile, or one fully documented template with unambiguous profile alternatives. Include identity, timezone, lamp MAC inputs and a pinned package reference.
 - Add `secrets.example.yaml` with clearly non-live values. Explain generation of valid API credentials; distinguish explanatory placeholders from CI's valid dummy inputs.
-- Document the two-lamp mapping, validation/compile/install steps, Home Assistant setup, maximum/calibration settings, readback verification and enabling automatic control.
+- Document explicit fixture/group/context mapping and the legacy pair adapter, validation/compile/install steps, Home Assistant setup, per-fixture calibration, readback verification and enabling automatic control.
 - Explain production versus development, ordinary manual override, mode changes by rebuild, settings migration and return to a previous release.
 - Build from a clean consumer directory using a reachable candidate commit/ref. Confirm nested includes and any helper/header assets work without a local repository beside the device YAML.
 - Keep internal package references on the same checkout/revision; avoid a candidate profile pulling dependencies from an older tag or moving branch.
@@ -478,8 +488,8 @@ Do not commit private live-device YAML or raw backups merely to fit this layout.
 - Add `dashboard_import` with a public, versioned import location and `import_full_config: false`. Ensure the advertised project identity, import configuration and bootstrap version agree.
 - Test actual discovery and adoption in Device Builder; inspect the YAML it generates. Do not assume all desired substitutions or secrets are automatically written into it.
 - Prove the immediately adopted configuration validates and compiles in its defined uncommissioned state without missing private lookups.
-- Document and test supplying the two real lamp MAC addresses, selecting the final production profile and installing the commissioned build.
-- Verify device identity, credentials and OTA access across bootstrap-to-production transition. Confirm the chosen release stays pinned and both lamps are explicitly checked before automatic control is enabled.
+- Document and test supplying the supported fixture topology and each enabled fixture's real MAC address, selecting the final production profile and installing the commissioned build.
+- Verify device identity, credentials and OTA access across bootstrap-to-production transition. Confirm the chosen release stays pinned and every enabled fixture is explicitly checked before automatic control is enabled.
 - Test incomplete/invalid commissioning values and recovery from an interrupted install. No hidden edits to upstream packages should be necessary.
 
 **Done when:** actual generated YAML plus the documented local edits completes adoption for each supported production mode. An adopted-but-uncommissioned controller remains non-operational, and production excludes development test features.
@@ -542,7 +552,7 @@ Do not allow these to expand the initial implementation accidentally. Revisit af
 
 - Runtime switching between seasonal and schedule engines. If wanted later, prototype both engines together and measure flash, minimum heap, responsiveness and transition correctness; the present recommendation is not proof that the ESP32-C3 cannot support it.
 - Dynamic BLE scanning, lamp selection and persistent runtime pairing.
-- More than two lamps, different lamp topologies or broad board/framework support.
+- More than four fixtures, runtime topology discovery and broad board/framework support. Up to four static fixtures and repeated products are now in the T05R/T06R plan; more-than-two production support still requires hardware evidence.
 - Additional engines such as Home Assistant-driven or manual-only profiles.
 - Weekly/holiday calendars or substantially more elaborate scheduling than T10 defines.
 - A web installer, automatic fleet updates or a separate runtime settings UI.

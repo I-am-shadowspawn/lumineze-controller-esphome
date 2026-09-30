@@ -1,5 +1,11 @@
 # T06 — Common control policy and transport boundary
 
+Historical implementation checkpoint. The planned T06R evolution to contexts,
+groups and independently identified fixtures is in the
+[architecture](plans/fixture-topology-architecture.md) and
+[runbook](plans/fixture-topology-implementation.md). That plan is not implemented
+by this document and does not replace the recorded validation evidence below.
+
 The seasonal engine now publishes a mode-independent pair of desired fractions
 and peak fractions, plus validity and simulated-input flags. It does not read
 dispatcher state or submit BLE commands. `core/control.yaml` turns each
