@@ -85,10 +85,14 @@ Work in the listed order by default. Dependencies identify prerequisites, not pe
 - [x] T05R — Rework topology/composition and generic fixture ownership (R0–R2 in the [runbook](docs/plans/fixture-topology-implementation.md)); retain the legacy pair as a regression case. Software implementation and compile matrix are in the fixture-topology refactor PR; hardware support remains gated.
 - [x] T06R — Introduce context outputs, control groups, fixture routing and generic authorization/dispatch (R3–R4 in the runbook). Software implementation and policy/transport tests are in the fixture-topology refactor PR; R5–R6 and physical evidence continue with T07–T09.
 - [x] T07 — Isolate simulated inputs and development test controls. Production and development snapshot providers are separate; development simulation and bench-output controls reset off, and seasonal code consumes only the captured snapshot.
-- [ ] T08 — Separate operational diagnostics from verbose development diagnostics.
+- [x] T08 — Separate operational diagnostics from verbose development diagnostics. PR #11 passed both CI validation runs; see [diagnostic profile inventories](docs/diagnostic-profiles.md).
 - [ ] T09 — Assemble and verify both seasonal profiles.
 
 **Gate A:** the modular seasonal build matches the recorded baseline, and seasonal production builds with all development test facilities omitted. Do not add schedule behaviour to shared code before this boundary is demonstrated.
+
+### Independent feature after Gate A
+
+- [ ] T23 — Add a temporary daily automatic maximum and timed fixed level per fixture. Begin after T09; this does not depend on the schedule or adoption tasks. See the [requirements](docs/temporary-lighting-requirements.md) and [implementation plan](docs/plans/temporary-lighting-implementation.md).
 
 ### B — Add schedule mode and establish a stable release
 
@@ -529,6 +533,18 @@ Do not commit private live-device YAML or raw backups merely to fit this layout.
 - Promote the tested adoption release using the same immutable-version discipline as T16. Record pilot outcomes and remaining limitations.
 
 **Done when:** Gate C is satisfied from a clean starting point, all required edits are documented, and the manual package installation route remains usable alongside adoption.
+
+### T23 — Add temporary daily maximum and timed fixed level
+
+**Depends on:** T09 and Gate A only. This task can proceed independently of T10–T22.
+
+**Intent:** allow a Home Assistant user to hold one fixture below today's automatic curve or at a chosen fixed level for a bounded time, then return it to current automatic output.
+
+**Requirements:** [temporary lighting feature request](docs/temporary-lighting-requirements.md).
+
+**Implementation:** [post-T09 implementation plan](docs/plans/temporary-lighting-implementation.md).
+
+**Done when:** the requirements' acceptance cases, seasonal profile builds, no-override parity and physical BLE/readback behavior are recorded. The normal seasonal calculator and permanent calibration remain unchanged.
 
 ## Decisions to carry into planning
 
