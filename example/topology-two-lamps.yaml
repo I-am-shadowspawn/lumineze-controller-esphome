@@ -1,0 +1,60 @@
+# Copy into ESPHome Device Builder and provide the named secrets locally.
+# Pin controller_ref to a tested release tag or commit for a real controller.
+substitutions:
+  device_name: my-vivarium-topology
+  friendly_name: My Vivarium
+  area_name: Vivarium
+  controller_ref: master
+  uv_mac: !secret my_vivarium_prot5_mac
+  visible_mac: !secret my_vivarium_jungle_dawn_mac
+
+packages:
+  lumineze:
+    url: https://github.com/I-am-shadowspawn/lumineze-controller-esphome
+    ref: ${controller_ref}
+    files:
+      - packages/lumineze-topology.yaml
+      - path: packages/topology/context-seasonal.yaml
+        vars: {context_id: vivarium, context_name: Vivarium}
+      - path: packages/topology/group.yaml
+        vars: {group_id: visible, group_name: Vivarium Visible}
+      - path: packages/topology/group.yaml
+        vars: {group_id: uv, group_name: Vivarium UV}
+      - path: packages/topology/fixture-luminize.yaml
+        vars:
+          fixture_id: prot5
+          fixture_name: ProT5
+          fixture_mac: ${uv_mac}
+          fixture_default_maximum: 0
+      - path: packages/topology/fixture-luminize.yaml
+        vars:
+          fixture_id: jungle_dawn
+          fixture_name: JungleDawn
+          fixture_mac: ${visible_mac}
+          fixture_default_maximum: 100
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/I-am-shadowspawn/lumineze-controller-esphome
+      ref: ${controller_ref}
+    components: [lumineze_topology]
+
+lumineze_topology:
+  topology_version: 1
+  engine_family: seasonal
+  contexts: [{id: vivarium}]
+  groups:
+    - {id: visible, context: vivarium, output: visible}
+    - {id: uv, context: vivarium, output: uv}
+  fixtures:
+    # Explicit slots: ProT5 can occupy slot 0 and JungleDawn slot 1.
+    - {id: prot5, slot: 0, type: prot5, group: uv, mac: ${uv_mac}}
+    - {id: jungle_dawn, slot: 1, type: jungle_dawn, group: visible, mac: ${visible_mac}}
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+api:
+  encryption:
+    key: !secret my_vivarium_encryption_key

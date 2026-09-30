@@ -1,9 +1,10 @@
 # Fixture topology architecture: T05/T06 revision
 
-Status: proposed architecture for subsequent implementation, **not implemented**. Prepared 30 September
+Status: architecture implemented in a generic software path; physical evidence and future profile integration remain outstanding. Prepared 30 September
 2026 against T06 commit `e505851` and merged T05 commit `461783b`.
-PR #6 was still open when this plan was written. Check its state before starting
-implementation; do not assume the T06 baseline is already on `master`.
+PR #6 was still open when this plan was written. It merged before the
+`refactor/fixture-topology` branch started from the documentation commit and
+current `master`.
 
 Source: the owner's attached discussion beginning “Yes. That scenario changes
 the architectural recommendation in an important way…”. It proposes independent

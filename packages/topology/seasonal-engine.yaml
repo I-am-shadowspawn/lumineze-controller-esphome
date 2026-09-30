@@ -1,0 +1,121 @@
+# One orchestrator captures the clock once, evaluates each context once, then
+# invokes group/fixture policy. Context math has no MAC, slot or fixture cap.
+script:
+  - id: evaluate_topology
+    mode: restart
+    then:
+      - lambda: |-
+          constexpr float pi = 3.14159265358979323846f;
+          constexpr float deg_to_rad = pi / 180.0f;
+          const auto clock_now = id(controller_time).now();
+          id(topology_snapshot_valid) = clock_now.is_valid();
+          const int year = clock_now.year;
+          const int days_in_year = ((year % 4 == 0) &&
+              ((year % 100 != 0) || (year % 400 == 0))) ? 366 : 365;
+          const int calendar_day = std::max(1, std::min(days_in_year,
+              static_cast<int>(clock_now.day_of_year)));
+          const float minutes = static_cast<float>(clock_now.hour * 60 +
+              clock_now.minute) + static_cast<float>(clock_now.second) / 60.0f;
+          for (int index = 0; index < lumineze_topology::context_count; ++index) {
+            auto &context = id(topology_contexts)[index];
+            context.revision++;
+            context.valid = false;
+            context.desired[0] = context.desired[1] = 0.0f;
+            context.peak[0] = context.peak[1] = 0.0f;
+            context.curve[0] = context.curve[1] = 0.0f;
+            if (!id(topology_snapshot_valid)) continue;
+            if (!std::isfinite(context.latitude) ||
+                !std::isfinite(context.noon_minutes) ||
+                !std::isfinite(context.phase_days) ||
+                !std::isfinite(context.visible_winter) ||
+                !std::isfinite(context.visible_summer) ||
+                !std::isfinite(context.visible_exponent) ||
+                !std::isfinite(context.uv_start_minutes) ||
+                !std::isfinite(context.uv_end_minutes) ||
+                !std::isfinite(context.uv_winter) ||
+                !std::isfinite(context.uv_summer) ||
+                !std::isfinite(context.uv_exponent)) continue;
+            float effective_day = std::fmod(
+                static_cast<float>(calendar_day - 1) + context.phase_days,
+                static_cast<float>(days_in_year));
+            if (effective_day < 0.0f) effective_day += days_in_year;
+            effective_day += 1.0f;
+            const float gamma = 2.0f * pi / static_cast<float>(days_in_year) *
+                (effective_day - 1.0f);
+            const float declination =
+                0.006918f - 0.399912f * std::cos(gamma) +
+                0.070257f * std::sin(gamma) -
+                0.006758f * std::cos(2.0f * gamma) +
+                0.000907f * std::sin(2.0f * gamma) -
+                0.002697f * std::cos(3.0f * gamma) +
+                0.001480f * std::sin(3.0f * gamma);
+            const float latitude = std::max(-60.0f,
+                std::min(60.0f, context.latitude)) * deg_to_rad;
+            const auto day_length = [latitude, pi](float decl) -> float {
+              const float cosine = -std::tan(latitude) * std::tan(decl);
+              const float angle = cosine >= 1.0f ? 0.0f :
+                  cosine <= -1.0f ? pi : std::acos(cosine);
+              return 24.0f * angle / pi;
+            };
+            const float hours = day_length(declination);
+            const float noon = std::max(600.0f,
+                std::min(840.0f, context.noon_minutes));
+            const float sunrise = noon - hours * 30.0f;
+            const float sunset = noon + hours * 30.0f;
+            float visible_envelope = 0.0f;
+            if (sunset > sunrise && minutes > sunrise && minutes < sunset) {
+              const float progress = (minutes - sunrise) / (sunset - sunrise);
+              visible_envelope = std::max(0.0f,
+                  std::min(1.0f, std::sin(pi * progress)));
+            }
+            const float tilt = 23.4393f * deg_to_rad;
+            const float a = day_length(tilt);
+            const float b = day_length(-tilt);
+            const float shortest = std::min(a, b);
+            const float longest = std::max(a, b);
+            float season = 0.5f;
+            if (longest - shortest > 0.001f)
+              season = (hours - shortest) / (longest - shortest);
+            season = std::max(0.0f, std::min(1.0f, season));
+            const float visible_peak = context.visible_winter +
+                (context.visible_summer - context.visible_winter) * season;
+            const float visible_curve = std::pow(visible_envelope,
+                std::max(0.25f, std::min(4.0f, context.visible_exponent)));
+            const float uv_start = sunrise + std::max(0.0f,
+                std::min(300.0f, context.uv_start_minutes));
+            const float uv_end = sunset - std::max(0.0f,
+                std::min(300.0f, context.uv_end_minutes));
+            const float uv_window = std::max(0.0f, uv_end - uv_start);
+            float uv_envelope = 0.0f;
+            if (uv_window > 0.0f && minutes > uv_start && minutes < uv_end) {
+              const float progress = (minutes - uv_start) / uv_window;
+              uv_envelope = std::max(0.0f,
+                  std::min(1.0f, std::sin(pi * progress)));
+            }
+            const float uv_peak = context.uv_winter +
+                (context.uv_summer - context.uv_winter) * season;
+            const float uv_curve = std::pow(uv_envelope,
+                std::max(0.25f, std::min(4.0f, context.uv_exponent)));
+            context.peak[0] = visible_peak;
+            context.curve[0] = visible_curve;
+            context.desired[0] = visible_peak * visible_curve;
+            context.peak[1] = uv_peak;
+            context.curve[1] = uv_curve;
+            context.desired[1] = uv_peak * uv_curve;
+            context.valid = true;
+            for (int role = 0; role < 2; ++role) {
+              if (!std::isfinite(context.desired[role]) ||
+                  !std::isfinite(context.peak[role]) ||
+                  context.desired[role] < 0.0f ||
+                  context.desired[role] > context.peak[role] ||
+                  context.peak[role] > 1.0f)
+                context.valid = false;
+            }
+          }
+      - script.execute: apply_topology_policy
+
+interval:
+  - interval: 10s
+    startup_delay: 5s
+    then:
+      - script.execute: evaluate_topology

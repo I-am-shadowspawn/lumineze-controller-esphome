@@ -1,9 +1,10 @@
 # Unattended implementation runbook: T05R/T06R
 
-Status: pending implementation. This document and
-[the architecture decision](fixture-topology-architecture.md) are the input to a
-future explicitly requested implementation. Writing this plan does not authorise
-firmware edits, deployment or a hardware test in the current documentation task.
+Status: software implementation completed on `refactor/fixture-topology`;
+hardware evidence and PR review remain open.
+The owner subsequently requested the T05R/T06R refactor and a review PR.
+[The architecture decision](fixture-topology-architecture.md) remains the
+design input. No live controller was flashed during this work.
 
 ## Start conditions and source precedence
 
@@ -300,11 +301,22 @@ persistence differences, numerical/protocol comparisons, build/resource evidence
 known limitations and next dependency. A later agent should be able to continue
 from that record without interpreting this conversation.
 
-- [ ] R0 composition/validation proof
-- [ ] R1 T05R extraction
-- [ ] R2 generic fixture identity/topology
-- [ ] R3 contexts/groups/routing
-- [ ] R4 T06R authorization/limits/transaction semantics
-- [ ] R5 compatibility and T07/T08 integration
-- [ ] R6 CI and release evidence
+- [x] R0 composition/validation proof (`fe69fa5`)
+- [x] R1 T05R extraction into a separate generic package tree
+- [x] R2 generic fixture identity/topology and static binding validation
+- [x] R3 contexts/groups/routing with one seasonal evaluation per context
+- [x] R4 T06R authorization, per-fixture caps and serialized transport
+- [x] R5 legacy compatibility wrapper and generic entity/migration guide
+- [x] R6 software CI matrix and release evidence in `docs/topology-controller.md`
 - [ ] Physical hardware evidence required for advertised topology support
+
+R1–R6 are delivered together because the operational package and its generated
+bindings must compile as one unit. The new path leaves the T07/T08 development
+inputs out of generic production control; it does not alter their legacy entry
+path. Local checks cover negative schema cases, nine topology compositions,
+production C++ conversion/transport helpers, seasonal target parity, protocol
+frames, safe-off scope and legacy configuration/firmware. The generic remote
+Device Builder example is checked at this branch's pushed ref before PR review.
+Physical BLE
+timing, persistence after power cycle and four-fixture heap behavior remain for
+bench testing before production support or a release claim.

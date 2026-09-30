@@ -106,6 +106,63 @@ def main():
         "allow_experimental_topology: false",
         "required for more than two fixtures",
     )
+    run_case(
+        command,
+        "BLE connection allocation",
+        four,
+        "max_connections: 4",
+        "max_connections: 2",
+        "one configured BLE connection slot per enabled client",
+    )
+    run_case(
+        command,
+        "unsupported engine family",
+        two,
+        "engine_family: seasonal",
+        "engine_family: schedule",
+        "engine_family",
+    )
+    run_case(
+        command,
+        "duplicate context ID",
+        four,
+        "    - id: second_vivarium",
+        "    - id: first_vivarium",
+        "duplicate identity",
+    )
+    run_case(
+        command,
+        "unused context",
+        two,
+        "  groups:",
+        "    - id: unused_context\n  groups:",
+        "every context needs a group",
+    )
+    run_case(
+        command,
+        "unused group",
+        two,
+        "  fixtures:",
+        "    - {id: unused_group, context: shared, output: visible}\n  fixtures:",
+        "every group needs an enabled fixture",
+    )
+    run_case(
+        command,
+        "out-of-range slot",
+        two,
+        "slot: 3",
+        "slot: 4",
+        "slot",
+    )
+    run_case(
+        command,
+        "five declarations",
+        four,
+        "    - {id: fixture_d, slot: 3, type: prot5, group: second_uv, mac: 'AA:BB:CC:DD:EE:04'}",
+        "    - {id: fixture_d, slot: 3, type: prot5, group: second_uv, mac: 'AA:BB:CC:DD:EE:04'}\n"
+        "    - {id: fifth, slot: 0, enabled: false}",
+        "one to four declared slots",
+    )
 
 
 if __name__ == "__main__":

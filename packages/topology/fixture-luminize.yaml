@@ -1,0 +1,296 @@
+# Include once per enabled fixture. The validator matches fixture_id/client MAC
+# to its descriptor; fixture_name is display text only.
+ble_client:
+  - id: ${fixture_id}_client
+    mac_address: ${fixture_mac}
+    auto_connect: false
+    on_connect:
+      then:
+        - lambda: |-
+            const int slot = lumineze_topology::fixture_slot("${fixture_id}");
+            id(topology_fixtures)[slot].connected = true;
+    on_disconnect:
+      then:
+        - lambda: |-
+            const int slot = lumineze_topology::fixture_slot("${fixture_id}");
+            id(topology_fixtures)[slot].connected = false;
+            auto &dispatcher = id(topology_dispatch);
+            if (dispatcher.active && dispatcher.active_slot == slot &&
+                !dispatcher.write_completed) dispatcher.failed = true;
+
+number:
+  - platform: template
+    id: ${fixture_id}_maximum
+    name: ${fixture_name} Calibrated Maximum
+    entity_category: config
+    unit_of_measurement: '%'
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: ${fixture_default_maximum}
+    # The on_value/on_boot pair stores under an assignment fingerprint.
+    restore_value: false
+    optimistic: true
+    on_value:
+      - lambda: |-
+          const int slot = lumineze_topology::fixture_slot("${fixture_id}");
+          auto &fixture = id(topology_fixtures)[slot];
+          fixture.maximum = x;
+          if (fixture.calibration_ready && std::isfinite(x) &&
+              x >= 0.0f && x <= 100.0f) {
+            auto preference = global_preferences->make_preference<float>(
+                lumineze_topology::calibration_key(slot));
+            preference.save(&x);
+          }
+      - script.execute: evaluate_topology
+  - platform: template
+    id: ${fixture_id}_minimum_change
+    name: ${fixture_id.replace('_', ' ').title()} Minimum Automatic Change
+    entity_category: config
+    unit_of_measurement: '%'
+    min_value: 1
+    max_value: 10
+    step: 1
+    initial_value: 2
+    restore_value: true
+    optimistic: true
+    on_value:
+      - lambda: id(topology_fixtures)[lumineze_topology::fixture_slot("${fixture_id}")].minimum_change = static_cast<int>(x);
+      - script.execute: evaluate_topology
+  - platform: template
+    id: ${fixture_id}_manual_level
+    name: ${fixture_name} Manual Absolute Level
+    entity_category: config
+    unit_of_measurement: '%'
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 0
+    restore_value: false
+    optimistic: true
+    on_value:
+      - lambda: id(topology_fixtures)[lumineze_topology::fixture_slot("${fixture_id}")].manual_level = static_cast<int>(x);
+      - script.execute: evaluate_topology
+
+switch:
+  - platform: template
+    id: ${fixture_id}_manual
+    name: ${fixture_name} Manual Override
+    entity_category: config
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - lambda: id(topology_fixtures)[lumineze_topology::fixture_slot("${fixture_id}")].manual = true;
+      - script.execute: evaluate_topology
+    on_turn_off:
+      - lambda: id(topology_fixtures)[lumineze_topology::fixture_slot("${fixture_id}")].manual = false;
+      - script.execute: evaluate_topology
+
+button:
+  - platform: template
+    id: ${fixture_id}_safe_off
+    name: ${fixture_name} Request Off
+    icon: mdi:power
+    on_press:
+      - lambda: |-
+          const int slot = lumineze_topology::fixture_slot("${fixture_id}");
+          auto &fixture = id(topology_fixtures)[slot];
+          fixture.manual = true;
+          fixture.manual_level = 0;
+          id(${fixture_id}_manual).publish_state(true);
+          id(${fixture_id}_manual_level).publish_state(0);
+      - script.execute: evaluate_topology
+
+binary_sensor:
+  - platform: template
+    id: ${fixture_id}_connected
+    name: ${fixture_name} BLE Connected
+    entity_category: diagnostic
+    lambda: return id(topology_fixtures)[lumineze_topology::fixture_slot("${fixture_id}")].connected;
+  - platform: template
+    id: ${fixture_id}_pending
+    name: ${fixture_name} Request Pending
+    entity_category: diagnostic
+    lambda: return id(topology_fixtures)[lumineze_topology::fixture_slot("${fixture_id}")].pending;
+  - platform: template
+    id: ${fixture_id}_readback_fresh
+    name: ${fixture_name} Readback Fresh
+    entity_category: diagnostic
+    lambda: return id(topology_fixtures)[lumineze_topology::fixture_slot("${fixture_id}")].readback_fresh;
+
+sensor:
+  - platform: ble_client
+    type: characteristic
+    id: ${fixture_id}_status_notification
+    ble_client_id: ${fixture_id}_client
+    service_uuid: '0000FFF0'
+    characteristic_uuid: '0000FFF1'
+    internal: true
+    notify: true
+    update_interval: never
+    lambda: |-
+      if (x.size() != 16 || x[0] != 0x02 || x[1] != 0xF0 || x[3] > 100)
+        return NAN;
+      return static_cast<float>(x[3]);
+    on_value:
+      then:
+        - lambda: |-
+            if (!std::isfinite(x)) return;
+            const int slot = lumineze_topology::fixture_slot("${fixture_id}");
+            auto &fixture = id(topology_fixtures)[slot];
+            fixture.reported = static_cast<int>(x);
+            if (id(topology_dispatch).active &&
+                id(topology_dispatch).active_slot == slot &&
+                id(topology_dispatch).write_completed)
+              fixture.readback_received = true;
+  - platform: template
+    id: ${fixture_id}_automatic_preview
+    name: ${fixture_name} Automatic Preview
+    entity_category: diagnostic
+    unit_of_measurement: '%'
+    accuracy_decimals: 0
+    lambda: |-
+      const int slot = lumineze_topology::fixture_slot("${fixture_id}");
+      const auto &fixture = id(topology_fixtures)[slot];
+      const int group_index = lumineze_topology::group_for_slot(slot);
+      const auto &group = lumineze_topology::groups[group_index];
+      const auto &context = id(topology_contexts)[group.context];
+      if (!context.valid) return NAN;
+      const int role = group.role;
+      const lumineze_topology::ConversionInput input{
+          lumineze_topology::AUTOMATIC, fixture.maximum,
+          context.desired[role], context.peak[role], context.curve[role],
+          0, fixture.target, fixture.minimum_change,
+          fixture.automatic_queued, false, false, false, false};
+      const auto preview = lumineze_topology::convert_fixture(input);
+      return preview.valid ? static_cast<float>(preview.target) : NAN;
+    update_interval: 10s
+  - platform: template
+    id: ${fixture_id}_reported_level
+    name: ${fixture_name} Lamp Reported Level
+    entity_category: diagnostic
+    unit_of_measurement: '%'
+    accuracy_decimals: 0
+    lambda: |-
+      const int value = id(topology_fixtures)[lumineze_topology::fixture_slot("${fixture_id}")].reported;
+      if (value < 0) return NAN;
+      return static_cast<float>(value);
+    update_interval: 5s
+  - platform: template
+    id: ${fixture_id}_requested_level
+    name: ${fixture_name} Requested Level
+    entity_category: diagnostic
+    unit_of_measurement: '%'
+    accuracy_decimals: 0
+    lambda: return static_cast<float>(id(topology_fixtures)[lumineze_topology::fixture_slot("${fixture_id}")].target);
+    update_interval: 5s
+
+text_sensor:
+  - platform: template
+    id: ${fixture_id}_dispatch_status
+    name: ${fixture_name} Dispatch Status
+    entity_category: diagnostic
+  - platform: template
+    id: ${fixture_id}_readback_status
+    name: ${fixture_name} Readback Status
+    entity_category: diagnostic
+
+script:
+  - id: ${fixture_id}_transaction
+    mode: single
+    parameters:
+      token: uint32_t
+    then:
+      - lambda: |-
+          id(${fixture_id}_dispatch_status).publish_state("Connecting");
+          id(${fixture_id}_readback_status).publish_state("Awaiting lamp status");
+      - ble_client.connect: ${fixture_id}_client
+      - delay: 1s
+      - ble_client.ble_write:
+          id: ${fixture_id}_client
+          service_uuid: '0000FFF0'
+          characteristic_uuid: '0000FFF2'
+          value: [0x05, 0xF0, 0x00, 0x01, 0x02, 0x03, 0x04, 0x00,
+                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x50]
+      - delay: 200ms
+      - ble_client.ble_write:
+          id: ${fixture_id}_client
+          service_uuid: '0000FFF0'
+          characteristic_uuid: '0000FFF2'
+          value: !lambda |-
+            const int slot = lumineze_topology::fixture_slot("${fixture_id}");
+            return {0x02, 0xF1, 0x00,
+                    static_cast<uint8_t>(id(topology_fixtures)[slot].in_flight),
+                    0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x20};
+      - delay: 300ms
+      - if:
+          condition:
+            lambda: |-
+              return id(topology_fixtures)[lumineze_topology::fixture_slot("${fixture_id}")].connected &&
+                     !id(topology_dispatch).failed;
+          then:
+            - lambda: id(topology_dispatch).write_completed = true;
+            - lambda: id(topology_fixtures)[lumineze_topology::fixture_slot("${fixture_id}")].readback_received = false;
+            - ble_client.ble_write:
+                id: ${fixture_id}_client
+                service_uuid: '0000FFF0'
+                characteristic_uuid: '0000FFF2'
+                value: [0x02, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20]
+            - wait_until:
+                condition:
+                  lambda: |-
+                    const int slot = lumineze_topology::fixture_slot("${fixture_id}");
+                    return id(topology_fixtures)[slot].readback_received ||
+                           !id(topology_fixtures)[slot].connected;
+                timeout: 1500ms
+            - ble_client.disconnect: ${fixture_id}_client
+            - wait_until:
+                condition:
+                  lambda: |-
+                    return !id(topology_fixtures)[
+                        lumineze_topology::fixture_slot("${fixture_id}")].connected;
+                timeout: 5s
+            - lambda: |-
+                const int slot = lumineze_topology::fixture_slot("${fixture_id}");
+                auto &dispatcher = id(topology_dispatch);
+                if (!lumineze_topology::owns_transaction(dispatcher, slot, token)) return;
+                auto &fixture = id(topology_fixtures)[slot];
+                if (fixture.connected) {
+                  id(record_topology_failure)->execute(slot, token);
+                  return;
+                }
+                if (!lumineze_topology::complete_transaction(
+                        fixture, dispatcher, slot, token)) return;
+                if (fixture.readback_fresh) {
+                  id(${fixture_id}_readback_status).publish_state(
+                      fixture.reported == fixture.completed ? "Confirmed" : "Mismatch");
+                } else {
+                  id(${fixture_id}_readback_status).publish_state(
+                      "No status response; last report may be stale");
+                }
+                id(${fixture_id}_dispatch_status).publish_state("Write completed");
+          else:
+            - script.execute:
+                id: record_topology_failure
+                slot: !lambda return lumineze_topology::fixture_slot("${fixture_id}");
+                token: !lambda return id(topology_dispatch).token;
+
+esphome:
+  on_boot:
+    - priority: -100
+      then:
+        - lambda: |-
+            const int slot = lumineze_topology::fixture_slot("${fixture_id}");
+            auto &fixture = id(topology_fixtures)[slot];
+            auto preference = global_preferences->make_preference<float>(
+                lumineze_topology::calibration_key(slot));
+            float restored = 0.0f;
+            if (preference.load(&restored) && std::isfinite(restored) &&
+                restored >= 0.0f && restored <= 100.0f) {
+              fixture.maximum = restored;
+              id(${fixture_id}_maximum).publish_state(restored);
+            }
+            fixture.calibration_ready = true;
+        - script.execute: evaluate_topology
