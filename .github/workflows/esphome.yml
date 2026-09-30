@@ -50,6 +50,8 @@ jobs:
         run: python scripts/check_protocol_trace.py
       - name: Compare seasonal targets with v1
         run: python scripts/check_seasonal_parity.py
+      - name: Compare live seasonal profile inputs
+        run: python scripts/check_seasonal_profile_parity.py
       - name: Check production safe-off scopes
         run: python scripts/check_safe_off_scopes.py
       - name: Check topology dispatcher timeout cleanup

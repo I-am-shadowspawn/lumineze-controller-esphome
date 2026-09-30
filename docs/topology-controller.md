@@ -1,6 +1,10 @@
 # Static fixture topology controller
 
-The generic entry point is `packages/lumineze-topology.yaml`. The existing
+The generic seasonal production entry point is
+`packages/seasonal-production.yaml`; development uses
+`packages/seasonal-development.yaml`. The older
+`packages/lumineze-topology.yaml` and `packages/lumineze-topology-development.yaml`
+paths remain compatibility aliases. The existing
 `packages/lumineze-controller.yaml` path still resolves to the v1 two-product
 configuration, now explicitly composed through
 `packages/compat/legacy-two-fixture.yaml`. A generic build is a **new
@@ -9,7 +13,7 @@ settings automatically. Keep a known-good v1 tag and its private YAML for
 recovery.
 
 Production uses the real-clock snapshot provider. Development topologies use
-`packages/lumineze-topology-development.yaml` with
+`packages/seasonal-development.yaml` with
 `input_provider: development`; their simulation enable and simulated-output
 switches reset off, and simulated automatic output remains calculation-only
 until explicitly enabled for bench use. The fixed two-fixture development

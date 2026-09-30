@@ -9,7 +9,11 @@ lamp report trace.
 
 ## Legacy two-lamp package
 
-`packages/lumineze-controller.yaml` is production. Its development counterpart,
+`packages/lumineze-controller.yaml` is the fixed legacy production composition.
+For static topology builds, `packages/seasonal-production.yaml` is the
+production entry point and `packages/seasonal-development.yaml` is the
+development entry point. The `lumineze-topology*.yaml` paths remain aliases.
+The legacy development counterpart,
 `packages/lumineze-controller-development.yaml`, adds
 `packages/features/verbose-diagnostics.yaml` and enables DEBUG logging.
 

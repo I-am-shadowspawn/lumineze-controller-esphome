@@ -13,7 +13,7 @@ packages:
     url: https://github.com/I-am-shadowspawn/lumineze-controller-esphome
     ref: ${controller_ref}
     files:
-      - packages/lumineze-topology.yaml
+      - packages/seasonal-production.yaml
       - path: packages/topology/context-seasonal.yaml
         vars: {context_id: vivarium, context_name: Vivarium}
       - path: packages/topology/group.yaml

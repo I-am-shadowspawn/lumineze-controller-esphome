@@ -1,0 +1,7 @@
+# Seasonal development profile uses the same engine with explicit dev inputs.
+substitutions:
+  topology_snapshot_provider: capture_topology_development_snapshot
+  logger_level: DEBUG
+packages:
+  controller: !include topology/controller-core.yaml
+  input_provider: !include topology/input-development.yaml
