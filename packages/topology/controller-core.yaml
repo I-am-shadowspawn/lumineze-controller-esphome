@@ -1,5 +1,6 @@
 packages:
   base: !include base.yaml
+  diagnostics: !include diagnostics.yaml
   seasonal_engine: !include seasonal-engine.yaml
   fixture_policy: !include fixture-policy.yaml
   dispatcher: !include dispatcher.yaml

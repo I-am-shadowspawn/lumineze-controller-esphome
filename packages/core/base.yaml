@@ -9,7 +9,9 @@ substitutions:
   enable_prot5: "false"
 
   timezone: "Europe/London"
-  logger_level: "DEBUG"
+  # Operational builds keep routine traffic at INFO. Development packages can
+  # override this to DEBUG for the seasonal engine's detailed traces.
+  logger_level: "INFO"
 
 # Board: Generic ESP32-C3 Board (Generic)
 # Definition: definitions/boards/generic-esp32c3/manifest.yaml

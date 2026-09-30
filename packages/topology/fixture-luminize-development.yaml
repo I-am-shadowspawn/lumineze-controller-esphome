@@ -1,0 +1,24 @@
+# Include alongside fixture-luminize.yaml only in development profiles.
+sensor:
+  - platform: template
+    id: ${fixture_id}_automatic_preview
+    name: ${fixture_name} Automatic Preview
+    entity_category: diagnostic
+    unit_of_measurement: '%'
+    accuracy_decimals: 0
+    lambda: |-
+      const int slot = lumineze_topology::fixture_slot("${fixture_id}");
+      const auto &fixture = id(topology_fixtures)[slot];
+      const int group_index = lumineze_topology::group_for_slot(slot);
+      const auto &group = lumineze_topology::groups[group_index];
+      const auto &context = id(topology_contexts)[group.context];
+      if (!context.valid) return NAN;
+      const int role = group.role;
+      const lumineze_topology::ConversionInput input{
+          lumineze_topology::AUTOMATIC, fixture.maximum,
+          context.desired[role], context.peak[role], context.curve[role],
+          0, fixture.target, fixture.minimum_change,
+          fixture.automatic_queued, false, false, false, false};
+      const auto preview = lumineze_topology::convert_fixture(input);
+      return preview.valid ? static_cast<float>(preview.target) : NAN;
+    update_interval: 10s

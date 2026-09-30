@@ -1,0 +1,179 @@
+# Optional detailed seasonal calculation diagnostics for development builds.
+sensor:
+  - platform: template
+    name: "Solar Calendar Day"
+    icon: mdi:calendar-today
+    unit_of_measurement: "day"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return static_cast<float>(id(solar_source_day));
+    update_interval: 10s
+  - platform: template
+    name: "Solar Effective Day"
+    icon: mdi:calendar-sync
+    unit_of_measurement: "day"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(solar_effective_day);
+    update_interval: 10s
+  - platform: template
+    name: "Solar Declination"
+    icon: mdi:angle-acute
+    unit_of_measurement: "°"
+    accuracy_decimals: 2
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(solar_declination_degrees);
+    update_interval: 10s
+  - platform: template
+    name: "Solar Day Length"
+    icon: mdi:theme-light-dark
+    unit_of_measurement: "h"
+    accuracy_decimals: 3
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(solar_day_length_hours);
+    update_interval: 10s
+  - platform: template
+    name: "Simulated Solar Elevation"
+    icon: mdi:sun-angle
+    unit_of_measurement: "°"
+    accuracy_decimals: 2
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(solar_elevation_degrees);
+    update_interval: 10s
+  - platform: template
+    name: "Solar Daylight Envelope"
+    icon: mdi:chart-bell-curve-cumulative
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(solar_daylight_envelope) * 100.0f;
+    update_interval: 10s
+  - platform: template
+    name: "JungleDawn Curve Fraction"
+    icon: mdi:chart-bell-curve
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(jungle_dawn_curve_fraction) * 100.0f;
+    update_interval: 10s
+  - platform: template
+    name: "JungleDawn Seasonal Position"
+    icon: mdi:calendar-range
+    unit_of_measurement: "% summer"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(jungle_dawn_season_factor) * 100.0f;
+    update_interval: 10s
+  - platform: template
+    name: "JungleDawn Effective Peak"
+    icon: mdi:brightness-7
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(jungle_dawn_effective_peak);
+    update_interval: 10s
+  - platform: template
+    name: "JungleDawn Calculated Target"
+    icon: mdi:brightness-percent
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return static_cast<float>(id(jungle_dawn_calculated_target));
+    update_interval: 10s
+  - platform: template
+    name: "JungleDawn Last Automatic Queued Target"
+    icon: mdi:playlist-check
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(automatic_has_queued)[0]) return NAN;
+      return static_cast<float>(id(automatic_last_queued)[0]);
+    update_interval: 10s
+  - platform: template
+    name: "ProT5 UVB Window Length"
+    icon: mdi:timeline-clock-outline
+    unit_of_measurement: "h"
+    accuracy_decimals: 2
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(prot5_window_length_hours);
+    update_interval: 10s
+  - platform: template
+    name: "ProT5 Window Envelope"
+    icon: mdi:chart-bell-curve-cumulative
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(prot5_window_envelope) * 100.0f;
+    update_interval: 10s
+  - platform: template
+    name: "ProT5 Curve Fraction"
+    icon: mdi:chart-bell-curve
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(prot5_curve_fraction) * 100.0f;
+    update_interval: 10s
+  - platform: template
+    name: "ProT5 Effective Peak"
+    icon: mdi:shield-sun
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return id(prot5_effective_peak);
+    update_interval: 10s
+  - platform: template
+    name: "ProT5 Calculated Target"
+    icon: mdi:brightness-percent
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    lambda: |-
+      if (!id(solar_calculation_valid)) return NAN;
+      return static_cast<float>(id(prot5_calculated_target));
+    update_interval: 10s
+  - platform: template
+    name: "ProT5 Last Automatic Queued Target"
+    icon: mdi:playlist-check
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    lambda: |-
+      if (!id(automatic_has_queued)[1]) return NAN;
+      return static_cast<float>(id(automatic_last_queued)[1]);
+    update_interval: 10s
+
+binary_sensor:
+  - platform: template
+    name: "Simulated Sun Above Horizon"
+    device_class: light
+    entity_category: diagnostic
+    lambda: |-
+      return id(solar_calculation_valid) &&
+             id(solar_daylight_envelope) > 0.0f;

@@ -3,7 +3,7 @@ substitutions:
   friendly_name: LuminEZE Topology Controller
   area_name: Vivarium
   timezone: Europe/London
-  logger_level: DEBUG
+  logger_level: INFO
   ble_connection_slots: '2'
 
 lumineze_topology:

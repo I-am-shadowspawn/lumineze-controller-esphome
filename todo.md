@@ -1,7 +1,7 @@
 # LuminEZE implementation roadmap
 
 Prepared: 29 September 2026  
-Status: implementation underway. T01–T07 have source/build evidence; live hardware and settings observations remain for Gate A. T05R/T06R have a generic static-topology implementation and software matrix; physical multi-fixture evidence remains outstanding.
+Status: implementation underway. T01–T08 have source/build evidence; live hardware and settings observations remain for Gate A. T05R/T06R have a generic static-topology implementation and software matrix; physical multi-fixture evidence remains outstanding.
 
 Planning update, 30 September 2026: the [fixture/group architecture](docs/plans/fixture-topology-architecture.md)
 and [unattended implementation runbook](docs/plans/fixture-topology-implementation.md)
@@ -282,6 +282,8 @@ Do not commit private live-device YAML or raw backups merely to fit this layout.
 - Record expected Home Assistant entities for each profile, including intentional removals, and measure whether reporting materially changes load.
 
 **Done when:** production faults can be diagnosed without installing test tools; common diagnostics compile independently of either engine's private state; profile entity inventories distinguish deliberate differences from accidental omissions.
+
+**Implementation and evidence:** Operational health entities remain in production for both the legacy and generic topology profiles. Detailed seasonal calculations and per-fixture automatic previews are opt-in development packages; seasonal status entities are declared with the seasonal engine. Production logging is INFO and development logging is DEBUG. The [diagnostic profile inventories](docs/diagnostic-profiles.md) record intended entities and sampling cadence. PR #11 CI passed both workflow runs: production/development configurations validated and firmware compiled; generated-source checks confirmed representative operational entities are shared and verbose entities remain development-only. Physical controller and lamp load were not measured; the documented cadence is a configured sampling estimate, not a hardware/network measurement.
 
 ### T09 — Assemble and verify both seasonal profiles
 
