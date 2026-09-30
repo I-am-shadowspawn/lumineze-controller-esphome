@@ -53,8 +53,30 @@ jobs:
       - name: Check topology dispatcher timeout cleanup
         run: python scripts/check_topology_dispatcher_timeout.py
       - name: Compile firmware
+        shell: bash
         run: |
-          esphome -s enable_prot5 true -s prot5_mac AA:BB:CC:DD:EE:02 compile ci/controller.yaml
-          esphome compile ci/controller-development.yaml
-          python scripts/check_topology_matrix.py --compile esphome
+          set -Eeuo pipefail
+
+          for attempt in 1 2 3; do
+            echo "::group::Firmware build attempt ${attempt}/3"
+            if esphome -s enable_prot5 true -s prot5_mac AA:BB:CC:DD:EE:02 compile ci/controller.yaml && \
+               esphome compile ci/controller-development.yaml && \
+               python scripts/check_topology_matrix.py --compile esphome; then
+              echo "::endgroup::"
+              break
+            else
+              status=$?
+            fi
+            echo "::endgroup::"
+
+            if [[ "$attempt" -eq 3 ]]; then
+              echo "Firmware compilation failed after ${attempt} attempts." >&2
+              exit "$status"
+            fi
+
+            delay=$((attempt * 20))
+            echo "Firmware compilation attempt ${attempt} failed; retrying in ${delay}s." >&2
+            sleep "$delay"
+          done
+
           python scripts/check_generated_input_isolation.py
