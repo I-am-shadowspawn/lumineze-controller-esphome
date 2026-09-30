@@ -318,3 +318,76 @@ script:
                    prot5_exponent);
 
       - script.execute: apply_control_policy
+binary_sensor:
+  - platform: template
+    name: "Solar Calculation Valid"
+    entity_category: diagnostic
+    lambda: return id(solar_calculation_valid);
+  - platform: template
+    name: "ProT5 UVB Window Active"
+    icon: mdi:weather-sunny-alert
+    entity_category: diagnostic
+    lambda: |-
+      return id(solar_calculation_valid) &&
+             id(prot5_window_envelope) > 0.0f;
+text_sensor:
+  - platform: template
+    id: solar_engine_status
+    name: "Solar Engine Status"
+    icon: mdi:information-outline
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: solar_evaluation_time_text
+    name: "Solar Evaluation Time"
+    icon: mdi:clock-outline
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: solar_sunrise_text
+    name: "Simulated Sunrise"
+    icon: mdi:weather-sunset-up
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: solar_noon_text
+    name: "Simulated Solar Noon Time"
+    icon: mdi:weather-sunny
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: solar_sunset_text
+    name: "Simulated Sunset"
+    icon: mdi:weather-sunset-down
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: solar_day_length_text
+    name: "Simulated Day Length"
+    icon: mdi:theme-light-dark
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: jungle_dawn_curve_status
+    name: "JungleDawn Curve Status"
+    icon: mdi:brightness-auto
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: prot5_curve_status
+    name: "ProT5 Curve Status"
+    icon: mdi:brightness-auto
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: prot5_window_start_text
+    name: "ProT5 Window Start"
+    icon: mdi:weather-sunset-up
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: prot5_window_end_text
+    name: "ProT5 Window End"
+    icon: mdi:weather-sunset-down
+    entity_category: diagnostic
+    update_interval: never

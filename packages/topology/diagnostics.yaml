@@ -1,0 +1,8 @@
+# Shared operational health signals; this package has no seasonal-engine IDs.
+binary_sensor:
+  - platform: template
+    id: topology_controller_time_valid
+    name: Controller Time Valid
+    device_class: connectivity
+    entity_category: diagnostic
+    lambda: return id(controller_time).now().is_valid();

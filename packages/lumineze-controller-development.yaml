@@ -1,5 +1,7 @@
 substitutions:
   evaluation_snapshot_provider: capture_development_evaluation_snapshot
+  logger_level: DEBUG
 packages:
   controller: !include lumineze-controller-core.yaml
   evaluation_input: !include inputs/development.yaml
+  verbose_diagnostics: !include features/verbose-diagnostics.yaml

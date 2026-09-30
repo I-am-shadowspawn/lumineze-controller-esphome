@@ -30,6 +30,8 @@ jobs:
           esphome -s enable_jungle_dawn false config ci/controller.yaml > /dev/null
           esphome config ci/controller.yaml > /dev/null
           esphome config ci/controller-development.yaml > /dev/null
+          esphome config ci/topology-generic.yaml > /dev/null
+          esphome config ci/topology-generic-development.yaml > /dev/null
           esphome -s enable_jungle_dawn false -s enable_prot5 true -s prot5_mac AA:BB:CC:DD:EE:02 config ci/controller.yaml > /dev/null
           esphome -s enable_prot5 true -s prot5_mac AA:BB:CC:DD:EE:02 config ci/controller.yaml > /dev/null
       - name: Check transport state transitions
@@ -61,6 +63,8 @@ jobs:
             echo "::group::Firmware build attempt ${attempt}/3"
             if esphome -s enable_prot5 true -s prot5_mac AA:BB:CC:DD:EE:02 compile ci/controller.yaml && \
                esphome compile ci/controller-development.yaml && \
+               esphome compile ci/topology-generic.yaml && \
+               esphome compile ci/topology-generic-development.yaml && \
                python scripts/check_topology_matrix.py --compile esphome; then
               echo "::endgroup::"
               break
@@ -80,3 +84,4 @@ jobs:
           done
 
           python scripts/check_generated_input_isolation.py
+          python scripts/check_diagnostic_profiles.py

@@ -159,6 +159,8 @@ boundary.
   legacy package and generic topology fragments.
 - [`docs/topology-controller.md`](docs/topology-controller.md): topology
   configuration, behavior, migration, and validation evidence.
+- [`docs/diagnostic-profiles.md`](docs/diagnostic-profiles.md): production and
+  development diagnostic entities and their update intervals.
 - [`docs/build.md`](docs/build.md): repository build, secrets, and private
   configuration notes.
 
