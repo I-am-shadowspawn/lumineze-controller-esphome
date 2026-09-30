@@ -1,0 +1,23 @@
+# CI-only values. Development simulation defaults to calculation-only.
+substitutions:
+  device_name: "lumineze-development-ci"
+  friendly_name: "LuminEZE Development CI"
+  enable_jungle_dawn: "true"
+  jungle_dawn_mac: "AA:BB:CC:DD:EE:01"
+  enable_prot5: "false"
+
+packages:
+  lumineze: !include ../packages/lumineze-controller-development.yaml
+
+wifi:
+  ssid: "ci-network"
+  password: "ci-password"
+  ap:
+    ssid: "LuminEZE Development Fallback"
+    password: "fallbackpassword"
+
+captive_portal:
+
+api:
+  encryption:
+    key: "dnRG2D8Cd5ETYvaQMYcP799ZuAjfSvZk6o1liVjo7qw="

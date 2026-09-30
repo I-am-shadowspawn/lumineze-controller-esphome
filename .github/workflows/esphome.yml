@@ -29,6 +29,7 @@ jobs:
         run: |
           esphome -s enable_jungle_dawn false config ci/controller.yaml > /dev/null
           esphome config ci/controller.yaml > /dev/null
+          esphome config ci/controller-development.yaml > /dev/null
           esphome -s enable_jungle_dawn false -s enable_prot5 true -s prot5_mac AA:BB:CC:DD:EE:02 config ci/controller.yaml > /dev/null
           esphome -s enable_prot5 true -s prot5_mac AA:BB:CC:DD:EE:02 config ci/controller.yaml > /dev/null
       - name: Check transport state transitions
@@ -37,6 +38,8 @@ jobs:
         run: python scripts/check_topology_schema.py esphome
       - name: Validate operational topology matrix
         run: python scripts/check_topology_matrix.py esphome
+      - name: Check real and development input isolation
+        run: python scripts/check_input_isolation.py esphome
       - name: Check production fixture conversion and routing helpers
         run: |
           g++ -std=c++17 -Wall -Wextra -Werror tests/test_fixture_logic.cpp -o /tmp/lumineze-fixture-logic-test
@@ -57,20 +60,23 @@ jobs:
           for attempt in 1 2 3; do
             echo "::group::Firmware build attempt ${attempt}/3"
             if esphome -s enable_prot5 true -s prot5_mac AA:BB:CC:DD:EE:02 compile ci/controller.yaml && \
+               esphome compile ci/controller-development.yaml && \
                python scripts/check_topology_matrix.py --compile esphome; then
               echo "::endgroup::"
-              exit 0
+              break
             else
               status=$?
             fi
             echo "::endgroup::"
 
             if [[ "$attempt" -eq 3 ]]; then
-              echo "Firmware build failed after ${attempt} attempts." >&2
+              echo "Firmware compilation failed after ${attempt} attempts." >&2
               exit "$status"
             fi
 
             delay=$((attempt * 20))
-            echo "Firmware build attempt ${attempt} failed; retrying the full compile block in ${delay}s." >&2
+            echo "Firmware compilation attempt ${attempt} failed; retrying in ${delay}s." >&2
             sleep "$delay"
           done
+
+          python scripts/check_generated_input_isolation.py

@@ -32,9 +32,15 @@ struct ClockValue {
   bool is_valid() const { return valid; }
 };
 struct Clock { ClockValue value; ClockValue now() const { return value; } };
+struct Snapshot {
+  int year = 2026, day_of_year = 172, days_in_year = 365;
+  float minutes = 750.0f;
+  bool valid = true, simulated = false, simulated_output_enabled = false;
+};
 struct State {
   Clock controller_time;
   bool topology_snapshot_valid = false;
+  Snapshot topology_snapshot;
   lumineze_topology::ContextState topology_contexts[2];
 } state;
 #define id(name) state.name
@@ -124,6 +130,8 @@ int main() {
     for (int day : {1, 80, 172, 266, last_day}) {
       for (int minute : {0, 300, 420, 600, 750, 900, 1080, 1439}) {
         state.controller_time.value = {true, year, day, minute / 60, minute % 60, 0};
+        state.topology_snapshot = {
+            year, day, last_day, static_cast<float>(minute), true, false, false};
         evaluate();
         for (int context_index = 0; context_index < 2; ++context_index) {
           const auto &context = state.topology_contexts[context_index];
@@ -147,6 +155,7 @@ int main() {
     }
   }
   state.controller_time.value.valid = false;
+  state.topology_snapshot.valid = false;
   evaluate();
   assert(!state.topology_snapshot_valid);
   assert(!state.topology_contexts[0].valid && !state.topology_contexts[1].valid);

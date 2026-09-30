@@ -31,7 +31,19 @@ struct ContextState {
   float peak[2] = {0.0f, 0.0f};
   float curve[2] = {0.0f, 0.0f};
   bool valid = false;
+  bool simulated = false;
+  bool simulated_output_enabled = false;
   uint32_t revision = 0;
+};
+
+struct EvaluationSnapshot {
+  int year = 0;
+  int day_of_year = 0;
+  int days_in_year = 365;
+  float minutes = 0.0f;
+  bool valid = false;
+  bool simulated = false;
+  bool simulated_output_enabled = false;
 };
 
 struct GroupState {
@@ -54,6 +66,7 @@ struct FixtureState {
   int manual_level = 0;
   int target = 0;
   Source source = HOLD;
+  bool target_simulated = false;
   uint32_t decision_revision = 0;
   bool pending = false;
   uint32_t generation = 0;

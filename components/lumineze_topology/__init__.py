@@ -140,6 +140,9 @@ CONFIG_SCHEMA = cv.All(
         {
             cv.Required("topology_version"): cv.int_,
             cv.Required("engine_family"): cv.one_of("seasonal", lower=True),
+            cv.Optional("input_provider", default="real"): cv.one_of(
+                "real", "development", lower=True
+            ),
             cv.Optional("allow_experimental_topology", default=False): cv.boolean,
             cv.Optional("operational", default=False): cv.boolean,
             cv.Required("contexts"): cv.ensure_list(_CONTEXT),
@@ -189,9 +192,66 @@ def _final_validate(config):
             "lumineze_topology.operational: must match the generic controller package"
         )
     if config["operational"]:
+        provider_scripts = {
+            "capture_topology_real_snapshot": "real",
+            "capture_topology_development_snapshot": "development",
+        }
+        declared_providers = {
+            provider_scripts[script]
+            for script in scripts
+            if script in provider_scripts
+        }
+        if declared_providers != {config["input_provider"]}:
+            raise cv.Invalid(
+                "lumineze_topology.input_provider: exactly the selected snapshot provider must be included"
+            )
         switches = {str(item["id"]) for item in full.get("switch", [])}
         numbers = {str(item["id"]): item for item in full.get("number", [])}
         text_sensors = {str(item["id"]) for item in full.get("text_sensor", [])}
+        test_entity_ids = {
+            "topology_simulation_enabled",
+            "topology_simulated_output_enable",
+            "topology_simulation_year",
+            "topology_simulation_day",
+            "topology_simulation_time",
+        }
+        all_ids = set()
+        for key in (
+            "globals", "switch", "number", "button", "sensor", "binary_sensor",
+            "text_sensor", "script",
+        ):
+            all_ids.update(str(item["id"]) for item in full.get(key, []))
+        if config["input_provider"] == "real" and all_ids & test_entity_ids:
+            raise cv.Invalid(
+                "lumineze_topology.input_provider: production cannot contain development simulation entities"
+            )
+        if config["input_provider"] == "development":
+            if not test_entity_ids <= all_ids:
+                raise cv.Invalid(
+                    "lumineze_topology.input_provider: development simulation controls are incomplete"
+                )
+            for entity in (
+                "topology_simulation_enabled",
+                "topology_simulated_output_enable",
+            ):
+                switch = next(
+                    item for item in full.get("switch", [])
+                    if str(item["id"]) == entity
+                )
+                if switch.get("restore_mode") != "ALWAYS_OFF":
+                    raise cv.Invalid(
+                        f"lumineze_topology.input_provider.{entity}: must reset off at boot"
+                    )
+            for entity in (
+                "topology_simulation_year",
+                "topology_simulation_day",
+                "topology_simulation_time",
+            ):
+                number = numbers[entity]
+                if number["restore_value"]:
+                    raise cv.Invalid(
+                        f"lumineze_topology.input_provider.{entity}: simulation values must not restore"
+                    )
         for group in config["groups"]:
             for suffix in ("automatic", "manual"):
                 if f'{group["id"]}_{suffix}' not in switches:

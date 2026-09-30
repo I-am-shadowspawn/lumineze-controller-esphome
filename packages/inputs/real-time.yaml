@@ -1,0 +1,19 @@
+script:
+  - id: capture_live_evaluation_snapshot
+    mode: single
+    then:
+      - lambda: |-
+          const auto now = id(controller_time).now();
+          id(evaluation_snapshot_valid) = now.is_valid();
+          id(evaluation_snapshot_simulated) = false;
+          id(evaluation_simulation_output_enabled) = false;
+          if (!id(evaluation_snapshot_valid)) return;
+          id(evaluation_snapshot_year) = now.year;
+          id(evaluation_snapshot_days_in_year) =
+              ((now.year % 4 == 0) &&
+               ((now.year % 100 != 0) || (now.year % 400 == 0)))
+                  ? 366 : 365;
+          id(evaluation_snapshot_day) = now.day_of_year;
+          id(evaluation_snapshot_minutes) =
+              static_cast<float>(now.hour * 60 + now.minute) +
+              static_cast<float>(now.second) / 60.0f;

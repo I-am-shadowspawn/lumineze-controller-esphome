@@ -1,4 +1,32 @@
 globals:
+  - id: evaluation_snapshot_valid
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: evaluation_snapshot_year
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: evaluation_snapshot_day
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: evaluation_snapshot_days_in_year
+    type: int
+    restore_value: false
+    initial_value: '365'
+  - id: evaluation_snapshot_minutes
+    type: float
+    restore_value: false
+    initial_value: '0.0f'
+  - id: evaluation_snapshot_simulated
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: evaluation_simulation_output_enabled
+    type: bool
+    restore_value: false
+    initial_value: 'false'
   - id: lamp_target
     type: int[2]
     restore_value: false
@@ -211,6 +239,10 @@ globals:
     type: bool
     restore_value: false
     initial_value: 'false'
+  - id: automatic_target_simulated
+    type: bool[2]
+    restore_value: false
+    initial_value: '{false, false}'
   - id: control_target
     type: int[2]
     restore_value: false

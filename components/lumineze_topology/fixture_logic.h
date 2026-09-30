@@ -8,6 +8,19 @@
 
 namespace lumineze_topology {
 
+inline bool automatic_output_allowed(bool simulated, bool bench_enabled) {
+  return !simulated || bench_enabled;
+}
+
+inline bool invalid_real_clock(bool snapshot_valid, bool simulated) {
+  return !snapshot_valid && !simulated;
+}
+
+inline bool automatic_refresh_required(bool previous_simulated,
+                                       bool simulated) {
+  return previous_simulated && !simulated;
+}
+
 inline void update_group_demand(GroupState &group, float demand, bool valid) {
   if (!valid) return;
   if (group.demand != demand) group.revision++;

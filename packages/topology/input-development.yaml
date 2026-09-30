@@ -1,0 +1,115 @@
+time:
+  - platform: sntp
+    id: controller_time
+    timezone: ${timezone}
+
+switch:
+  - platform: template
+    id: topology_simulation_enabled
+    name: Seasonal Simulation Input
+    icon: mdi:test-tube
+    entity_category: config
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - script.execute: evaluate_topology
+    on_turn_off:
+      - script.execute: evaluate_topology
+  - platform: template
+    id: topology_simulated_output_enable
+    name: Allow Simulated Automatic Output
+    icon: mdi:alert
+    entity_category: config
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - script.execute: evaluate_topology
+    on_turn_off:
+      - script.execute: evaluate_topology
+
+number:
+  - platform: template
+    id: topology_simulation_year
+    name: Simulation Calendar Year
+    entity_category: config
+    min_value: 2000
+    max_value: 2099
+    step: 1
+    initial_value: 2026
+    restore_value: false
+    optimistic: true
+    on_value:
+      - if:
+          condition:
+            switch.is_on: topology_simulation_enabled
+          then:
+            - script.execute: evaluate_topology
+  - platform: template
+    id: topology_simulation_day
+    name: Simulation Day of Year
+    entity_category: config
+    min_value: 1
+    max_value: 366
+    step: 1
+    initial_value: 355
+    restore_value: false
+    optimistic: true
+    on_value:
+      - if:
+          condition:
+            switch.is_on: topology_simulation_enabled
+          then:
+            - script.execute: evaluate_topology
+  - platform: template
+    id: topology_simulation_time
+    name: Simulation Time
+    entity_category: config
+    unit_of_measurement: min after midnight
+    min_value: 0
+    max_value: 1439
+    step: 1
+    initial_value: 750
+    restore_value: false
+    optimistic: true
+    on_value:
+      - if:
+          condition:
+            switch.is_on: topology_simulation_enabled
+          then:
+            - script.execute: evaluate_topology
+
+script:
+  - id: capture_topology_development_snapshot
+    mode: single
+    then:
+      - lambda: |-
+          auto &snapshot = id(topology_snapshot);
+          snapshot.simulated = id(topology_simulation_enabled).state;
+          snapshot.simulated_output_enabled = snapshot.simulated &&
+              id(topology_simulated_output_enable).state;
+          if (snapshot.simulated) {
+            snapshot.year = static_cast<int>(
+                std::lround(id(topology_simulation_year).state));
+            snapshot.days_in_year = ((snapshot.year % 4 == 0) &&
+                ((snapshot.year % 100 != 0) || (snapshot.year % 400 == 0)))
+                ? 366 : 365;
+            snapshot.day_of_year = static_cast<int>(
+                std::lround(id(topology_simulation_day).state));
+            snapshot.minutes = id(topology_simulation_time).state;
+            snapshot.valid = snapshot.year >= 2000 && snapshot.year <= 2099 &&
+                snapshot.day_of_year >= 1 &&
+                snapshot.day_of_year <= snapshot.days_in_year &&
+                std::isfinite(snapshot.minutes) && snapshot.minutes >= 0.0f &&
+                snapshot.minutes < 1440.0f;
+            return;
+          }
+          const auto now = id(controller_time).now();
+          snapshot.valid = now.is_valid();
+          if (!snapshot.valid) return;
+          snapshot.year = now.year;
+          snapshot.day_of_year = now.day_of_year;
+          snapshot.days_in_year = ((snapshot.year % 4 == 0) &&
+              ((snapshot.year % 100 != 0) || (snapshot.year % 400 == 0)))
+              ? 366 : 365;
+          snapshot.minutes = static_cast<float>(now.hour * 60 + now.minute) +
+              static_cast<float>(now.second) / 60.0f;

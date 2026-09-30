@@ -39,7 +39,9 @@ script:
           int target = 0;
           if (source == 0) {
             if (!automatic || manual || invalid_clock ||
-                id(engine_output_simulated) || !id(engine_output_valid)) return;
+                (id(engine_output_simulated) &&
+                 !id(evaluation_simulation_output_enabled)) ||
+                !id(engine_output_valid)) return;
             if (!std::isfinite(fraction) || fraction < 0.0f ||
                 fraction > 1.0f) {
               id(control_invalid_output)[lamp] = true;
@@ -67,8 +69,9 @@ script:
                   (lamp == 1 && !${enable_prot5})) return false;
               if (id(control_invalid_output)[lamp]) return false;
               if (source == 0) return id(engine_output_valid) &&
-                  !id(engine_output_simulated) &&
-                  id(controller_time).now().is_valid() &&
+                  (id(engine_output_simulated)
+                      ? id(evaluation_simulation_output_enabled)
+                      : id(controller_time).now().is_valid()) &&
                   (lamp == 0 ? id(jungle_dawn_automatic_control).state &&
                                 !id(jungle_dawn_manual_override).state
                              : id(prot5_automatic_control).state &&
@@ -162,8 +165,13 @@ script:
                   id(lamp_pending)[lamp] = false;
                 }
                 snprintf(status, sizeof(status), "Invalid engine output; target held");
-              } else if (id(engine_output_simulated)) {
+              } else if (id(engine_output_simulated) &&
+                         !id(evaluation_simulation_output_enabled)) {
                 id(control_invalid_output)[lamp] = false;
+                if (automatic && !manual && id(lamp_pending)[lamp]) {
+                  id(lamp_request_generation)[lamp]++;
+                  id(lamp_pending)[lamp] = false;
+                }
                 snprintf(status, sizeof(status), "Simulated input; automatic output paused");
               } else if (manual) {
                 id(control_invalid_output)[lamp] = false;
@@ -200,6 +208,8 @@ script:
                       ? !id(automatic_has_queued)[0]
                       : !id(automatic_has_queued)[1]) || endpoint_change ||
                       std::abs(target - id(lamp_target)[lamp]) >= minimum_change ||
+                      (id(automatic_target_simulated)[lamp] &&
+                       !id(engine_output_simulated)) ||
                       (recovery_due && id(lamp_last_completed)[lamp] != target);
                   if (due) {
                     id(control_should_queue)[lamp] = true;
@@ -224,13 +234,18 @@ script:
                 id: submit_control_target
                 lamp: 0
                 source: !lambda |-
-                  return id(controller_time).now().is_valid() ? 0 : 2;
+                  return id(engine_output_simulated)
+                      ? (id(evaluation_simulation_output_enabled) ? 0 : 2)
+                      : (id(controller_time).now().is_valid() ? 0 : 2);
                 fraction: !lambda return id(engine_output_fraction)[0];
                 level: 0
             - lambda: |-
-                if (id(controller_time).now().is_valid()) {
+                if (id(engine_output_simulated) ||
+                    id(controller_time).now().is_valid()) {
                   id(automatic_last_queued)[0] = id(control_target)[0];
                   id(automatic_has_queued)[0] = true;
+                  id(automatic_target_simulated)[0] =
+                      id(engine_output_simulated);
                 }
       - if:
           condition:
@@ -240,11 +255,16 @@ script:
                 id: submit_control_target
                 lamp: 1
                 source: !lambda |-
-                  return id(controller_time).now().is_valid() ? 0 : 2;
+                  return id(engine_output_simulated)
+                      ? (id(evaluation_simulation_output_enabled) ? 0 : 2)
+                      : (id(controller_time).now().is_valid() ? 0 : 2);
                 fraction: !lambda return id(engine_output_fraction)[1];
                 level: 0
             - lambda: |-
-                if (id(controller_time).now().is_valid()) {
+                if (id(engine_output_simulated) ||
+                    id(controller_time).now().is_valid()) {
                   id(automatic_last_queued)[1] = id(control_target)[1];
                   id(automatic_has_queued)[1] = true;
+                  id(automatic_target_simulated)[1] =
+                      id(engine_output_simulated);
                 }

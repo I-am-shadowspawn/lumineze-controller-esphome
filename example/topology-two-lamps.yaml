@@ -43,6 +43,7 @@ external_components:
 lumineze_topology:
   topology_version: 1
   engine_family: seasonal
+  input_provider: real
   contexts: [{id: vivarium}]
   groups:
     - {id: visible, context: vivarium, output: visible}

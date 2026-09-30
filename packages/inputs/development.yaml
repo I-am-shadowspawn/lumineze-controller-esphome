@@ -1,0 +1,119 @@
+switch:
+  - platform: template
+    id: solar_test_mode
+    name: Solar Simulation Input
+    icon: mdi:test-tube
+    entity_category: config
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - script.execute: calculate_solar
+    on_turn_off:
+      - script.execute: calculate_solar
+  - platform: template
+    id: solar_simulated_output_enable
+    name: Allow Simulated Automatic Output
+    icon: mdi:alert
+    entity_category: config
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - lambda: id(evaluation_simulation_output_enabled) = true;
+      - script.execute: calculate_solar
+    on_turn_off:
+      - lambda: id(evaluation_simulation_output_enabled) = false;
+      - script.execute: calculate_solar
+
+number:
+  - platform: template
+    id: solar_test_year
+    name: Solar Simulation Year
+    icon: mdi:calendar
+    unit_of_measurement: year
+    min_value: 2000
+    max_value: 2099
+    step: 1
+    initial_value: 2026
+    restore_value: false
+    optimistic: true
+    mode: box
+    on_value:
+      - if:
+          condition:
+            switch.is_on: solar_test_mode
+          then:
+            - script.execute: calculate_solar
+  - platform: template
+    id: solar_test_calendar_day
+    name: Solar Simulation Calendar Day
+    icon: mdi:calendar-today
+    unit_of_measurement: day
+    min_value: 1
+    max_value: 366
+    step: 1
+    initial_value: 355
+    restore_value: false
+    optimistic: true
+    mode: box
+    on_value:
+      - if:
+          condition:
+            switch.is_on: solar_test_mode
+          then:
+            - script.execute: calculate_solar
+  - platform: template
+    id: solar_test_time_minutes
+    name: Solar Simulation Time
+    icon: mdi:clock-outline
+    unit_of_measurement: min after midnight
+    min_value: 0
+    max_value: 1439
+    step: 1
+    initial_value: 750
+    restore_value: false
+    optimistic: true
+    mode: box
+    on_value:
+      - if:
+          condition:
+            switch.is_on: solar_test_mode
+          then:
+            - script.execute: calculate_solar
+
+script:
+  - id: capture_development_evaluation_snapshot
+    mode: single
+    then:
+      - lambda: |-
+          const bool simulate = id(solar_test_mode).state;
+          id(evaluation_snapshot_simulated) = simulate;
+          id(evaluation_simulation_output_enabled) =
+              simulate && id(solar_simulated_output_enable).state;
+          if (simulate) {
+            const int year = static_cast<int>(
+                std::lround(id(solar_test_year).state));
+            const int days = ((year % 4 == 0) &&
+                ((year % 100 != 0) || (year % 400 == 0))) ? 366 : 365;
+            const int day = static_cast<int>(
+                std::lround(id(solar_test_calendar_day).state));
+            const float minutes = id(solar_test_time_minutes).state;
+            id(evaluation_snapshot_valid) = day >= 1 && day <= days &&
+                std::isfinite(minutes) && minutes >= 0.0f && minutes < 1440.0f;
+            id(evaluation_snapshot_year) = year;
+            id(evaluation_snapshot_days_in_year) = days;
+            id(evaluation_snapshot_day) = day;
+            id(evaluation_snapshot_minutes) = minutes;
+            return;
+          }
+          const auto now = id(controller_time).now();
+          id(evaluation_snapshot_valid) = now.is_valid();
+          if (!id(evaluation_snapshot_valid)) return;
+          id(evaluation_snapshot_year) = now.year;
+          id(evaluation_snapshot_days_in_year) =
+              ((now.year % 4 == 0) &&
+               ((now.year % 100 != 0) || (now.year % 400 == 0)))
+                  ? 366 : 365;
+          id(evaluation_snapshot_day) = now.day_of_year;
+          id(evaluation_snapshot_minutes) =
+              static_cast<float>(now.hour * 60 + now.minute) +
+              static_cast<float>(now.second) / 60.0f;

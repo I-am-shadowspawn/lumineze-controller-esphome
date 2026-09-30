@@ -61,7 +61,7 @@ binary_sensor:
       const uint32_t grace_ms = static_cast<uint32_t>(
           std::max(30.0f, id(invalid_time_grace_period).state) * 1000.0f);
       return id(invalid_time_failsafe_enabled).state &&
-             !id(solar_test_mode).state &&
+             !id(evaluation_snapshot_simulated) &&
              !id(controller_time).now().is_valid() && millis() >= grace_ms;
   - platform: template
     name: "JungleDawn Communication Fault"

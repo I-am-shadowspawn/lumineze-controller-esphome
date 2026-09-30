@@ -177,11 +177,12 @@ tests. Once boot grace expires, monotonic-counter rollover cannot restart it.
 Use one captured validity decision per evaluation, not repeated clock
 reads to reconstruct request source.
 
-Calculation-only simulated input cannot fan out into operational requests.
-Real-clock safety remains independent of simulation. Removing T06's simulation
-bypass of invalid-time safety is an explicit coordinated T07 change, not a
-mechanical T05R extraction. Until that change is verified, development profiles
-must remain labelled as retaining the old behavior.
+Calculation-only simulated input cannot fan out into automatic operational
+requests. Development profiles require an explicit, non-restoring bench-output
+enable for simulated automatic targets; invalid simulated dates remain
+calculation errors rather than real-clock safety events. Real-clock fail-safe
+remains active only for an invalid live clock. Operational fixture manual and
+safe-off actions remain distinct from seasonal simulation.
 
 Maximum changes require reevaluating that fixture immediately. A reduction below
 an outstanding target replaces it even if the ordinary minimum-change threshold

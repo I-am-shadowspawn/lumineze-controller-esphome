@@ -1,0 +1,11 @@
+packages:
+  base: !include core/base.yaml
+  time: !include core/time.yaml
+  ble: !include core/ble.yaml
+  state: !include core/state.yaml
+  diagnostics: !include features/diagnostics.yaml
+  controls: !include core/controls.yaml
+  seasonal: !include modes/seasonal.yaml
+  control_policy: !include core/control.yaml
+  dispatcher: !include core/dispatcher.yaml
+  lamp_protocol: !include lamps/protocol.yaml

@@ -311,9 +311,9 @@ from that record without interpreting this conversation.
 - [ ] Physical hardware evidence required for advertised topology support
 
 R1–R6 are delivered together because the operational package and its generated
-bindings must compile as one unit. The new path leaves the T07/T08 development
-inputs out of generic production control; it does not alter their legacy entry
-path. Local checks cover negative schema cases, nine topology compositions,
+bindings must compile as one unit. T07 now keeps development inputs out of both
+production entry paths and provides a separate legacy development composition.
+Local checks cover negative schema cases, nine topology compositions,
 production C++ conversion/transport helpers, seasonal target parity, protocol
 frames, safe-off scope and legacy configuration/firmware. The generic remote
 Device Builder example is checked at this branch's pushed ref before PR review.
