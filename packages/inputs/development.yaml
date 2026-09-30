@@ -87,9 +87,9 @@ script:
       - lambda: |-
           const bool simulate = id(solar_test_mode).state;
           id(evaluation_snapshot_simulated) = simulate;
+          id(evaluation_simulation_output_enabled) =
+              simulate && id(solar_simulated_output_enable).state;
           if (simulate) {
-            id(evaluation_simulation_output_enabled) =
-                id(solar_simulated_output_enable).state;
             const int year = static_cast<int>(
                 std::lround(id(solar_test_year).state));
             const int days = ((year % 4 == 0) &&

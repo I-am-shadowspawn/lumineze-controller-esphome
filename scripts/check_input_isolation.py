@@ -17,6 +17,12 @@ DEVELOPMENT_IDS = (
     "solar_test_calendar_day",
     "solar_test_time_minutes",
 )
+PROVIDER_GATES = {
+    ROOT / "packages/inputs/development.yaml":
+        "simulate && id(solar_simulated_output_enable).state",
+    ROOT / "packages/topology/input-development.yaml":
+        "snapshot.simulated &&\n              id(topology_simulated_output_enable).state",
+}
 
 
 def config_output(command, path):
@@ -55,6 +61,13 @@ def main():
         if "restore_mode: ALWAYS_OFF" not in output:
             raise AssertionError(f"{path} does not reset simulation switches off")
         print(f"PASS {path} includes non-restoring development controls")
+    for path, expected in PROVIDER_GATES.items():
+        if expected not in path.read_text():
+            raise AssertionError(
+                f"{path.relative_to(ROOT)} does not clear the bench gate "
+                "when simulation is disabled"
+            )
+        print(f"PASS {path.relative_to(ROOT)} gates bench output on simulation")
 
 
 if __name__ == "__main__":

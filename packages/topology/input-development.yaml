@@ -85,7 +85,7 @@ script:
       - lambda: |-
           auto &snapshot = id(topology_snapshot);
           snapshot.simulated = id(topology_simulation_enabled).state;
-          snapshot.simulated_output_enabled =
+          snapshot.simulated_output_enabled = snapshot.simulated &&
               id(topology_simulated_output_enable).state;
           if (snapshot.simulated) {
             snapshot.year = static_cast<int>(
