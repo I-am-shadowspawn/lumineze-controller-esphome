@@ -1,6 +1,3 @@
-substitutions:
-  topology_snapshot_provider: capture_topology_development_snapshot
-  logger_level: DEBUG
+# Compatibility name for the supported seasonal development profile.
 packages:
-  controller: !include topology/controller-core.yaml
-  input_provider: !include topology/input-development.yaml
+  seasonal: !include seasonal-development.yaml

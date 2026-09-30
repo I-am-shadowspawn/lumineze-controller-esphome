@@ -3,7 +3,7 @@ substitutions:
   device_name: lumineze-generic-ci
   friendly_name: LuminEZE Generic CI
 packages:
-  controller: !include ../packages/lumineze-topology.yaml
+  controller: !include ../packages/seasonal-production.yaml
   context: !include
     file: ../packages/topology/context-seasonal.yaml
     vars: {context_id: shared, context_name: Shared}

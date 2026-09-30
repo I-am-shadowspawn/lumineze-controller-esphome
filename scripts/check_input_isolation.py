@@ -7,15 +7,26 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 PRODUCTION_CONFIGS = ("ci/controller.yaml", "ci/topology-generic.yaml")
-DEVELOPMENT_CONFIGS = (
-    "ci/controller-development.yaml",
-)
-DEVELOPMENT_IDS = (
-    "solar_test_mode",
-    "solar_simulated_output_enable",
-    "solar_test_year",
-    "solar_test_calendar_day",
-    "solar_test_time_minutes",
+DEVELOPMENT_CONFIGS = {
+    "ci/controller-development.yaml": (
+        "solar_test_mode",
+        "solar_simulated_output_enable",
+        "solar_test_year",
+        "solar_test_calendar_day",
+        "solar_test_time_minutes",
+    ),
+    "ci/topology-generic-development.yaml": (
+        "topology_simulation_enabled",
+        "topology_simulated_output_enable",
+        "topology_simulation_year",
+        "topology_simulation_day",
+        "topology_simulation_time",
+    ),
+}
+ALL_DEVELOPMENT_IDS = tuple(
+    identifier
+    for identifiers in DEVELOPMENT_CONFIGS.values()
+    for identifier in identifiers
 )
 PROVIDER_GATES = {
     ROOT / "packages/inputs/development.yaml":
@@ -45,15 +56,15 @@ def main():
         raise SystemExit("pass an ESPHome command")
     for path in PRODUCTION_CONFIGS:
         output = config_output(command, path)
-        for identifier in DEVELOPMENT_IDS:
+        for identifier in ALL_DEVELOPMENT_IDS:
             if identifier in output:
                 raise AssertionError(
                     f"{path} contains development entity {identifier}"
                 )
         print(f"PASS {path} excludes development controls")
-    for path in DEVELOPMENT_CONFIGS:
+    for path, development_ids in DEVELOPMENT_CONFIGS.items():
         output = config_output(command, path)
-        for identifier in DEVELOPMENT_IDS:
+        for identifier in development_ids:
             if identifier not in output:
                 raise AssertionError(
                     f"{path} is missing development entity {identifier}"

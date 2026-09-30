@@ -1,0 +1,7 @@
+# Seasonal production profile for a declared static fixture topology.
+substitutions:
+  topology_snapshot_provider: capture_topology_real_snapshot
+  logger_level: INFO
+packages:
+  controller: !include topology/controller-core.yaml
+  input_provider: !include topology/input-real.yaml

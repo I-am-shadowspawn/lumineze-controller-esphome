@@ -76,7 +76,13 @@ There are two package paths:
 | Use this when… | Configuration |
 | --- | --- |
 | You already run the v1 two-product controller and want to keep its existing configuration and Home Assistant entity IDs | [`packages/lumineze-controller.yaml`](packages/lumineze-controller.yaml) |
-| You are creating a new controller with explicit fixture identities, slots and control groups | [`example/topology-two-lamps.yaml`](example/topology-two-lamps.yaml), using [`packages/lumineze-topology.yaml`](packages/lumineze-topology.yaml) |
+| You are creating a new controller with explicit fixture identities, slots and control groups | [`example/topology-two-lamps.yaml`](example/topology-two-lamps.yaml), using [`packages/seasonal-production.yaml`](packages/seasonal-production.yaml) |
+
+The matching generic development profile is
+[`packages/seasonal-development.yaml`](packages/seasonal-development.yaml).
+Both use the same seasonal engine and policy path; only the input provider and
+optional development diagnostics differ. See
+[`docs/seasonal-profiles.md`](docs/seasonal-profiles.md).
 
 The generic topology is the recommended starting point for a new installation.
 Its example defines one seasonal context and two groups: `visible` for
@@ -161,6 +167,8 @@ boundary.
   configuration, behavior, migration, and validation evidence.
 - [`docs/diagnostic-profiles.md`](docs/diagnostic-profiles.md): production and
   development diagnostic entities and their update intervals.
+- [`docs/seasonal-profiles.md`](docs/seasonal-profiles.md): supported seasonal
+  entry points, profile differences, and Gate A evidence.
 - [`docs/build.md`](docs/build.md): repository build, secrets, and private
   configuration notes.
 

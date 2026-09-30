@@ -39,6 +39,10 @@ def main():
     for entity in (
         "Controller Time Valid",
         "JungleDawn BLE Connected",
+        "JungleDawn Automatic Control",
+        "JungleDawn Manual Override",
+        "JungleDawn Requested Level",
+        "JungleDawn Maximum Brightness",
         "JungleDawn Readback Mismatch",
         "JungleDawn Last Completed Level",
         "JungleDawn Failed Transactions",
@@ -56,7 +60,12 @@ def main():
 
     for entity in (
         "Controller Time Valid",
+        "Visible Group Automatic Control",
+        "Shared Visible Manual Override",
         "Fixture A BLE Connected",
+        "Fixture A Manual Override",
+        "Fixture A Calibrated Maximum",
+        "Fixture A Manual Absolute Level",
         "Fixture A Readback Mismatch",
         "Fixture A Requested Level",
         "Fixture A Lamp Reported Level",
@@ -66,6 +75,20 @@ def main():
         require(topology_dev, "topology development", entity)
     forbid(topology_prod, "topology production", "Fixture A Automatic Preview")
     require(topology_dev, "topology development", "Fixture A Automatic Preview")
+    for entity in (
+        "Solar Simulation Input",
+        "Allow Simulated Automatic Output",
+        "Solar Declination",
+    ):
+        forbid(legacy_prod, "legacy production", entity)
+        require(legacy_dev, "legacy development", entity)
+    for entity in (
+        "Seasonal Simulation Input",
+        "Allow Simulated Automatic Output",
+        "Simulation Calendar Year",
+    ):
+        forbid(topology_prod, "topology production", entity)
+        require(topology_dev, "topology development", entity)
     print("PASS compiled diagnostic profile inventories")
 
 
