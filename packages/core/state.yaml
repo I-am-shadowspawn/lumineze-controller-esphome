@@ -27,6 +27,14 @@ globals:
     type: bool[2]
     restore_value: false
     initial_value: '{false, false}'
+  - id: lamp_request_generation
+    type: uint32_t[2]
+    restore_value: false
+    initial_value: '{0, 0}'
+  - id: lamp_inflight_generation
+    type: uint32_t[2]
+    restore_value: false
+    initial_value: '{0, 0}'
   - id: lamp_connected
     type: bool[2]
     restore_value: false
@@ -155,18 +163,6 @@ globals:
     type: int
     restore_value: false
     initial_value: '0'
-  - id: jungle_dawn_curve_last_queued
-    type: int
-    restore_value: false
-    initial_value: '-1'
-  - id: jungle_dawn_curve_has_queued
-    type: bool
-    restore_value: false
-    initial_value: 'false'
-  - id: jungle_dawn_curve_should_queue
-    type: bool
-    restore_value: false
-    initial_value: 'false'
   - id: prot5_window_start_minutes
     type: float
     restore_value: false
@@ -195,19 +191,47 @@ globals:
     type: int
     restore_value: false
     initial_value: '0'
-  - id: prot5_curve_last_queued
-    type: int
-    restore_value: false
-    initial_value: '-1'
-  - id: prot5_curve_has_queued
-    type: bool
-    restore_value: false
-    initial_value: 'false'
-  - id: prot5_curve_should_queue
-    type: bool
-    restore_value: false
-    initial_value: 'false'
   - id: invalid_time_failsafe_sent
+    type: bool[2]
+    restore_value: false
+    initial_value: '{false, false}'
+  - id: engine_output_fraction
+    type: float[2]
+    restore_value: false
+    initial_value: '{0.0f, 0.0f}'
+  - id: engine_peak_fraction
+    type: float[2]
+    restore_value: false
+    initial_value: '{0.0f, 0.0f}'
+  - id: engine_output_valid
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: engine_output_simulated
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: control_target
+    type: int[2]
+    restore_value: false
+    initial_value: '{0, 0}'
+  - id: control_should_queue
+    type: bool[2]
+    restore_value: false
+    initial_value: '{false, false}'
+  - id: control_invalid_output
+    type: bool[2]
+    restore_value: false
+    initial_value: '{false, false}'
+  - id: control_limit_applied
+    type: bool[2]
+    restore_value: false
+    initial_value: '{false, false}'
+  - id: automatic_last_queued
+    type: int[2]
+    restore_value: false
+    initial_value: '{-1, -1}'
+  - id: automatic_has_queued
     type: bool[2]
     restore_value: false
     initial_value: '{false, false}'

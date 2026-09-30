@@ -9,8 +9,6 @@ script:
 
           const auto clock_now = id(controller_time).now();
           const bool test_mode = id(solar_test_mode).state;
-          id(jungle_dawn_curve_should_queue) = false;
-          id(prot5_curve_should_queue) = false;
 
           if (!test_mode && !clock_now.is_valid()) {
             id(solar_calculation_valid) = false;
@@ -27,102 +25,18 @@ script:
             id(prot5_effective_peak) = 0.0f;
             id(prot5_calculated_target) = 0;
 
-            const bool failsafe_enabled =
-                id(invalid_time_failsafe_enabled).state;
-            const uint32_t now_ms = millis();
-            const uint32_t grace_ms = static_cast<uint32_t>(
-                std::max(30.0f, id(invalid_time_grace_period).state) *
-                1000.0f);
-            const uint32_t recovery_ms = static_cast<uint32_t>(
-                std::max(60.0f, id(automatic_recovery_interval).state) *
-                1000.0f);
-            const int maximum_attempts = std::max(
-                1, static_cast<int>(id(ble_max_attempts).state));
-            const bool grace_elapsed = now_ms >= grace_ms;
-            const auto elapsed_ms = [now_ms](uint32_t since,
-                                             uint32_t required) {
-              return static_cast<uint32_t>(now_ms - since) >= required;
-            };
-            bool failsafe_recovery_due[2] = {false, false};
-            bool failsafe_request_due[2] = {false, false};
-
-            if (!failsafe_enabled) {
-              id(invalid_time_failsafe_sent)[0] = false;
-              id(invalid_time_failsafe_sent)[1] = false;
-            } else if (grace_elapsed) {
-              for (int lamp = 0; lamp < 2; lamp++) {
-                const bool transaction_for_lamp =
-                    id(transaction_active) && id(active_lamp) == lamp;
-                const bool request_lost =
-                    id(invalid_time_failsafe_sent)[lamp] &&
-                    id(lamp_last_completed)[lamp] != 0 &&
-                    !id(lamp_pending)[lamp] && !transaction_for_lamp &&
-                    id(lamp_attempts_for_request)[lamp] == 0 &&
-                    id(lamp_consecutive_failures)[lamp] == 0;
-                failsafe_recovery_due[lamp] =
-                    id(invalid_time_failsafe_sent)[lamp] &&
-                    id(lamp_last_completed)[lamp] != 0 &&
-                    !id(lamp_pending)[lamp] && !transaction_for_lamp &&
-                    id(lamp_attempts_for_request)[lamp] >= maximum_attempts &&
-                    id(lamp_consecutive_failures)[lamp] > 0 &&
-                    elapsed_ms(id(lamp_last_failure_ms)[lamp], recovery_ms);
-                failsafe_request_due[lamp] =
-                    !id(invalid_time_failsafe_sent)[lamp] || request_lost ||
-                    failsafe_recovery_due[lamp];
-                if (failsafe_request_due[lamp]) {
-                  id(invalid_time_failsafe_sent)[lamp] = true;
-                }
-              }
-              id(jungle_dawn_curve_should_queue) = failsafe_request_due[0];
-              id(prot5_curve_should_queue) = failsafe_request_due[1];
-            }
-
-            char engine_status[128];
-            if (!failsafe_enabled) {
-              snprintf(engine_status, sizeof(engine_status),
-                       "Waiting for valid SNTP time; fail-safe disabled; outputs held");
-            } else if (!grace_elapsed) {
-              const uint32_t remaining_seconds =
-                  (grace_ms - now_ms + 999U) / 1000U;
-              snprintf(engine_status, sizeof(engine_status),
-                       "Waiting for valid SNTP time; safe-off in %lus",
-                       static_cast<unsigned long>(remaining_seconds));
-            } else {
-              snprintf(engine_status, sizeof(engine_status),
-                       "No valid time; safe-off requested for both lamps");
-            }
-            id(solar_engine_status).publish_state(engine_status);
-
-            char jungle_status[128];
-            char prot5_status[128];
-            if (failsafe_request_due[0]) {
-              snprintf(
-                  jungle_status, sizeof(jungle_status), "%s",
-                  failsafe_recovery_due[0]
-                      ? "No valid time; recovery safe-off 0% queued"
-                      : "No valid time; safety target 0% queued");
-            } else if (failsafe_enabled && grace_elapsed) {
-              snprintf(jungle_status, sizeof(jungle_status),
-                       "No valid time; safe-off already requested");
-            } else {
-              snprintf(jungle_status, sizeof(jungle_status),
-                       "No valid time; output held while awaiting clock");
-            }
-            if (failsafe_request_due[1]) {
-              snprintf(
-                  prot5_status, sizeof(prot5_status), "%s",
-                  failsafe_recovery_due[1]
-                      ? "No valid time; recovery safe-off 0% queued"
-                      : "No valid time; safety target 0% queued");
-            } else if (failsafe_enabled && grace_elapsed) {
-              snprintf(prot5_status, sizeof(prot5_status),
-                       "No valid time; safe-off already requested");
-            } else {
-              snprintf(prot5_status, sizeof(prot5_status),
-                       "No valid time; output held while awaiting clock");
-            }
-            id(jungle_dawn_curve_status).publish_state(jungle_status);
-            id(prot5_curve_status).publish_state(prot5_status);
+            id(engine_output_valid) = false;
+            id(engine_output_simulated) = false;
+            id(engine_output_fraction)[0] = 0.0f;
+            id(engine_output_fraction)[1] = 0.0f;
+            id(engine_peak_fraction)[0] = 0.0f;
+            id(engine_peak_fraction)[1] = 0.0f;
+            id(solar_engine_status).publish_state(
+                "Waiting for valid SNTP time");
+            id(jungle_dawn_curve_status).publish_state(
+                "No valid time; calculation unavailable");
+            id(prot5_curve_status).publish_state(
+                "No valid time; calculation unavailable");
             id(solar_evaluation_time_text).publish_state("Unavailable");
             id(solar_sunrise_text).publish_state("Unavailable");
             id(solar_noon_text).publish_state("Unavailable");
@@ -132,9 +46,6 @@ script:
             id(prot5_window_end_text).publish_state("Unavailable");
             return;
           }
-
-          id(invalid_time_failsafe_sent)[0] = false;
-          id(invalid_time_failsafe_sent)[1] = false;
 
           int days_in_year = 365;
           if (clock_now.is_valid()) {
@@ -395,159 +306,24 @@ script:
                    effective_day);
           id(solar_engine_status).publish_state(status);
 
-          const uint32_t calculation_ms = millis();
-          const uint32_t recovery_interval_ms = static_cast<uint32_t>(
-              std::max(60.0f, id(automatic_recovery_interval).state) *
-              1000.0f);
-          const int configured_max_attempts = std::max(
-              1, static_cast<int>(id(ble_max_attempts).state));
-          const auto recovery_elapsed =
-              [calculation_ms](uint32_t since, uint32_t required) {
-                return static_cast<uint32_t>(calculation_ms - since) >=
-                       required;
-              };
-
-          const bool automatic_enabled =
-              id(jungle_dawn_automatic_control).state;
-          const bool manual_override_active =
-              id(jungle_dawn_manual_override).state;
-          const int minimum_change = std::max(
-              1, static_cast<int>(std::lround(
-                     id(jungle_dawn_minimum_automatic_change).state)));
-          const int requested_target = id(lamp_target)[0];
-          const int target_difference = std::abs(
-              calculated_target - requested_target);
-          const bool endpoint_change =
-              calculated_target != requested_target &&
-              (calculated_target == 0 ||
-               calculated_target == effective_peak_target);
-          const bool recovery_due =
-              automatic_enabled && !manual_override_active && !test_mode &&
-              id(lamp_last_completed)[0] != calculated_target &&
-              !id(lamp_pending)[0] &&
-              (!id(transaction_active) || id(active_lamp) != 0) &&
-              id(lamp_attempts_for_request)[0] >= configured_max_attempts &&
-              id(lamp_consecutive_failures)[0] > 0 &&
-              recovery_elapsed(id(lamp_last_failure_ms)[0],
-                               recovery_interval_ms);
-          const bool target_is_due =
-              !id(jungle_dawn_curve_has_queued) || endpoint_change ||
-              target_difference >= minimum_change || recovery_due;
+          id(engine_output_fraction)[0] =
+              seasonal_peak_scale * curve_fraction;
+          id(engine_output_fraction)[1] =
+              prot5_seasonal_scale * prot5_fraction;
+          id(engine_peak_fraction)[0] = seasonal_peak_scale;
+          id(engine_peak_fraction)[1] = prot5_seasonal_scale;
+          id(engine_output_valid) = true;
+          id(engine_output_simulated) = test_mode;
 
           char curve_status[128];
-          if (manual_override_active) {
-            snprintf(curve_status, sizeof(curve_status),
-                     "%s preview: %d%%; manual override active",
-                     test_mode ? "TEST" : "LIVE", calculated_target);
-          } else if (!automatic_enabled) {
-            snprintf(curve_status, sizeof(curve_status),
-                     "%s preview: %d%%; automatic control disabled",
-                     test_mode ? "TEST" : "LIVE", calculated_target);
-          } else if (test_mode) {
-            snprintf(curve_status, sizeof(curve_status),
-                     "TEST preview: %d%%; automatic BLE output paused",
-                     calculated_target);
-          } else if (recovery_due) {
-            id(jungle_dawn_curve_should_queue) = true;
-            snprintf(curve_status, sizeof(curve_status),
-                     "LIVE target: %d%%; recovery retry queued",
-                     calculated_target);
-          } else if (target_is_due) {
-            id(jungle_dawn_curve_should_queue) = true;
-            snprintf(curve_status, sizeof(curve_status),
-                     "LIVE target: %d%%; queued for dispatcher",
-                     calculated_target);
-          } else {
-            snprintf(curve_status, sizeof(curve_status),
-                     "LIVE target: %d%%; within %d%% change threshold",
-                     calculated_target, minimum_change);
-          }
+          snprintf(curve_status, sizeof(curve_status),
+                   "%s preview: %d%%", test_mode ? "TEST" : "LIVE",
+                   calculated_target);
           id(jungle_dawn_curve_status).publish_state(curve_status);
-
-          const bool prot5_automatic_enabled =
-              id(prot5_automatic_control).state;
-          const bool prot5_manual_override_active =
-              id(prot5_manual_override).state;
-          const int prot5_minimum_change = std::max(
-              1, static_cast<int>(std::lround(
-                     id(prot5_minimum_automatic_change).state)));
-          const int prot5_requested_target = id(lamp_target)[1];
-          const int prot5_target_difference = std::abs(
-              prot5_target - prot5_requested_target);
-          const bool prot5_endpoint_change =
-              prot5_target != prot5_requested_target &&
-              (prot5_target == 0 ||
-               prot5_target == prot5_effective_peak_target);
-          const bool prot5_recovery_due =
-              prot5_automatic_enabled && !prot5_manual_override_active &&
-              !test_mode && id(lamp_last_completed)[1] != prot5_target &&
-              !id(lamp_pending)[1] &&
-              (!id(transaction_active) || id(active_lamp) != 1) &&
-              id(lamp_attempts_for_request)[1] >= configured_max_attempts &&
-              id(lamp_consecutive_failures)[1] > 0 &&
-              recovery_elapsed(id(lamp_last_failure_ms)[1],
-                               recovery_interval_ms);
-          const bool prot5_target_is_due =
-              !id(prot5_curve_has_queued) || prot5_endpoint_change ||
-              prot5_target_difference >= prot5_minimum_change ||
-              prot5_recovery_due;
-
           char prot5_status[160];
-          if (prot5_manual_override_active) {
-            snprintf(prot5_status, sizeof(prot5_status),
-                     "%s preview: %d%%; manual override active",
-                     test_mode ? "TEST" : "LIVE", prot5_target);
-          } else if (!prot5_automatic_enabled) {
-            snprintf(prot5_status, sizeof(prot5_status),
-                     "%s preview: %d%%; automatic control disabled",
-                     test_mode ? "TEST" : "LIVE", prot5_target);
-          } else if (test_mode) {
-            snprintf(prot5_status, sizeof(prot5_status),
-                     "TEST preview: %d%%; automatic BLE output paused",
-                     prot5_target);
-          } else if (prot5_maximum_brightness <= 0.0f) {
-            if (prot5_target_is_due) {
-              id(prot5_curve_should_queue) = true;
-              if (prot5_recovery_due) {
-                snprintf(prot5_status, sizeof(prot5_status),
-                         "Safety target 0%%; recovery retry queued");
-              } else {
-                snprintf(prot5_status, sizeof(prot5_status),
-                         "LIVE safety target 0%% queued; set measured maximum before use");
-              }
-            } else {
-              snprintf(prot5_status, sizeof(prot5_status),
-                       "LIVE target 0%%; calibrated maximum is 0%%");
-            }
-          } else if (prot5_window_minutes <= 0.0f) {
-            if (prot5_target_is_due) {
-              id(prot5_curve_should_queue) = true;
-              if (prot5_recovery_due) {
-                snprintf(prot5_status, sizeof(prot5_status),
-                         "UVB window collapsed; recovery safe-off queued");
-              } else {
-                snprintf(prot5_status, sizeof(prot5_status),
-                         "UVB window collapsed; 0%% queued for safety");
-              }
-            } else {
-              snprintf(prot5_status, sizeof(prot5_status),
-                       "UVB window collapsed; reduce start/end offsets");
-            }
-          } else if (prot5_recovery_due) {
-            id(prot5_curve_should_queue) = true;
-            snprintf(prot5_status, sizeof(prot5_status),
-                     "LIVE target: %d%%; recovery retry queued",
-                     prot5_target);
-          } else if (prot5_target_is_due) {
-            id(prot5_curve_should_queue) = true;
-            snprintf(prot5_status, sizeof(prot5_status),
-                     "LIVE target: %d%%; queued for dispatcher",
-                     prot5_target);
-          } else {
-            snprintf(prot5_status, sizeof(prot5_status),
-                     "LIVE target: %d%%; within %d%% change threshold",
-                     prot5_target, prot5_minimum_change);
-          }
+          snprintf(prot5_status, sizeof(prot5_status),
+                   "%s preview: %d%%", test_mode ? "TEST" : "LIVE",
+                   prot5_target);
           id(prot5_curve_status).publish_state(prot5_status);
 
           ESP_LOGD("solar", "%s; sunrise %s, noon %s, sunset %s, elevation %.2f deg, envelope %.3f",
@@ -562,29 +338,4 @@ script:
                    prot5_effective_peak_value,
                    prot5_exponent);
 
-      - if:
-          condition:
-            lambda: return id(jungle_dawn_curve_should_queue);
-          then:
-            - script.execute:
-                id: queue_lumenize_command
-                lamp: 0
-                level: !lambda return id(jungle_dawn_calculated_target);
-            - lambda: |-
-                id(jungle_dawn_curve_last_queued) =
-                    id(jungle_dawn_calculated_target);
-                id(jungle_dawn_curve_has_queued) = true;
-                id(jungle_dawn_curve_should_queue) = false;
-
-      - if:
-          condition:
-            lambda: return id(prot5_curve_should_queue);
-          then:
-            - script.execute:
-                id: queue_lumenize_command
-                lamp: 1
-                level: !lambda return id(prot5_calculated_target);
-            - lambda: |-
-                id(prot5_curve_last_queued) = id(prot5_calculated_target);
-                id(prot5_curve_has_queued) = true;
-                id(prot5_curve_should_queue) = false;
+      - script.execute: apply_control_policy

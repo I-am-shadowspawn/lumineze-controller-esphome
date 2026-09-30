@@ -14,6 +14,7 @@ script:
           id(jungle_dawn_readback_status).publish_state(
               "Connecting; awaiting lamp status");
           id(lamp_inflight)[0] = id(lamp_target)[0];
+          id(lamp_inflight_generation)[0] = id(lamp_request_generation)[0];
           id(lamp_attempts_for_request)[0]++;
           id(lamp_ever_attempted)[0] = true;
           id(lamp_last_attempt_ms)[0] = now;
@@ -81,16 +82,19 @@ script:
                   id(jungle_dawn_readback_status).publish_state(
                       "No status response; last lamp report may be stale");
                 }
-                if (id(lamp_target)[0] == completed) {
+                if (id(lamp_inflight_generation)[0] ==
+                    id(lamp_request_generation)[0]) {
                   id(lamp_pending)[0] = false;
                   id(lamp_attempts_for_request)[0] = 0;
                   char status[48];
                   snprintf(status, sizeof(status), "Transaction completed: %d%%", completed);
                   id(jungle_dawn_dispatch_status).publish_state(status);
-                } else {
-                  id(lamp_pending)[0] = true;
+                } else if (id(lamp_pending)[0]) {
                   id(jungle_dawn_dispatch_status).publish_state(
                       "Transaction completed; newer target pending");
+                } else {
+                  id(jungle_dawn_dispatch_status).publish_state(
+                      "Transaction completed; pending request cancelled");
                 }
                 auto now = id(controller_time).now();
                 id(jungle_dawn_last_completed_time).publish_state(
@@ -120,6 +124,7 @@ script:
           id(prot5_readback_status).publish_state(
               "Connecting; awaiting lamp status");
           id(lamp_inflight)[1] = id(lamp_target)[1];
+          id(lamp_inflight_generation)[1] = id(lamp_request_generation)[1];
           id(lamp_attempts_for_request)[1]++;
           id(lamp_ever_attempted)[1] = true;
           id(lamp_last_attempt_ms)[1] = now;
@@ -187,16 +192,19 @@ script:
                   id(prot5_readback_status).publish_state(
                       "No status response; last lamp report may be stale");
                 }
-                if (id(lamp_target)[1] == completed) {
+                if (id(lamp_inflight_generation)[1] ==
+                    id(lamp_request_generation)[1]) {
                   id(lamp_pending)[1] = false;
                   id(lamp_attempts_for_request)[1] = 0;
                   char status[48];
                   snprintf(status, sizeof(status), "Transaction completed: %d%%", completed);
                   id(prot5_dispatch_status).publish_state(status);
-                } else {
-                  id(lamp_pending)[1] = true;
+                } else if (id(lamp_pending)[1]) {
                   id(prot5_dispatch_status).publish_state(
                       "Transaction completed; newer target pending");
+                } else {
+                  id(prot5_dispatch_status).publish_state(
+                      "Transaction completed; pending request cancelled");
                 }
                 auto now = id(controller_time).now();
                 id(prot5_last_completed_time).publish_state(

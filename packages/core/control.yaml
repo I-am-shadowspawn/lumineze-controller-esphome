@@ -1,0 +1,250 @@
+# Common policy boundary. Source: 0 automatic, 1 manual, 2 safety.
+# Only this module submits operational targets to the dispatcher.
+script:
+  - id: submit_control_target
+    mode: restart
+    parameters:
+      lamp: int
+      source: int
+      fraction: float
+      level: int
+    then:
+      - lambda: |-
+          if (lamp < 0 || lamp > 1 || source < 0 || source > 2) return;
+          if ((lamp == 0 && !${enable_jungle_dawn}) ||
+              (lamp == 1 && !${enable_prot5})) return;
+          const bool automatic = lamp == 0
+              ? id(jungle_dawn_automatic_control).state
+              : id(prot5_automatic_control).state;
+          const bool manual = lamp == 0
+              ? id(jungle_dawn_manual_override).state
+              : id(prot5_manual_override).state;
+          const bool invalid_clock = !id(engine_output_simulated) &&
+              !id(controller_time).now().is_valid();
+          const uint32_t grace_ms = static_cast<uint32_t>(
+              std::max(30.0f, id(invalid_time_grace_period).state) * 1000.0f);
+          const bool safety_active = id(invalid_time_failsafe_enabled).state &&
+              invalid_clock && millis() >= grace_ms;
+          const float maximum = lamp == 0
+              ? id(jungle_dawn_max_brightness).state
+              : id(prot5_max_brightness).state;
+          if (source != 2 && !std::isfinite(maximum)) {
+            id(control_invalid_output)[lamp] = true;
+            return;
+          }
+          const float bounded_maximum = source == 2 ? 0.0f :
+              std::max(0.0f, std::min(100.0f, maximum));
+          const int cap = std::max(0, std::min(100,
+              static_cast<int>(std::lround(bounded_maximum))));
+          int target = 0;
+          if (source == 0) {
+            if (!automatic || manual || invalid_clock ||
+                id(engine_output_simulated) || !id(engine_output_valid)) return;
+            if (!std::isfinite(fraction) || fraction < 0.0f ||
+                fraction > 1.0f) {
+              id(control_invalid_output)[lamp] = true;
+              return;
+            }
+            target = std::max(0, std::min(100, static_cast<int>(
+                std::lround(bounded_maximum * fraction))));
+            id(control_limit_applied)[lamp] = target < static_cast<int>(
+                std::lround(100.0f * fraction));
+          } else if (source == 1) {
+            if (!manual || safety_active) return;
+            target = std::min(std::max(0, level), cap);
+            id(control_limit_applied)[lamp] = target < std::max(0, level);
+          } else {
+            target = 0;
+            id(control_limit_applied)[lamp] = false;
+          }
+          id(control_target)[lamp] = target;
+          id(control_invalid_output)[lamp] = false;
+      - if:
+          condition:
+            lambda: |-
+              if (lamp < 0 || lamp > 1) return false;
+              if ((lamp == 0 && !${enable_jungle_dawn}) ||
+                  (lamp == 1 && !${enable_prot5})) return false;
+              if (id(control_invalid_output)[lamp]) return false;
+              if (source == 0) return id(engine_output_valid) &&
+                  !id(engine_output_simulated) &&
+                  id(controller_time).now().is_valid() &&
+                  (lamp == 0 ? id(jungle_dawn_automatic_control).state &&
+                                !id(jungle_dawn_manual_override).state
+                             : id(prot5_automatic_control).state &&
+                                !id(prot5_manual_override).state);
+              if (source == 1) {
+                const uint32_t grace_ms = static_cast<uint32_t>(
+                    std::max(30.0f, id(invalid_time_grace_period).state) * 1000.0f);
+                const bool safety_active = id(invalid_time_failsafe_enabled).state &&
+                    !id(engine_output_simulated) &&
+                    !id(controller_time).now().is_valid() && millis() >= grace_ms;
+                return !safety_active && (lamp == 0
+                    ? id(jungle_dawn_manual_override).state
+                    : id(prot5_manual_override).state);
+              }
+              return source == 2;
+          then:
+            - script.execute:
+                id: queue_lumenize_command
+                lamp: !lambda return lamp;
+                level: !lambda return id(control_target)[lamp];
+
+  - id: apply_control_policy
+    mode: restart
+    then:
+      - lambda: |-
+          const uint32_t now = millis();
+          const bool invalid_clock = !id(engine_output_simulated) &&
+              !id(controller_time).now().is_valid();
+          const uint32_t grace_ms = static_cast<uint32_t>(
+              std::max(30.0f, id(invalid_time_grace_period).state) * 1000.0f);
+          const uint32_t recovery_ms = static_cast<uint32_t>(
+              std::max(60.0f, id(automatic_recovery_interval).state) * 1000.0f);
+          const int maximum_attempts = std::max(1,
+              static_cast<int>(id(ble_max_attempts).state));
+          const auto elapsed = [now](uint32_t since, uint32_t required) {
+            return static_cast<uint32_t>(now - since) >= required;
+          };
+          for (int lamp = 0; lamp < 2; lamp++) {
+            id(control_should_queue)[lamp] = false;
+            const bool enabled = lamp == 0 ? ${enable_jungle_dawn} : ${enable_prot5};
+            if (!enabled) continue;
+            const bool in_flight = id(transaction_active) &&
+                id(active_lamp) == lamp;
+            const bool automatic = lamp == 0
+                ? id(jungle_dawn_automatic_control).state
+                : id(prot5_automatic_control).state;
+            const bool manual = lamp == 0
+                ? id(jungle_dawn_manual_override).state
+                : id(prot5_manual_override).state;
+            const bool recovery_due =
+                id(lamp_attempts_for_request)[lamp] >= maximum_attempts &&
+                id(lamp_consecutive_failures)[lamp] > 0 &&
+                !id(lamp_pending)[lamp] && !in_flight &&
+                elapsed(id(lamp_last_failure_ms)[lamp], recovery_ms);
+            char status[128];
+            if (invalid_clock) {
+              id(control_invalid_output)[lamp] = false;
+              if (!id(invalid_time_failsafe_enabled).state) {
+                id(invalid_time_failsafe_sent)[lamp] = false;
+                snprintf(status, sizeof(status), "Invalid time; output held (fail-safe disabled)");
+              } else if (now < grace_ms) {
+                snprintf(status, sizeof(status), "Invalid time; output held during grace period");
+              } else {
+                const bool lost_request =
+                    id(invalid_time_failsafe_sent)[lamp] &&
+                    id(lamp_last_completed)[lamp] != 0 &&
+                    !id(lamp_pending)[lamp] && !in_flight &&
+                    id(lamp_attempts_for_request)[lamp] == 0 &&
+                    id(lamp_consecutive_failures)[lamp] == 0;
+                if (!id(invalid_time_failsafe_sent)[lamp] ||
+                    lost_request ||
+                    (id(lamp_last_completed)[lamp] != 0 && recovery_due)) {
+                  id(control_should_queue)[lamp] = true;
+                  id(control_target)[lamp] = 0;
+                  id(invalid_time_failsafe_sent)[lamp] = true;
+                  snprintf(status, sizeof(status), "Invalid time; safe-off requested (not confirmed)");
+                } else {
+                  snprintf(status, sizeof(status), "Invalid time; safe-off pending or previously requested");
+                }
+              }
+            } else {
+              id(invalid_time_failsafe_sent)[lamp] = false;
+              const float fraction = id(engine_output_fraction)[lamp];
+              const float peak = id(engine_peak_fraction)[lamp];
+              if (!id(engine_output_valid) || !std::isfinite(fraction) ||
+                  fraction < 0.0f || fraction > 1.0f ||
+                  !std::isfinite(peak) || peak < 0.0f || peak > 1.0f) {
+                id(control_invalid_output)[lamp] = true;
+                if (automatic && !manual && id(lamp_pending)[lamp]) {
+                  id(lamp_request_generation)[lamp]++;
+                  id(lamp_pending)[lamp] = false;
+                }
+                snprintf(status, sizeof(status), "Invalid engine output; target held");
+              } else if (id(engine_output_simulated)) {
+                id(control_invalid_output)[lamp] = false;
+                snprintf(status, sizeof(status), "Simulated input; automatic output paused");
+              } else if (manual) {
+                id(control_invalid_output)[lamp] = false;
+                snprintf(status, sizeof(status), "Manual override active until switched off");
+              } else if (!automatic) {
+                id(control_invalid_output)[lamp] = false;
+                snprintf(status, sizeof(status), "Automatic disabled; output held");
+              } else {
+                id(control_invalid_output)[lamp] = false;
+                const float maximum = lamp == 0
+                    ? id(jungle_dawn_max_brightness).state
+                    : id(prot5_max_brightness).state;
+                if (!std::isfinite(maximum)) {
+                  id(control_invalid_output)[lamp] = true;
+                  if (id(lamp_pending)[lamp]) {
+                    id(lamp_request_generation)[lamp]++;
+                    id(lamp_pending)[lamp] = false;
+                  }
+                  snprintf(status, sizeof(status), "Invalid brightness limit; target held");
+                } else {
+                  const float bounded_maximum = std::max(0.0f,
+                      std::min(100.0f, maximum));
+                  const int target = std::max(0, std::min(100, static_cast<int>(
+                      std::lround(bounded_maximum * fraction))));
+                  const int peak_target = std::max(0, std::min(100, static_cast<int>(
+                      std::lround(bounded_maximum * peak))));
+                  const int minimum_change = std::max(1, static_cast<int>(
+                      std::lround(lamp == 0
+                          ? id(jungle_dawn_minimum_automatic_change).state
+                          : id(prot5_minimum_automatic_change).state)));
+                  const bool endpoint_change = target != id(lamp_target)[lamp] &&
+                      (target == 0 || target == peak_target);
+                  const bool due = (lamp == 0
+                      ? !id(automatic_has_queued)[0]
+                      : !id(automatic_has_queued)[1]) || endpoint_change ||
+                      std::abs(target - id(lamp_target)[lamp]) >= minimum_change ||
+                      (recovery_due && id(lamp_last_completed)[lamp] != target);
+                  if (due) {
+                    id(control_should_queue)[lamp] = true;
+                    id(control_target)[lamp] = target;
+                    snprintf(status, sizeof(status), "Automatic target %d%% queued%s",
+                             target, recovery_due ? " for recovery" : "");
+                  } else {
+                    snprintf(status, sizeof(status), "Automatic target %d%% held within threshold",
+                             target);
+                  }
+                }
+              }
+            }
+            if (lamp == 0) id(jungle_dawn_control_status).publish_state(status);
+            else id(prot5_control_status).publish_state(status);
+          }
+      - if:
+          condition:
+            lambda: return id(control_should_queue)[0];
+          then:
+            - script.execute:
+                id: submit_control_target
+                lamp: 0
+                source: !lambda |-
+                  return id(controller_time).now().is_valid() ? 0 : 2;
+                fraction: !lambda return id(engine_output_fraction)[0];
+                level: 0
+            - lambda: |-
+                if (id(controller_time).now().is_valid()) {
+                  id(automatic_last_queued)[0] = id(control_target)[0];
+                  id(automatic_has_queued)[0] = true;
+                }
+      - if:
+          condition:
+            lambda: return id(control_should_queue)[1];
+          then:
+            - script.execute:
+                id: submit_control_target
+                lamp: 1
+                source: !lambda |-
+                  return id(controller_time).now().is_valid() ? 0 : 2;
+                fraction: !lambda return id(engine_output_fraction)[1];
+                level: 0
+            - lambda: |-
+                if (id(controller_time).now().is_valid()) {
+                  id(automatic_last_queued)[1] = id(control_target)[1];
+                  id(automatic_has_queued)[1] = true;
+                }
