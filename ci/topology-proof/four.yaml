@@ -1,0 +1,50 @@
+# Composition-only proof. No operational control or physical MACs.
+packages:
+  a: !include
+    file: instance.yaml
+    vars: {fixture_id: fixture_a, fixture_name: A, fixture_mac: 'AA:BB:CC:DD:EE:01'}
+  b: !include
+    file: instance.yaml
+    vars: {fixture_id: fixture_b, fixture_name: B, fixture_mac: 'AA:BB:CC:DD:EE:02'}
+  c: !include
+    file: instance.yaml
+    vars: {fixture_id: fixture_c, fixture_name: C, fixture_mac: 'AA:BB:CC:DD:EE:03'}
+  d: !include
+    file: instance.yaml
+    vars: {fixture_id: fixture_d, fixture_name: D, fixture_mac: 'AA:BB:CC:DD:EE:04'}
+external_components:
+  - source: {type: local, path: ../../components}
+    components: [lumineze_topology]
+lumineze_topology:
+  topology_version: 1
+  engine_family: seasonal
+  allow_experimental_topology: true
+  contexts:
+    - id: first_vivarium
+    - id: second_vivarium
+  groups:
+    - {id: first_visible, context: first_vivarium, output: visible}
+    - {id: first_uv, context: first_vivarium, output: uv}
+    - {id: second_visible, context: second_vivarium, output: visible}
+    - {id: second_uv, context: second_vivarium, output: uv}
+  fixtures:
+    - {id: fixture_a, slot: 0, type: jungle_dawn, group: first_visible, mac: 'AA:BB:CC:DD:EE:01'}
+    - {id: fixture_b, slot: 1, type: prot5, group: first_uv, mac: 'AA:BB:CC:DD:EE:02'}
+    - {id: fixture_c, slot: 2, type: jungle_dawn, group: second_visible, mac: 'AA:BB:CC:DD:EE:03'}
+    - {id: fixture_d, slot: 3, type: prot5, group: second_uv, mac: 'AA:BB:CC:DD:EE:04'}
+esphome:
+  name: topology-four-proof
+esp32:
+  variant: esp32c3
+  framework: {type: esp-idf}
+logger:
+esp32_ble:
+  # ESPHome reserves one connection slot per declared BLE client, even though
+  # the LuminEZE dispatcher serializes transactions.
+  max_connections: 4
+esp32_ble_tracker:
+  scan_parameters: {continuous: false}
+script:
+  - id: dispatcher_tick
+    then:
+      - lambda: ESP_LOGI("topology-proof", "arbiter");
