@@ -86,7 +86,7 @@ Work in the listed order by default. Dependencies identify prerequisites, not pe
 - [x] T06R — Introduce context outputs, control groups, fixture routing and generic authorization/dispatch (R3–R4 in the runbook). Software implementation and policy/transport tests are in the fixture-topology refactor PR; R5–R6 and physical evidence continue with T07–T09.
 - [x] T07 — Isolate simulated inputs and development test controls. Production and development snapshot providers are separate; development simulation and bench-output controls reset off, and seasonal code consumes only the captured snapshot.
 - [x] T08 — Separate operational diagnostics from verbose development diagnostics. PR #11 passed both CI validation runs; see [diagnostic profile inventories](docs/diagnostic-profiles.md).
-- [ ] T09 — Assemble and verify both seasonal profiles.
+- [ ] T09 — Assemble and verify both seasonal profiles. PR #13's remote CI passed both seasonal ESP32-C3 profile builds, provider-isolation and snapshot-parity checks; the physical seasonal bench smoke test and settings capture/restore remain outstanding for Gate A.
 
 **Gate A:** the modular seasonal build matches the recorded baseline, and seasonal production builds with all development test facilities omitted. Do not add schedule behaviour to shared code before this boundary is demonstrated.
 
