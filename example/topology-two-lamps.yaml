@@ -49,8 +49,8 @@ lumineze_topology:
     - {id: uv, context: vivarium, output: uv}
   fixtures:
     # Explicit slots: ProT5 can occupy slot 0 and JungleDawn slot 1.
-    - {id: prot5, slot: 0, type: prot5, group: uv, mac: ${uv_mac}}
-    - {id: jungle_dawn, slot: 1, type: jungle_dawn, group: visible, mac: ${visible_mac}}
+    - {id: prot5, slot: 0, type: prot5, group: uv, mac: '${uv_mac}'}
+    - {id: jungle_dawn, slot: 1, type: jungle_dawn, group: visible, mac: '${visible_mac}'}
 
 wifi:
   ssid: !secret wifi_ssid
