@@ -31,7 +31,7 @@ jobs:
           esphome config ci/controller.yaml > /dev/null
           esphome config ci/controller-development.yaml > /dev/null
           esphome config ci/topology-generic.yaml > /dev/null
-          esphome config ci/topology-generic-development.yaml > /dev/null
+          esphome config ci/topology-generic-development.yaml
           esphome -s enable_jungle_dawn false -s enable_prot5 true -s prot5_mac AA:BB:CC:DD:EE:02 config ci/controller.yaml > /dev/null
           esphome -s enable_prot5 true -s prot5_mac AA:BB:CC:DD:EE:02 config ci/controller.yaml > /dev/null
       - name: Check transport state transitions
