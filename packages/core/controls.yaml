@@ -8,17 +8,15 @@ switch:
     restore_mode: ALWAYS_OFF
     on_turn_on:
       - lambda: |-
-          id(jungle_dawn_curve_should_queue) = false;
-          id(prot5_curve_should_queue) = false;
           if (id(jungle_dawn_automatic_control).state &&
-              !id(jungle_dawn_manual_override).state &&
-              (!id(transaction_active) || id(active_lamp) != 0)) {
+              !id(jungle_dawn_manual_override).state) {
             id(lamp_pending)[0] = false;
+            id(lamp_request_generation)[0]++;
           }
           if (id(prot5_automatic_control).state &&
-              !id(prot5_manual_override).state &&
-              (!id(transaction_active) || id(active_lamp) != 1)) {
+              !id(prot5_manual_override).state) {
             id(lamp_pending)[1] = false;
+            id(lamp_request_generation)[1]++;
           }
       - script.execute: calculate_solar
     on_turn_off:
@@ -46,17 +44,15 @@ switch:
     restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
       - lambda: |-
-          id(jungle_dawn_curve_has_queued) = false;
-          id(jungle_dawn_curve_should_queue) = false;
+          id(automatic_has_queued)[0] = false;
           id(jungle_dawn_curve_status).publish_state(
               "Automatic control enabled; awaiting solar calculation");
       - script.execute: calculate_solar
     on_turn_off:
       - lambda: |-
-          id(jungle_dawn_curve_should_queue) = false;
-          if (!id(jungle_dawn_manual_override).state &&
-              (!id(transaction_active) || id(active_lamp) != 0)) {
+          if (!id(jungle_dawn_manual_override).state) {
             id(lamp_pending)[0] = false;
+            id(lamp_request_generation)[0]++;
           }
           id(jungle_dawn_curve_status).publish_state(
               "Automatic control disabled; lamp state held");
@@ -69,17 +65,15 @@ switch:
     restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
       - lambda: |-
-          id(prot5_curve_has_queued) = false;
-          id(prot5_curve_should_queue) = false;
+          id(automatic_has_queued)[1] = false;
           id(prot5_curve_status).publish_state(
               "Automatic control enabled; awaiting solar calculation");
       - script.execute: calculate_solar
     on_turn_off:
       - lambda: |-
-          id(prot5_curve_should_queue) = false;
-          if (!id(prot5_manual_override).state &&
-              (!id(transaction_active) || id(active_lamp) != 1)) {
+          if (!id(prot5_manual_override).state) {
             id(lamp_pending)[1] = false;
+            id(lamp_request_generation)[1]++;
           }
           id(prot5_curve_status).publish_state(
               "Automatic control disabled; lamp state held");
@@ -92,16 +86,13 @@ switch:
     restore_mode: ALWAYS_OFF
     on_turn_on:
       - lambda: |-
-          id(jungle_dawn_curve_should_queue) = false;
-          if (!id(transaction_active) || id(active_lamp) != 0) {
-            id(lamp_pending)[0] = false;
-          }
+          id(lamp_pending)[0] = false;
+          id(lamp_request_generation)[0]++;
           id(jungle_dawn_curve_status).publish_state(
               "Manual override active; use Queue JungleDawn Level");
     on_turn_off:
       - lambda: |-
-          id(jungle_dawn_curve_has_queued) = false;
-          id(jungle_dawn_curve_should_queue) = false;
+          id(automatic_has_queued)[0] = false;
           id(jungle_dawn_curve_status).publish_state(
               "Manual override released; awaiting solar calculation");
       - script.execute: calculate_solar
@@ -114,16 +105,13 @@ switch:
     restore_mode: ALWAYS_OFF
     on_turn_on:
       - lambda: |-
-          id(prot5_curve_should_queue) = false;
-          if (!id(transaction_active) || id(active_lamp) != 1) {
-            id(lamp_pending)[1] = false;
-          }
+          id(lamp_pending)[1] = false;
+          id(lamp_request_generation)[1]++;
           id(prot5_curve_status).publish_state(
               "Manual override active; use Queue ProT5 Level");
     on_turn_off:
       - lambda: |-
-          id(prot5_curve_has_queued) = false;
-          id(prot5_curve_should_queue) = false;
+          id(automatic_has_queued)[1] = false;
           id(prot5_curve_status).publish_state(
               "Manual override released; awaiting solar calculation");
       - script.execute: calculate_solar
@@ -461,8 +449,10 @@ button:
     on_press:
       - switch.turn_on: jungle_dawn_manual_override
       - script.execute:
-          id: queue_lumenize_command
+          id: submit_control_target
           lamp: 0
+          source: 1
+          fraction: 0.0
           level: !lambda return static_cast<int>(id(jungle_dawn_test_level).state);
   - platform: template
     name: "Queue ProT5 Level"
@@ -470,8 +460,10 @@ button:
     on_press:
       - switch.turn_on: prot5_manual_override
       - script.execute:
-          id: queue_lumenize_command
+          id: submit_control_target
           lamp: 1
+          source: 1
+          fraction: 0.0
           level: !lambda return static_cast<int>(id(prot5_test_level).state);
   - platform: template
     name: "Queue Safe Off for Both Lamps"
@@ -483,12 +475,16 @@ button:
       - switch.turn_off: jungle_dawn_manual_override
       - switch.turn_off: prot5_manual_override
       - script.execute:
-          id: queue_lumenize_command
+          id: submit_control_target
           lamp: 0
+          source: 2
+          fraction: 0.0
           level: 0
       - script.execute:
-          id: queue_lumenize_command
+          id: submit_control_target
           lamp: 1
+          source: 2
+          fraction: 0.0
           level: 0
   - platform: template
     name: "Cancel Pending LumenIZE Commands"
@@ -498,5 +494,7 @@ button:
       - lambda: |-
           id(lamp_pending)[0] = false;
           id(lamp_pending)[1] = false;
+          id(lamp_request_generation)[0]++;
+          id(lamp_request_generation)[1]++;
           id(jungle_dawn_dispatch_status).publish_state("Pending command cancelled");
           id(prot5_dispatch_status).publish_state("Pending command cancelled");

@@ -9,15 +9,7 @@ script:
           if (lamp < 0 || lamp > 1) return;
           if ((lamp == 0 && !${enable_jungle_dawn}) ||
               (lamp == 1 && !${enable_prot5})) return;
-          const int requested = std::max(
-              0, std::min(100, static_cast<int>(level)));
-          const float configured_cap_value = lamp == 0
-              ? id(jungle_dawn_max_brightness).state
-              : id(prot5_max_brightness).state;
-          const int configured_cap = std::max(
-              0, std::min(100, static_cast<int>(
-                  std::lround(configured_cap_value))));
-          const int target = std::min(requested, configured_cap);
+          const int target = std::max(0, std::min(100, level));
           const bool duplicate_inflight =
               id(transaction_active) && id(active_lamp) == lamp &&
               id(lamp_inflight)[lamp] == target &&
@@ -29,15 +21,10 @@ script:
           }
           id(lamp_target)[lamp] = target;
           id(lamp_pending)[lamp] = true;
+          if (!duplicate_inflight) id(lamp_request_generation)[lamp]++;
           char status[96];
-          if (target != requested) {
-            snprintf(status, sizeof(status),
-                     "Pending target: %d%% (requested %d%%, safety-capped)",
-                     target, requested);
-          } else {
-            snprintf(status, sizeof(status),
-                     "Pending latest target: %d%%", target);
-          }
+          snprintf(status, sizeof(status),
+                   "Pending latest target: %d%%", target);
           if (lamp == 0) id(jungle_dawn_dispatch_status).publish_state(status);
           else id(prot5_dispatch_status).publish_state(status);
           ESP_LOGI("lumenize", "%s target queued: %d%%",
@@ -52,7 +39,8 @@ script:
           if (lamp < 0 || lamp > 1) return;
           if (!id(transaction_active) || id(active_lamp) != lamp) return;
           const uint32_t now = millis();
-          const bool newer_target = id(lamp_target)[lamp] != id(lamp_inflight)[lamp];
+          const bool newer_request = id(lamp_request_generation)[lamp] !=
+              id(lamp_inflight_generation)[lamp];
           id(lamp_failure_count)[lamp]++;
           id(lamp_last_failure_ms)[lamp] = now;
           id(lamp_connected)[lamp] = false;
@@ -61,7 +49,7 @@ script:
           id(transaction_write_completed) = false;
           id(next_lamp) = 1 - lamp;
           char status[96];
-          if (newer_target) {
+          if (newer_request && id(lamp_pending)[lamp]) {
             id(lamp_attempts_for_request)[lamp] = 0;
             id(lamp_consecutive_failures)[lamp] = 0;
             id(lamp_retry_delay_ms)[lamp] = 0;
@@ -69,7 +57,7 @@ script:
             snprintf(status, sizeof(status),
                      "Previous target failed; newer %d%% target pending",
                      id(lamp_target)[lamp]);
-          } else {
+          } else if (!newer_request) {
             id(lamp_consecutive_failures)[lamp]++;
             const int attempt = std::max(1, id(lamp_attempts_for_request)[lamp]);
             const int maximum = std::max(1, static_cast<int>(id(ble_max_attempts).state));
@@ -91,6 +79,9 @@ script:
                        attempt, maximum,
                        static_cast<unsigned long>(id(lamp_retry_delay_ms)[lamp] / 1000U));
             }
+          } else {
+            snprintf(status, sizeof(status),
+                     "Cancelled request failed; no retry queued");
           }
           if (lamp == 0) id(jungle_dawn_dispatch_status).publish_state(status);
           else id(prot5_dispatch_status).publish_state(status);

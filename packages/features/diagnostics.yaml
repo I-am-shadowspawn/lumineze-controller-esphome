@@ -90,6 +90,24 @@ binary_sensor:
     entity_category: diagnostic
     lambda: return id(solar_calculation_valid);
   - platform: template
+    name: "JungleDawn Control Output Invalid"
+    device_class: problem
+    entity_category: diagnostic
+    lambda: return id(control_invalid_output)[0];
+  - platform: template
+    name: "ProT5 Control Output Invalid"
+    device_class: problem
+    entity_category: diagnostic
+    lambda: return id(control_invalid_output)[1];
+  - platform: template
+    name: "JungleDawn Brightness Limit Applied"
+    entity_category: diagnostic
+    lambda: return id(control_limit_applied)[0];
+  - platform: template
+    name: "ProT5 Brightness Limit Applied"
+    entity_category: diagnostic
+    lambda: return id(control_limit_applied)[1];
+  - platform: template
     name: "Simulated Sun Above Horizon"
     device_class: light
     entity_category: diagnostic
@@ -342,8 +360,8 @@ sensor:
     accuracy_decimals: 0
     entity_category: diagnostic
     lambda: |-
-      if (!id(jungle_dawn_curve_has_queued)) return NAN;
-      return static_cast<float>(id(jungle_dawn_curve_last_queued));
+      if (!id(automatic_has_queued)[0]) return NAN;
+      return static_cast<float>(id(automatic_last_queued)[0]);
     update_interval: 10s
   - platform: template
     name: "ProT5 UVB Window Length"
@@ -401,11 +419,21 @@ sensor:
     accuracy_decimals: 0
     entity_category: diagnostic
     lambda: |-
-      if (!id(prot5_curve_has_queued)) return NAN;
-      return static_cast<float>(id(prot5_curve_last_queued));
+      if (!id(automatic_has_queued)[1]) return NAN;
+      return static_cast<float>(id(automatic_last_queued)[1]);
     update_interval: 10s
 
 text_sensor:
+  - platform: template
+    id: jungle_dawn_control_status
+    name: "JungleDawn Control Status"
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: prot5_control_status
+    name: "ProT5 Control Status"
+    entity_category: diagnostic
+    update_interval: never
   - platform: template
     id: controller_last_time_source
     name: "Controller Last Time Sync Source"
