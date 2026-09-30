@@ -1,0 +1,87 @@
+# Include once per declared group with group_id and group_name vars.
+# A group makes one logical decision; routing fans it out to its members.
+switch:
+  - platform: template
+    id: ${group_id}_automatic
+    name: ${group_id.replace('_', ' ').title()} Automatic Control
+    entity_category: config
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - lambda: |-
+          const int group = lumineze_topology::group_index("${group_id}");
+          id(topology_groups)[group].automatic = true;
+          for (const auto &binding : lumineze_topology::fixtures)
+            if (binding.group == group)
+              id(topology_fixtures)[binding.slot].automatic_queued = false;
+      - script.execute: evaluate_topology
+    on_turn_off:
+      - lambda: id(topology_groups)[lumineze_topology::group_index("${group_id}")].automatic = false;
+      - script.execute: evaluate_topology
+  - platform: template
+    id: ${group_id}_manual
+    name: ${group_name} Manual Override
+    entity_category: config
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - lambda: id(topology_groups)[lumineze_topology::group_index("${group_id}")].manual = true;
+      - script.execute: evaluate_topology
+    on_turn_off:
+      - lambda: id(topology_groups)[lumineze_topology::group_index("${group_id}")].manual = false;
+      - script.execute: evaluate_topology
+
+number:
+  - platform: template
+    id: ${group_id}_manual_fraction
+    name: ${group_name} Manual % of Fixture Maximum
+    entity_category: config
+    unit_of_measurement: '% of fixture maximum'
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 0
+    restore_value: false
+    optimistic: true
+    on_value:
+      - lambda: id(topology_groups)[lumineze_topology::group_index("${group_id}")].manual_fraction = x / 100.0f;
+      - script.execute: evaluate_topology
+
+text_sensor:
+  - platform: template
+    id: ${group_id}_delivery
+    name: ${group_name} Delivery
+    update_interval: 10s
+    lambda: |-
+      const int group = lumineze_topology::group_index("${group_id}");
+      const auto &decision = id(topology_groups)[group];
+      int members = 0;
+      int confirmed = 0;
+      int written = 0;
+      int safe_off = 0;
+      for (const auto &binding : lumineze_topology::fixtures) {
+        if (binding.group != group) continue;
+        members++;
+        const auto &fixture = id(topology_fixtures)[binding.slot];
+        if (fixture.source == lumineze_topology::SAFETY) safe_off++;
+        if (fixture.completed == fixture.target && !fixture.pending) written++;
+        if (fixture.readback_fresh && fixture.reported == fixture.target &&
+            !fixture.pending) confirmed++;
+      }
+      if (decision.source == lumineze_topology::HOLD && safe_off == 0)
+        return {"Holding output"};
+      if (confirmed == members) return {"All members confirmed"};
+      char status[64];
+      snprintf(status, sizeof(status), "%d/%d confirmed, %d written",
+               confirmed, members, written);
+      return {status};
+
+button:
+  - platform: template
+    id: ${group_id}_safe_off
+    name: ${group_name} Request Off
+    icon: mdi:power
+    on_press:
+      - script.execute:
+          id: topology_safe_off_group
+          group_index: !lambda return lumineze_topology::group_index("${group_id}");

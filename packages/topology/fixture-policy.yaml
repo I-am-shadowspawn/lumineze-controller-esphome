@@ -1,0 +1,152 @@
+# One policy pass resolves group demand and applies each member's own controls,
+# calibration, threshold and request generation before the dispatcher sees it.
+script:
+  - id: apply_topology_policy
+    mode: restart
+    then:
+      - lambda: |-
+          using namespace lumineze_topology;
+          const uint32_t now = millis();
+          const bool invalid_clock = !id(topology_snapshot_valid);
+          const uint32_t grace_ms = static_cast<uint32_t>(
+              std::max(30.0f, id(topology_invalid_time_grace).state) * 1000.0f);
+          if (now >= grace_ms) id(topology_grace_expired) = true;
+          const bool safety_active = id(topology_invalid_time_safety).state &&
+              invalid_clock && id(topology_grace_expired);
+          const uint32_t recovery_ms = static_cast<uint32_t>(
+              std::max(60.0f, id(topology_recovery_interval).state) * 1000.0f);
+          const int maximum_attempts = std::max(1,
+              static_cast<int>(id(topology_max_attempts).state));
+
+          // Group decisions contain fractions only. Two groups may consume the
+          // same context output while retaining independent enable/manual state.
+          for (int index = 0; index < group_count; ++index) {
+            auto &group = id(topology_groups)[index];
+            const auto &binding = groups[index];
+            const auto &context = id(topology_contexts)[binding.context];
+            Source source = HOLD;
+            bool valid = false;
+            float demand = 0.0f;
+            if (group.manual) {
+              source = GROUP_MANUAL;
+              demand = group.manual_fraction;
+              valid = std::isfinite(demand) && demand >= 0.0f && demand <= 1.0f;
+            } else if (group.automatic && context.valid && !invalid_clock) {
+              source = AUTOMATIC;
+              demand = context.desired[binding.role];
+              valid = std::isfinite(demand) && demand >= 0.0f && demand <= 1.0f;
+            }
+            update_group_demand(group, demand, valid);
+            group.source = source;
+            group.valid = valid;
+            group.context_revision = context.revision;
+          }
+
+          for (const auto &binding : fixtures) {
+            const int slot = binding.slot;
+            auto &fixture = id(topology_fixtures)[slot];
+            const auto &group = id(topology_groups)[binding.group];
+            const auto &group_binding = groups[binding.group];
+            const auto &context = id(topology_contexts)[group_binding.context];
+            const bool in_flight = id(topology_dispatch).active &&
+                id(topology_dispatch).active_slot == slot;
+            // Group/controller safe-off is held while its controls stay off.
+            // A deliberate manual/automatic request replaces it unless clock safety is active.
+            const Source source = resolve_source(
+                safety_active, fixture.manual, group.source);
+            const bool cap_valid = std::isfinite(fixture.maximum) &&
+                fixture.maximum >= 0.0f && fixture.maximum <= 100.0f;
+            const bool previous_invalid = fixture.invalid_output;
+            const bool cap_reduced = cap_valid &&
+                fixture.maximum < fixture.last_maximum;
+            fixture.last_maximum = fixture.maximum;
+            fixture.invalid_output = false;
+            fixture.limit_applied = false;
+            if (source != HOLD && source != SAFETY &&
+                source != FIXTURE_MANUAL && !group.valid) {
+              fixture.invalid_output = true;
+              if (fixture.pending && fixture.source == source) {
+                revoke_pending(fixture);
+              }
+              status(slot, "Invalid output or fixture maximum; held");
+              continue;
+            }
+            if (source == HOLD) {
+              if (fixture.pending && fixture.source != SAFETY) {
+                revoke_pending(fixture);
+              }
+              status(slot, "Group disabled; output held");
+              continue;
+            }
+            const bool recovery_due = fixture.consecutive_failures > 0 &&
+                fixture.attempts >= maximum_attempts && !fixture.pending &&
+                !in_flight && static_cast<uint32_t>(now - fixture.last_failure_ms)
+                    >= recovery_ms;
+            const ConversionInput input{
+                source, fixture.maximum, group.demand,
+                context.peak[group_binding.role],
+                context.curve[group_binding.role], fixture.manual_level,
+                fixture.target, fixture.minimum_change,
+                fixture.automatic_queued, cap_reduced, previous_invalid,
+                recovery_due, fixture.source != source};
+            const ConversionResult decision = convert_fixture(input);
+            if (!decision.valid) {
+              fixture.invalid_output = true;
+              if (fixture.pending && fixture.source == source) {
+                revoke_pending(fixture);
+              }
+              status(slot, "Invalid output or fixture maximum; held");
+              continue;
+            }
+            fixture.limit_applied = decision.limit_applied;
+            if (!decision.submit) continue;
+            accept_target(fixture, decision.target, source, group.revision,
+                          in_flight);
+            status(slot, "Latest authorised target pending");
+          }
+
+number:
+  - platform: template
+    id: topology_invalid_time_grace
+    name: Invalid Time Grace Period
+    entity_category: config
+    unit_of_measurement: s
+    min_value: 30
+    max_value: 3600
+    step: 10
+    initial_value: 60
+    restore_value: true
+    optimistic: true
+  - platform: template
+    id: topology_recovery_interval
+    name: Automatic Recovery Interval
+    entity_category: config
+    unit_of_measurement: s
+    min_value: 60
+    max_value: 3600
+    step: 30
+    initial_value: 300
+    restore_value: true
+    optimistic: true
+  - platform: template
+    id: topology_max_attempts
+    name: BLE Maximum Attempts
+    entity_category: config
+    min_value: 1
+    max_value: 5
+    step: 1
+    initial_value: 3
+    restore_value: true
+    optimistic: true
+
+switch:
+  - platform: template
+    id: topology_invalid_time_safety
+    name: Invalid Time Fail-Safe
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_turn_on:
+      - script.execute: evaluate_topology
+    on_turn_off:
+      - script.execute: evaluate_topology

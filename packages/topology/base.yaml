@@ -1,0 +1,68 @@
+substitutions:
+  device_name: lumineze-topology
+  friendly_name: LuminEZE Topology Controller
+  area_name: Vivarium
+  timezone: Europe/London
+  logger_level: DEBUG
+  ble_connection_slots: '2'
+
+lumineze_topology:
+  operational: true
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  area: ${area_name}
+
+esp32:
+  variant: esp32c3
+  framework:
+    type: esp-idf
+
+logger:
+  level: ${logger_level}
+api:
+  reboot_timeout: 0s
+ota:
+  - platform: esphome
+wifi:
+  reboot_timeout: 0s
+
+time:
+  - platform: sntp
+    id: controller_time
+    timezone: ${timezone}
+
+esp32_ble:
+  max_connections: ${ble_connection_slots}
+  connection_timeout: 20s
+esp32_ble_tracker:
+  scan_parameters:
+    continuous: false
+  software_coexistence: true
+
+globals:
+  - id: topology_snapshot_valid
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: topology_grace_expired
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: topology_contexts
+    type: lumineze_topology::ContextState[2]
+    restore_value: false
+    initial_value: 'std::array<lumineze_topology::ContextState, 2>{}'
+  - id: topology_groups
+    type: lumineze_topology::GroupState[4]
+    restore_value: false
+    initial_value: 'std::array<lumineze_topology::GroupState, 4>{}'
+  - id: topology_fixtures
+    type: lumineze_topology::FixtureState[4]
+    restore_value: false
+    initial_value: 'std::array<lumineze_topology::FixtureState, 4>{}'
+  - id: topology_dispatch
+    type: lumineze_topology::DispatchState
+    restore_value: false
+    initial_value: 'lumineze_topology::DispatchState{}'

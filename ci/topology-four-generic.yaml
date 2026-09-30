@@ -1,0 +1,58 @@
+# Experimental software build: four fixtures, two independent contexts.
+substitutions:
+  device_name: lumineze-four-ci
+  friendly_name: LuminEZE Four CI
+  ble_connection_slots: '4'
+packages:
+  controller: !include ../packages/lumineze-topology.yaml
+  first_context: !include
+    file: ../packages/topology/context-seasonal.yaml
+    vars: {context_id: viv_a, context_name: Vivarium A}
+  second_context: !include
+    file: ../packages/topology/context-seasonal.yaml
+    vars: {context_id: viv_b, context_name: Vivarium B}
+  a_visible: !include
+    file: ../packages/topology/group.yaml
+    vars: {group_id: a_visible, group_name: A Visible}
+  a_uv: !include
+    file: ../packages/topology/group.yaml
+    vars: {group_id: a_uv, group_name: A UV}
+  b_visible: !include
+    file: ../packages/topology/group.yaml
+    vars: {group_id: b_visible, group_name: B Visible}
+  b_uv: !include
+    file: ../packages/topology/group.yaml
+    vars: {group_id: b_uv, group_name: B UV}
+  lamp_0: !include
+    file: ../packages/topology/fixture-luminize.yaml
+    vars: {fixture_id: a_jungle, fixture_name: A JungleDawn, fixture_mac: 'AA:BB:CC:DD:EE:01', fixture_default_maximum: 100}
+  lamp_1: !include
+    file: ../packages/topology/fixture-luminize.yaml
+    vars: {fixture_id: a_uv_lamp, fixture_name: A ProT5, fixture_mac: 'AA:BB:CC:DD:EE:02', fixture_default_maximum: 0}
+  lamp_2: !include
+    file: ../packages/topology/fixture-luminize.yaml
+    vars: {fixture_id: b_jungle, fixture_name: B JungleDawn, fixture_mac: 'AA:BB:CC:DD:EE:03', fixture_default_maximum: 100}
+  lamp_3: !include
+    file: ../packages/topology/fixture-luminize.yaml
+    vars: {fixture_id: b_uv_lamp, fixture_name: B ProT5, fixture_mac: 'AA:BB:CC:DD:EE:04', fixture_default_maximum: 0}
+external_components:
+  - source: {type: local, path: ../components}
+    components: [lumineze_topology]
+lumineze_topology:
+  topology_version: 1
+  engine_family: seasonal
+  allow_experimental_topology: true
+  contexts: [{id: viv_a}, {id: viv_b}]
+  groups:
+    - {id: a_visible, context: viv_a, output: visible}
+    - {id: a_uv, context: viv_a, output: uv}
+    - {id: b_visible, context: viv_b, output: visible}
+    - {id: b_uv, context: viv_b, output: uv}
+  fixtures:
+    - {id: a_jungle, slot: 0, type: jungle_dawn, group: a_visible, mac: 'AA:BB:CC:DD:EE:01'}
+    - {id: a_uv_lamp, slot: 1, type: prot5, group: a_uv, mac: 'AA:BB:CC:DD:EE:02'}
+    - {id: b_jungle, slot: 2, type: jungle_dawn, group: b_visible, mac: 'AA:BB:CC:DD:EE:03'}
+    - {id: b_uv_lamp, slot: 3, type: prot5, group: b_uv, mac: 'AA:BB:CC:DD:EE:04'}
+wifi:
+  ssid: ci-network
+  password: ci-password

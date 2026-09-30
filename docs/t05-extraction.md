@@ -1,5 +1,10 @@
 # T05 — Mechanical module extraction
 
+Historical completion evidence. The subsequent, unimplemented T05R topology
+refactor is specified in the [architecture](plans/fixture-topology-architecture.md)
+and [runbook](plans/fixture-topology-implementation.md); do not treat the two-client
+inventory below as a constraint on the new design.
+
 Source: `master` at `b92812f`, ESPHome 2026.9.0 / ESP-IDF 5.5.5. T01–T04 and the ownership contract in `docs/architecture.md` are prerequisites. This task moves the existing YAML without changing identifiers, values, expressions or automations. Policy and production/development separation remain T06–T09 work.
 
 ## Extraction order and temporary grouping

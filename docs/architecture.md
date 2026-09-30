@@ -1,5 +1,11 @@
 # T03 — Ownership map and control contract
 
+For the planned removal of product-specific physical slots, read the
+[fixture/group architecture](plans/fixture-topology-architecture.md) and
+[T05R/T06R execution runbook](plans/fixture-topology-implementation.md).
+They supersede this document's fixed two-slot assumptions for future work.
+The description below remains the existing T05/T06 checkpoint, not the new implementation.
+
 Design checkpoint written against the monolithic `packages/lumineze-controller.yaml` at source baseline `7cbc718`. T05 mechanically separated it as recorded in `docs/t05-extraction.md`. T06 implemented the shared control boundary in `core/control.yaml`; the current policy, deviations and evidence are recorded in `docs/t06-control-policy.md`. The implementation uses **parameterised ESPHome scripts plus explicitly owned globals**. A generic C++ framework is unnecessary for two fixed lamp slots.
 
 ## Ownership map
@@ -43,7 +49,7 @@ The current seasonal engine produces validity, desired and peak fractions for sl
 
 Common control converts an authorised fraction to lamp percent **once** using `std::lround(maximum_percent * fraction)` and clamps the result to `[0, 100]`. Manual input is an integer percent and passes through the same maximum cap. ProT5's calibrated maximum of zero produces zero. The queue receives only a final integer percent and does no engine-specific arithmetic or cap calculation. The seasonal preview still calculates the historic target for display, while common control owns the operational target.
 
-Priority per lamp is: (1) disabled lamp: no operational queueing; (2) invalid-clock safe-off after its grace period; (3) explicit safe-off; (4) active manual override/latest manual request; (5) automatic request if enabled and engine valid; (6) hold current request. Switching automatic off holds state rather than sending zero. A new target during an in-flight write waits for that transaction to finish. Request generations prevent a cancelled target from being resurrected by the older completion or failure. T06's simulated transport scenarios exercise this path; physical-lamp observation remains open.
+Priority per lamp is: (1) disabled lamp: no operational queueing; (2) invalid-clock safe-off after its grace period; (3) explicit safe-off; (4) active manual override/latest manual request; (5) automatic request if enabled and engine valid; (6) hold current request. Explicit safe-off is a 0% request, not a persistent latch: it remains in effect while controls stay off, and a deliberate manual request or automatic re-enable supersedes it on the next policy evaluation. Active invalid-clock safety cannot be superseded. Switching automatic off holds state rather than sending zero. A new target during an in-flight write waits for that transaction to finish. Request generations prevent a cancelled target from being resurrected by the older completion or failure. T06's simulated transport scenarios exercise this path; physical-lamp observation remains open.
 
 The shared state names mean different things: **requested** is the latest authorised final target; **pending** means it awaits dispatch/retry; **in-flight** is the target copied when a transaction starts; **completed** means the transaction write path finished; **reported** is the last valid lamp notification, with freshness tied to the last command. A missing/stale report is unknown physical output, even after a successful write or safe-off request. Diagnostics expose these separately.
 

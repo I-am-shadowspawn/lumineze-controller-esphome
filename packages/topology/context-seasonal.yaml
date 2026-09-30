@@ -1,0 +1,192 @@
+# Include once per declared context with context_id and context_name vars.
+# The context owns seasonal settings and role-labelled fractions only.
+number:
+  - platform: template
+    id: ${context_id}_latitude
+    name: ${context_id.replace('_', ' ').title()} Latitude
+    entity_category: config
+    unit_of_measurement: '°'
+    min_value: -60
+    max_value: 60
+    step: 0.1
+    initial_value: -28.5
+    restore_value: true
+    optimistic: true
+    on_value:
+      - lambda: id(topology_contexts)[lumineze_topology::context_index("${context_id}")].latitude = x;
+      - script.execute: evaluate_topology
+  - platform: template
+    id: ${context_id}_noon
+    name: ${context_id.replace('_', ' ').title()} Solar Noon
+    entity_category: config
+    unit_of_measurement: min after midnight
+    min_value: 600
+    max_value: 840
+    step: 1
+    initial_value: 750
+    restore_value: true
+    optimistic: true
+    on_value:
+      - lambda: id(topology_contexts)[lumineze_topology::context_index("${context_id}")].noon_minutes = x;
+      - script.execute: evaluate_topology
+  - platform: template
+    id: ${context_id}_phase
+    name: ${context_id.replace('_', ' ').title()} Season Phase Offset
+    entity_category: config
+    unit_of_measurement: d
+    min_value: 0
+    max_value: 366
+    step: 0.1
+    initial_value: 182.6
+    restore_value: true
+    optimistic: true
+    on_value:
+      - lambda: id(topology_contexts)[lumineze_topology::context_index("${context_id}")].phase_days = x;
+      - script.execute: evaluate_topology
+  - platform: template
+    id: ${context_id}_visible_winter
+    name: ${context_id.replace('_', ' ').title()} Visible Winter Peak
+    entity_category: config
+    unit_of_measurement: '% of maximum'
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 75
+    restore_value: true
+    optimistic: true
+    on_value:
+      - lambda: id(topology_contexts)[lumineze_topology::context_index("${context_id}")].visible_winter = x / 100.0f;
+      - script.execute: evaluate_topology
+  - platform: template
+    id: ${context_id}_visible_summer
+    name: ${context_id.replace('_', ' ').title()} Visible Summer Peak
+    entity_category: config
+    unit_of_measurement: '% of maximum'
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 100
+    restore_value: true
+    optimistic: true
+    on_value:
+      - lambda: id(topology_contexts)[lumineze_topology::context_index("${context_id}")].visible_summer = x / 100.0f;
+      - script.execute: evaluate_topology
+  - platform: template
+    id: ${context_id}_visible_exponent
+    name: ${context_id.replace('_', ' ').title()} Visible Curve Exponent
+    entity_category: config
+    min_value: 0.25
+    max_value: 4
+    step: 0.05
+    initial_value: 1
+    restore_value: true
+    optimistic: true
+    on_value:
+      - lambda: id(topology_contexts)[lumineze_topology::context_index("${context_id}")].visible_exponent = x;
+      - script.execute: evaluate_topology
+  - platform: template
+    id: ${context_id}_uv_start
+    name: ${context_id.replace('_', ' ').title()} UV Start After Sunrise
+    entity_category: config
+    unit_of_measurement: min
+    min_value: 0
+    max_value: 300
+    step: 5
+    initial_value: 90
+    restore_value: true
+    optimistic: true
+    on_value:
+      - lambda: id(topology_contexts)[lumineze_topology::context_index("${context_id}")].uv_start_minutes = x;
+      - script.execute: evaluate_topology
+  - platform: template
+    id: ${context_id}_uv_end
+    name: ${context_id.replace('_', ' ').title()} UV End Before Sunset
+    entity_category: config
+    unit_of_measurement: min
+    min_value: 0
+    max_value: 300
+    step: 5
+    initial_value: 90
+    restore_value: true
+    optimistic: true
+    on_value:
+      - lambda: id(topology_contexts)[lumineze_topology::context_index("${context_id}")].uv_end_minutes = x;
+      - script.execute: evaluate_topology
+  - platform: template
+    id: ${context_id}_uv_winter
+    name: ${context_id.replace('_', ' ').title()} UV Winter Peak
+    entity_category: config
+    unit_of_measurement: '% of maximum'
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 80
+    restore_value: true
+    optimistic: true
+    on_value:
+      - lambda: id(topology_contexts)[lumineze_topology::context_index("${context_id}")].uv_winter = x / 100.0f;
+      - script.execute: evaluate_topology
+  - platform: template
+    id: ${context_id}_uv_summer
+    name: ${context_id.replace('_', ' ').title()} UV Summer Peak
+    entity_category: config
+    unit_of_measurement: '% of maximum'
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 100
+    restore_value: true
+    optimistic: true
+    on_value:
+      - lambda: id(topology_contexts)[lumineze_topology::context_index("${context_id}")].uv_summer = x / 100.0f;
+      - script.execute: evaluate_topology
+  - platform: template
+    id: ${context_id}_uv_exponent
+    name: ${context_id.replace('_', ' ').title()} UV Curve Exponent
+    entity_category: config
+    min_value: 0.25
+    max_value: 4
+    step: 0.05
+    initial_value: 1
+    restore_value: true
+    optimistic: true
+    on_value:
+      - lambda: id(topology_contexts)[lumineze_topology::context_index("${context_id}")].uv_exponent = x;
+      - script.execute: evaluate_topology
+
+sensor:
+  - platform: template
+    id: ${context_id}_visible_demand
+    name: ${context_name} Visible Demand
+    entity_category: diagnostic
+    unit_of_measurement: '% of fixture maximum'
+    accuracy_decimals: 1
+    lambda: |-
+      const auto &context = id(topology_contexts)[
+          lumineze_topology::context_index("${context_id}")];
+      return context.valid ? 100.0f * context.desired[0] : NAN;
+    update_interval: 10s
+  - platform: template
+    id: ${context_id}_uv_demand
+    name: ${context_name} UV Demand
+    entity_category: diagnostic
+    unit_of_measurement: '% of fixture maximum'
+    accuracy_decimals: 1
+    lambda: |-
+      const auto &context = id(topology_contexts)[
+          lumineze_topology::context_index("${context_id}")];
+      return context.valid ? 100.0f * context.desired[1] : NAN;
+    update_interval: 10s
+
+text_sensor:
+  - platform: template
+    id: ${context_id}_status
+    name: ${context_name} Evaluation Status
+    entity_category: diagnostic
+    lambda: |-
+      const auto &context = id(topology_contexts)[
+          lumineze_topology::context_index("${context_id}")];
+      if (!id(topology_snapshot_valid)) return {"Waiting for valid time"};
+      return {context.valid ? "Valid seasonal calculation" :
+                              "Invalid seasonal settings/output"};
+    update_interval: 10s

@@ -1,0 +1,69 @@
+# Explicit off actions submit fresh 0% requests. Group/controller off disable
+# automatic/manual controls, so policy holds that request until a deliberate
+# manual or automatic re-enable; active invalid-time safety still takes priority.
+script:
+  - id: topology_safe_off_group
+    mode: single
+    parameters:
+      group_index: int
+    then:
+      - lambda: |-
+          using namespace lumineze_topology;
+          if (group_index < 0 || group_index >= group_count) return;
+          auto &group = id(topology_groups)[group_index];
+          group.automatic = false;
+          group.manual = false;
+          group.source = HOLD;
+          group.revision++;
+          group_controls_off(group_index);
+          for (const auto &binding : fixtures) {
+            if (binding.group != group_index) continue;
+            auto &fixture = id(topology_fixtures)[binding.slot];
+            fixture.manual = false;
+            fixture_control_off(binding.slot);
+            fixture.generation++;
+            fixture.target = 0;
+            fixture.source = SAFETY;
+            fixture.decision_revision = group.revision;
+            fixture.pending = true;
+            fixture.attempts = 0;
+            fixture.consecutive_failures = 0;
+            fixture.retry_delay_ms = 0;
+            status(binding.slot, "Group safe-off requested; not confirmed");
+          }
+
+  - id: topology_safe_off_all
+    mode: single
+    then:
+      - lambda: |-
+          using namespace lumineze_topology;
+          for (int index = 0; index < group_count; ++index) {
+            auto &group = id(topology_groups)[index];
+            group.automatic = false;
+            group.manual = false;
+            group.source = HOLD;
+            group.revision++;
+            group_controls_off(index);
+          }
+          for (const auto &binding : fixtures) {
+            auto &fixture = id(topology_fixtures)[binding.slot];
+            fixture.manual = false;
+            fixture_control_off(binding.slot);
+            fixture.generation++;
+            fixture.target = 0;
+            fixture.source = SAFETY;
+            fixture.decision_revision = id(topology_groups)[binding.group].revision;
+            fixture.pending = true;
+            fixture.attempts = 0;
+            fixture.consecutive_failures = 0;
+            fixture.retry_delay_ms = 0;
+            status(binding.slot, "Controller safe-off requested; not confirmed");
+          }
+
+button:
+  - platform: template
+    id: topology_all_off
+    name: Request All Fixtures Off
+    icon: mdi:power
+    on_press:
+      - script.execute: topology_safe_off_all

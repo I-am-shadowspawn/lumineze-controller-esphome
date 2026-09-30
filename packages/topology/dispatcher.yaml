@@ -1,0 +1,135 @@
+# A single arbiter services enabled descriptors in slot order. Product names
+# occur only in generated static adapter bindings, never in this scheduler.
+script:
+  - id: record_topology_failure
+    mode: single
+    parameters:
+      slot: int
+      token: uint32_t
+    then:
+      - lambda: |-
+          auto &dispatcher = id(topology_dispatch);
+          auto &fixture = id(topology_fixtures)[slot];
+          const int maximum = std::max(1,
+              static_cast<int>(id(topology_max_attempts).state));
+          const uint32_t base = static_cast<uint32_t>(
+              std::max(1.0f, id(topology_retry_base_delay).state) * 1000.0f);
+          const auto result = lumineze_topology::fail_transaction(
+              fixture, dispatcher, slot, token, millis(), maximum, base);
+          if (result == lumineze_topology::STALE_EVENT) return;
+          if (result == lumineze_topology::NEWER_PENDING)
+            lumineze_topology::status(slot, "Previous target failed; newer target pending");
+          else if (result == lumineze_topology::RETRY_PENDING)
+            lumineze_topology::status(slot, "BLE failure; retry pending");
+          else if (result == lumineze_topology::TERMINAL_FAILURE)
+            lumineze_topology::status(slot, "Maximum attempts reached; recovery scheduled");
+          else
+            lumineze_topology::status(slot, "Cancelled request failed");
+          lumineze_topology::readback_status(slot, "No readback; BLE command failed");
+
+  - id: dispatcher_tick
+    mode: single
+    then:
+      - lambda: |-
+          auto &dispatcher = id(topology_dispatch);
+          const uint32_t now = millis();
+          const auto elapsed = [now](uint32_t since, uint32_t duration) {
+            return lumineze_topology::elapsed(now, since, duration);
+          };
+          if (dispatcher.active) {
+            const int slot = dispatcher.active_slot;
+            const uint32_t timeout = static_cast<uint32_t>(
+                std::max(25.0f, id(topology_transaction_timeout).state) * 1000.0f);
+            if (!dispatcher.cleanup_pending && elapsed(dispatcher.started_ms, timeout)) {
+              // Stop the script before disconnecting. Keep the arbiter until
+              // disconnect completes or bounded cleanup expires.
+              lumineze_topology::stop(slot);
+              dispatcher.cleanup_pending = true;
+              dispatcher.cleanup_started_ms = now;
+              lumineze_topology::disconnect(slot);
+              lumineze_topology::status(slot, "Transaction timed out; cleaning up");
+            }
+            if (dispatcher.cleanup_pending &&
+                (!id(topology_fixtures)[slot].connected ||
+                 elapsed(dispatcher.cleanup_started_ms, 5000U))) {
+              id(record_topology_failure)->execute(slot, dispatcher.token);
+            }
+            return;
+          }
+          const uint32_t quiet = static_cast<uint32_t>(
+              std::max(1.0f, id(topology_inter_fixture_quiet).state) * 1000.0f);
+          if (dispatcher.ever_attempted &&
+              !elapsed(dispatcher.last_attempt_ms, quiet)) return;
+          const uint32_t same_fixture = static_cast<uint32_t>(
+              std::max(1.0f, id(topology_min_fixture_interval).state) * 1000.0f);
+          bool enabled[4] = {false, false, false, false};
+          bool due[4] = {false, false, false, false};
+          for (const auto &binding : lumineze_topology::fixtures) {
+            const int slot = binding.slot;
+            enabled[slot] = true;
+            const auto &fixture = id(topology_fixtures)[slot];
+            if (!fixture.pending) continue;
+            if (fixture.ever_attempted &&
+                !elapsed(fixture.last_attempt_ms, same_fixture)) continue;
+            if (fixture.retry_delay_ms != 0 &&
+                !elapsed(fixture.last_failure_ms, fixture.retry_delay_ms)) continue;
+            due[slot] = true;
+          }
+          const int choice = lumineze_topology::select_due_slot(
+              dispatcher.next_slot, enabled, due);
+          if (choice < 0) return;
+          lumineze_topology::begin_transaction(
+              id(topology_fixtures)[choice], dispatcher, choice, now);
+          lumineze_topology::dispatch(choice, dispatcher.token);
+
+number:
+  - platform: template
+    id: topology_min_fixture_interval
+    name: BLE Minimum Same-Fixture Interval
+    entity_category: config
+    unit_of_measurement: s
+    min_value: 5
+    max_value: 600
+    step: 5
+    initial_value: 30
+    restore_value: true
+    optimistic: true
+  - platform: template
+    id: topology_inter_fixture_quiet
+    name: BLE Inter-Fixture Quiet Time
+    entity_category: config
+    unit_of_measurement: s
+    min_value: 1
+    max_value: 30
+    step: 1
+    initial_value: 5
+    restore_value: true
+    optimistic: true
+  - platform: template
+    id: topology_retry_base_delay
+    name: BLE Retry Base Delay
+    entity_category: config
+    unit_of_measurement: s
+    min_value: 5
+    max_value: 300
+    step: 5
+    initial_value: 30
+    restore_value: true
+    optimistic: true
+  - platform: template
+    id: topology_transaction_timeout
+    name: BLE Transaction Timeout
+    entity_category: config
+    unit_of_measurement: s
+    min_value: 25
+    max_value: 120
+    step: 5
+    initial_value: 25
+    restore_value: true
+    optimistic: true
+
+interval:
+  - interval: 1s
+    startup_delay: 3s
+    then:
+      - script.execute: dispatcher_tick

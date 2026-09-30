@@ -1,0 +1,40 @@
+# Safe local software fixture: two visible lamps sharing one context/group.
+substitutions:
+  device_name: lumineze-generic-ci
+  friendly_name: LuminEZE Generic CI
+packages:
+  controller: !include ../packages/lumineze-topology.yaml
+  context: !include
+    file: ../packages/topology/context-seasonal.yaml
+    vars: {context_id: shared, context_name: Shared}
+  group: !include
+    file: ../packages/topology/group.yaml
+    vars: {group_id: visible_group, group_name: Shared Visible}
+  first: !include
+    file: ../packages/topology/fixture-luminize.yaml
+    vars:
+      fixture_id: fixture_a
+      fixture_name: Fixture A
+      fixture_mac: 'AA:BB:CC:DD:EE:01'
+      fixture_default_maximum: 100
+  second: !include
+    file: ../packages/topology/fixture-luminize.yaml
+    vars:
+      fixture_id: fixture_b
+      fixture_name: Fixture B
+      fixture_mac: 'AA:BB:CC:DD:EE:02'
+      fixture_default_maximum: 100
+external_components:
+  - source: {type: local, path: ../components}
+    components: [lumineze_topology]
+lumineze_topology:
+  topology_version: 1
+  engine_family: seasonal
+  contexts: [{id: shared}]
+  groups: [{id: visible_group, context: shared, output: visible}]
+  fixtures:
+    - {id: fixture_a, slot: 0, type: jungle_dawn, group: visible_group, mac: 'AA:BB:CC:DD:EE:01'}
+    - {id: fixture_b, slot: 3, type: jungle_dawn, group: visible_group, mac: 'AA:BB:CC:DD:EE:02'}
+wifi:
+  ssid: ci-network
+  password: ci-password

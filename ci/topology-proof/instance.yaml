@@ -1,0 +1,17 @@
+number:
+  - platform: template
+    id: ${fixture_id}_limit
+    name: ${fixture_name} Limit
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 50
+    optimistic: true
+ble_client:
+  - id: ${fixture_id}_client
+    mac_address: ${fixture_mac}
+    auto_connect: false
+script:
+  - id: ${fixture_id}_transaction
+    then:
+      - lambda: ESP_LOGI("topology-proof", "${fixture_id}");
