@@ -61,7 +61,7 @@ Temporary T23 controls retain their documented seasonal-only scope.
   fraction of a minute, leap-day independence, DST, forward/backward corrections,
   invalid clock, disabled slots, missing points and startup. Acceptance: expected
   results are determinable from timestamp plus active snapshot alone.
-- [ ] **T10.3 — Editing, persistence and control contract.** Specify staged
+- [x] **T10.3 — Editing, persistence and control contract.** Specify staged
   entity IDs, atomic context Apply/Cancel, rejection messages, active revision,
   boot defaults, schema corruption handling and upgrade/rollback. Document
   fraction output, calibration once, manual/off/safety priority, and independent
@@ -116,3 +116,13 @@ points, DST/corrections, startup, invalid clocks and transition filtering.
 Verification: manually checked 09:00=50, UV 09:30=40, wrap midnight=20 and
 fractional-minute expectations against their documented segments; `git diff
 --check` passes. No time events are replayed and no firmware changed.
+
+### T10.3 — complete
+
+[Contract section 3](../schedule-behaviour.md) freezes entity IDs, staged/active
+separation, context-atomic Apply, rejection/Cancel, revision and schema-1 two-bank
+persistence, including uncertain writes, corruption and rollback. Common
+calibration/manual/safety/authorization behavior is preserved. Verification:
+record arithmetic is 4+2+2+4+4+1+33+33+4=87 bytes; checked controls against current
+policy and reviewed invalid-edit/power-loss paths. `git diff --check` passes.
+Storage and hardware implementation proofs belong to T11/T15, not this task.

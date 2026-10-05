@@ -186,3 +186,158 @@ when the final target changes. Repeated evaluations of the same segment cannot
 reset retry budgets. Skipping several step segments requests only the current
 segment; equal-level adjacent steps create no duplicate confirmed command.
 Transition identity is role-scoped and distinct from the evaluation revision.
+
+## 3. HA editor, activation, persistence and common control
+
+### Entity and action contract
+
+`<context>` means the stable configured context ID; `<role>` is visible or uv;
+`<n>` is slot 1–8. IDs and operational editor names use these stable identifiers,
+not the display label, physical slot, MAC or product. Labels may provide a
+friendly explanation but must not alter preference identity.
+
+| Entity ID pattern | Kind / values | Behavior |
+| --- | --- | --- |
+| `<context>_<role>_point_<n>_enabled` | Boolean switch | Stage inclusion only |
+| `<context>_<role>_point_<n>_minute` | Number 0–1439, step 1 | Local minutes after midnight; stage only |
+| `<context>_<role>_point_<n>_level` | Number 0–100, step 1 | Percent of fixture maximum; stage only |
+| `<context>_<role>_schedule_mode` | Select `step`, `linear` | Stage interpolation for the role |
+| `<context>_apply_schedule` | Button | Validate and commit the entire context |
+| `<context>_cancel_schedule_edits` | Button | Reload staging from active or empty defaults; no output change |
+| `<context>_schedule_status` | Text | Active/unconfigured/editing or precise rejection/storage reason |
+| `<context>_schedule_revision` | Sensor, integer | Last durably committed revision; 0 when absent |
+| `<context>_schedule_valid` | Boolean sensor | All used roles have a valid active snapshot |
+| `<context>_schedule_dirty` | Boolean sensor | Staged data differs from active snapshot/defaults |
+
+Production includes these operational controls. Development includes the same
+controls plus the existing non-restoring simulated-input and bench-output gate.
+Simulation cannot activate itself through restore/API reconnect. T23 temporary
+controls are absent from schedule builds. Engine-specific preview diagnostics
+may be added in development; they must use the active snapshot, clearly separate
+from staged values and requested/completed/reported lamp levels.
+
+### Apply/Cancel state transitions
+
+1. Freeze one complete staged context snapshot; serialize Apply/Cancel/editor
+   mutation with this operation so later edits cannot alter the captured data.
+2. Validate schema, used roles, types/ranges, capacity and unique enabled times.
+   On invalid data, keep active snapshot/revision and all pending requests intact;
+   perform no preference write. Preserve staging for correction. Report role,
+   point and reason (for example `Rejected: uv duplicate enabled minute 600`).
+3. Normalize a bounded sorted evaluation copy while retaining stable editor slots
+   in the persisted record. If the complete staged record equals active,
+   return `Unchanged`: no flash write, revision increment or authorization reset.
+4. Durably store and verify the new complete record. After known successful
+   persistence, publish it atomically as active and increment revision, then
+   immediately evaluate one fresh snapshot. Never publish half a role/context.
+5. Apply preserves automatic/manual enable states; it never turns groups on.
+   It is permitted while groups are disabled, manual is active or clock is
+   invalid, because validating a daily schedule is independent of current time.
+   Operational gates may consequently hold output or issue safety-off.
+6. Replace obsolete automatic pending/retry generations for affected groups only.
+   A new final target or source gets current authorization. A revoked identical
+   pending target still needs a replacement generation; an identical already
+   confirmed target needs no duplicate write. An old in-flight write may finish
+   physically but cannot restore its request or confirm the newer decision.
+   Keep retries bounded across unchanged evaluations. Manual/safety requests are
+   not revoked by a schedule edit.
+7. Cancel Edits discards staging changes and rejection text, loading active
+   values; with no active snapshot, load mode `step` and all slots disabled at
+   minute/level 0. Cancel Edits is not Cancel Temporary Lighting and sends no BLE
+   command. Switching HA connections never acts as Apply.
+
+Active output continues during staging. A rejected action's diagnostic does not
+mean the active schedule is invalid. Status distinguishes active revision from
+staged error, for example `Active revision 7; rejected uv point 3 level`.
+Dirty remains true after a rejected Apply and false after successful Apply,
+Unchanged or Cancel. Editor mutation after a captured Apply appears as new dirty
+staging after publication; it cannot alter the saved snapshot.
+
+### Persistence and reboot contract
+
+Use two independent bounded preference records per context, preserving the older
+valid record until the newer one has been written/flushed/verified. This is a
+storage requirement for T11 to prove on the pinned backend, not a claim that
+multiple ESPHome numbers restore atomically. No per-field restoring staged number
+may be used as the active schedule.
+
+Schema 1 encoding, packed bytes without native-struct padding:
+
+| Field | Bytes / encoding |
+| --- | --- |
+| Magic | 4 literal bytes `LZSC` |
+| Schema | 2, little-endian uint16 = 1 |
+| Record length | 2, little-endian uint16 = 87 |
+| Revision | 4, little-endian uint32, nonzero |
+| Context fingerprint | 4, little-endian first four SHA-256 bytes of `lumineze-schedule-v1\|<context-id>\|<used-role-mask>`; substitute 1 if zero |
+| Used-role mask | 1; visible bit 0, uv bit 1; no other bits |
+| Visible role | 33: mode byte (0 step, 1 linear), then eight 4-byte slot records |
+| UV role | 33, same encoding |
+| Checksum | 4, little-endian IEEE CRC-32 of preceding 83 bytes |
+
+Each slot encodes enabled 0/1 byte, minute uint16 little-endian and level byte.
+An unused role has canonical step mode and all disabled zero slots; it has no
+entities or valid output. Validate record length, magic, CRC, fingerprint, schema
+and every field before evaluation. CRC detects damage, not malicious changes.
+Preference keys use a distinct schedule namespace plus context ID, role mask and
+bank index; detect key collisions against other generated preferences. Renaming
+a context or changing its used-role mask invalidates old schedule restoration.
+Label/group/fixture changes that preserve context ID and role mask retain the
+schedule; fixture calibration still follows its physical assignment fingerprint.
+
+Recover the newest complete valid record; a torn/corrupt newest record falls
+back to the older valid record. Revision starts at 1; increment modulo uint32,
+skipping 0. Compare revisions by a modulo difference strictly between 0 and
+2^31; equal revisions require identical payloads, otherwise reject the pair.
+A half-range ambiguous pair is rejected. No valid record means unconfigured,
+invalid automatic output and staging defaults. Unknown schema is never guessed
+or interpreted as seasonal preferences. Loading valid active data does not enable
+groups or restore fixture/group manual actions.
+
+Apply acknowledges success only after durable storage and active publication.
+A definitely failed write leaves the older record and active snapshot unchanged.
+If persistence outcome cannot be established (including power loss before the
+response), report `Storage outcome unknown; reboot/reload before Apply` rather
+than claiming rejection or success; block further Apply until recovery selects
+a valid record. Reboot may restore either the previous complete record or the
+new complete record if that write finished. It must never restore a mixture.
+An interrupted/unacknowledged operation has this explicit recovery rule; invalid
+validation rejection always leaves persistence untouched. T11 must fault-test
+these cases and its chosen preference flush/readback mechanism.
+
+Only complete active settings persist. Staging is repopulated from active on
+boot, losing uncommitted edits. Manual, transaction, simulation and temporary
+state remain volatile. Upgrades within schema 1 preserve compatible records;
+an incompatible future schema requires explicit export/migration. Downgrades
+that cannot read the active schema start unconfigured with controls off.
+Keep a private exported schedule/settings record for rollback and re-entry;
+never overwrite seasonal calibration or automatically enable output on update.
+
+### Common policy and final lamp target
+
+Schedule output is a finite fraction `desired = interpolated_percent / 100`,
+with `peak = 1`, `curve = desired` for the existing conversion contract.
+The ideal target is `lround(calibrated_maximum * desired)`, limited to 0–100;
+positive half ties round upward. Embedded float conversion remains owned by the
+existing helper; vectors include half ties and scaling to guard operation order.
+Do not round a fraction to integer schedule percent first or scale twice.
+For two members capped at 100 and 60, a shared 75% demand gives 75 and 45.
+Group manual remains relative; fixture manual is absolute, capped by its maximum.
+
+Use current priority: absent/disabled fixture cannot transact; active invalid-time
+safety supersedes manual; explicit scoped safe-off authorizes 0; fixture manual,
+group manual, valid enabled automatic output, then hold. Group automatic-off
+revokes automatic retries but does not send off. Existing scoped safe-off remains
+requested while controls stay disabled; deliberate manual/automatic action may
+supersede it unless live-clock safety is active. Keep the existing boot-uptime
+invalid-clock grace (not a new time-since-failure grace) and fail-safe setting.
+Invalid schedules block automatic requests without inventing a clock fault or
+blocking independent manual controls. Invalid maximum rejects nonzero requests
+but cannot prevent safety-off. ProT5 starts at zero maximum; commissioning is
+required for nonzero UV. No editor action bypasses calibration or commissioning.
+
+Schedule Apply/step-edge authorization cannot bypass BLE timing, bounded retries,
+readback windows or stale-generation protections. Requested, pending, in-flight,
+completed and reported values remain distinct; unknown/stale readback is never
+physical confirmation. Other contexts and higher-priority fixture overrides
+continue independently when one context is edited or invalid.
