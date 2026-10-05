@@ -85,3 +85,104 @@ plus metadata and output records; budget the schedule's explicit data records
 within 1 KiB. HA entities, framework allocation and buffers are additional and
 must be compiled/measured in T11/T15. If those checks fail, revise capacity and
 vectors explicitly before advertising schedule support.
+
+## 2. Evaluation, boundaries and clock behavior
+
+Let `t` be local minutes after midnight including seconds/60, in `[0,1440)`.
+Reject invalid provider calendar/clock, non-finite `t`, or out-of-range `t`;
+never clamp a malformed time into a valid point. Leap days use the same daily
+schedule. Validity and simulated provenance come from one captured snapshot.
+
+For sorted enabled points, find the last point at/before `t` and the next point.
+If no earlier point exists, use the last point on the previous day. After the
+last point, use the first on the next day. Extend times by ±1440 for that one
+segment. A segment never has zero duration because enabled times are unique.
+
+- **Step:** output the earlier point's level until the next point. At an exact
+  point, use the new point's level, including exact minute zero.
+- **Linear:** interpolate from earlier to next: earlier level plus their level
+  difference times elapsed segment minutes divided by segment duration.
+  Do not round the interpolated percentage before the fixture boundary.
+- Both modes evaluate from the current time; boot does not replay morning points.
+  Before/after endpoints are cyclic, not an implicit off or permanently held tail.
+
+### Concrete visible example
+
+Enabled points: 08:00=0, 10:00=100, 18:00=100, 20:00=0. Both modes are 0 overnight.
+The table is the logical percent of each fixture's maximum, before calibration.
+
+| Local time | Linear | Step |
+| --- | ---: | ---: |
+| 00:00 / 07:59 | 0 | 0 |
+| 08:00 | 0 | 0 |
+| 08:30 | 25 | 0 |
+| 09:00 | 50 | 0 |
+| 09:00:30 | 50.4166666667 | 0 |
+| 10:00 | 100 | 100 |
+| 12:00 / 18:00 | 100 | 100 |
+| 19:00 | 50 | 100 |
+| 20:00 / 23:59 | 0 | 0 |
+
+### Concrete UV example
+
+Enabled points: 09:00=0, 10:00=80, 16:00=80, 17:00=0.
+
+| Local time | Linear | Step |
+| --- | ---: | ---: |
+| 08:00 / 09:00 | 0 | 0 |
+| 09:30 | 40 | 0 |
+| 10:00 / 12:00 / 16:00 | 80 | 80 |
+| 16:30 | 40 | 80 |
+| 17:00 / 00:00 | 0 | 0 |
+
+With a commissioned UV maximum of 50%, the linear 09:30 target is 20% lamp
+output. With the new ProT5 default maximum of 0%, it remains 0%. No schedule
+parameter constitutes calibration or exposure guidance.
+
+### Midnight and disabled-point examples
+
+Points 02:00=0 and 22:00=40 give linear 23:00=30, 00:00=20, 01:00=10, 02:00=0;
+step is 40 throughout the wrapping segment until exact 02:00. The daytime
+linear segment ramps 0→40 over 20 hours. Add explicit zero boundary points if
+that daytime ramp is unwanted. A point at 00:00 is allowed; 24:00 is not.
+
+For 08:00=0, disabled 09:00=100, 10:00=0, output at 09:00 is 0 in either mode.
+Disabling an endpoint may lengthen a segment across midnight; Apply previews
+validation but must not silently add an off window. Unordered slots 20:00=0,
+10:00=100, 08:00=0, 18:00=100 are equivalent to the visible example after sorting.
+
+### DST, corrections, clock loss and missed evaluations
+
+| Situation | Required output/application |
+| --- | --- |
+| Spring clock jumps over a point | Evaluate the new local time/segment; do not emit every skipped point |
+| Autumn local hour repeats | Evaluate that hour again; the same local timestamp has the same schedule output |
+| Forward/backward correction | Evaluate corrected time immediately on the next evaluation; no catch-up queue |
+| Startup part-way through day | Restore validated active settings, evaluate now, leave groups off until deliberate enable |
+| Missed evaluation/tick | Recompute now, not an accumulated ramp increment |
+| Date change/leap day | Same repeating schedule, continuous cyclic midnight segment; date alone is not an output event |
+| Invalid live clock | Invalidate automatic schedule output and revoke automatic retries; shared invalid-clock safety applies |
+| Invalid simulated clock | Calculation error and automatic output blocked; do not misclassify it as live-clock safety |
+| Return from simulation to live | Fresh live evaluation replaces authorized simulated output, including within normal threshold |
+
+Example DST-style snapshots on a linear schedule 01:00=0, 03:00=100, 23:00=0:
+01:30 gives 25; a jump to 03:00 gives 100. A backward correction from 02:30
+(75) to 01:30 (25) yields 25, even if that wall-clock time occurred earlier.
+The skipped/repeated-hour size depends on the configured timezone; the algorithm
+uses the provider's current local snapshot and does not hardcode a one-hour gap.
+
+### Evaluation and transport timing
+
+Use the existing 10-second engine/policy interval, with immediate reevaluation
+on Apply and relevant common control/time-provider events. A time-sync callback
+must request a fresh evaluation; timers for retries, uptime grace and transactions
+stay monotonic. Output is an authorization, not instantaneous physical delivery:
+BLE spacing, active transaction completion and retry delays still apply.
+
+Linear intermediate values use the existing per-fixture minimum-change filter.
+A changed **step segment**, accepted Apply, recovery to valid live output or
+return from simulation requests one explicit reevaluation, bypassing that filter
+when the final target changes. Repeated evaluations of the same segment cannot
+reset retry budgets. Skipping several step segments requests only the current
+segment; equal-level adjacent steps create no duplicate confirmed command.
+Transition identity is role-scoped and distinct from the evaluation revision.

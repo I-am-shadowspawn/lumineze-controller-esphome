@@ -56,7 +56,7 @@ Temporary T23 controls retain their documented seasonal-only scope.
   interpolation, minimum-change and used/unused role rules. Map every existing
   T10 roadmap edge case to a section. Acceptance: no product-slot assumptions
   and no unresolved normal-output rule.
-- [ ] **T10.2 — Time and boundary specification.** Add before/at/between/after
+- [x] **T10.2 — Time and boundary specification.** Add before/at/between/after
   and midnight tables for step and linear schedules; specify seconds as a
   fraction of a minute, leap-day independence, DST, forward/backward corrections,
   invalid clock, disabled slots, missing points and startup. Acceptance: expected
@@ -107,3 +107,12 @@ settles capacity, units, topology, validation and alternatives, with explicit
 entity/storage estimates. Verification: matched owner paths to the checkout,
 reviewed roadmap T10 decisions and ran `git diff --check`. No firmware change;
 Gate A remains pending and gates T11.
+
+### T10.2 — complete
+
+[Contract section 2](../schedule-behaviour.md) specifies cyclic point evaluation,
+separate visible/UV tables, fractional minutes, wrap, disabled/out-of-order
+points, DST/corrections, startup, invalid clocks and transition filtering.
+Verification: manually checked 09:00=50, UV 09:30=40, wrap midnight=20 and
+fractional-minute expectations against their documented segments; `git diff
+--check` passes. No time events are replayed and no firmware changed.
