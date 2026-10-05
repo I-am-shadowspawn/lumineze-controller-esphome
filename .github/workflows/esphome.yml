@@ -6,12 +6,9 @@ on:
   workflow_dispatch:
   merge_group:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 permissions:
   contents: read
+  checks: read
 
 jobs:
   changes:
@@ -19,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       code: ${{ steps.scope.outputs.code }}
+      baseline: ${{ steps.scope.outputs.baseline }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,6 +24,9 @@ jobs:
       - id: scope
         run: python scripts/ci_change_scope.py
   validate:
+    concurrency:
+      group: ${{ github.workflow }}-validate-${{ github.ref }}
+      cancel-in-progress: true
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
@@ -116,6 +117,9 @@ jobs:
           python scripts/check_diagnostic_profiles.py
 
   profiles:
+    concurrency:
+      group: ${{ github.workflow }}-profile-${{ matrix.profile }}-${{ github.ref }}
+      cancel-in-progress: true
     needs: changes
     if: needs.changes.outputs.code == 'true'
     name: Profile / ${{ matrix.profile }}
@@ -166,6 +170,9 @@ jobs:
           retention-days: 14
 
   remote-consumer:
+    concurrency:
+      group: ${{ github.workflow }}-consumer-${{ github.ref }}
+      cancel-in-progress: true
     name: Immutable remote consumer
     needs: changes
     if: needs.changes.outputs.code == 'true'
@@ -209,3 +216,11 @@ jobs:
             test "$CODE" = "false"
             echo "Documentation-only update; full firmware checks skipped."
           fi
+      - uses: actions/checkout@v4
+        if: needs.changes.outputs.code == 'false'
+      - name: Require successful preceding-source validation for docs-only updates
+        if: needs.changes.outputs.code == 'false'
+        env:
+          BASELINE_SHA: ${{ needs.changes.outputs.baseline }}
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/ci_documentation_baseline.py

@@ -31,7 +31,7 @@ with tempfile.TemporaryDirectory() as tmp:
         event.write_text(json.dumps({'before': before})); output.write_text('')
         env = dict(os.environ, GITHUB_EVENT_PATH=str(event), GITHUB_EVENT_NAME='push', GITHUB_SHA=head, GITHUB_OUTPUT=str(output))
         subprocess.run([sys.executable, str(ROOT / 'scripts/ci_change_scope.py')], cwd=directory, env=env, check=True)
-        assert output.read_text() == 'code=' + expected + '\n'
+        assert output.read_text() == 'code=' + expected + '\nbaseline=' + before + '\n'
         before = head
 workflow = yaml.load((ROOT / '.github/workflows/esphome.yml').read_text(), Loader=yaml.BaseLoader)
 gate = workflow['jobs']['required']['steps'][0]['run']
@@ -45,3 +45,15 @@ for code, scope, validate, profiles, remote, expected in [
     result = subprocess.run(['bash', '-ec', gate], env=env, capture_output=True)
     assert (result.returncode == 0) == (expected == 0)
 print('PASS actual Git event decisions and required gate success/failure paths')
+
+from ci_documentation_baseline import outcome, require_baseline
+pending = {'id': 1, 'name': 'Required validation', 'app': {'slug': 'github-actions'}, 'status': 'in_progress', 'conclusion': None}
+passed = dict(pending, status='completed', conclusion='success')
+failed = dict(pending, status='completed', conclusion='failure')
+assert outcome([passed]) is True and outcome([failed]) is False and outcome([pending]) is None
+require_baseline(lambda: [passed], delay=lambda _: None)
+for checks in ([failed], [pending], []):
+    try: require_baseline(lambda: checks, delay=lambda _: None, attempts=2)
+    except RuntimeError: pass
+    else: raise AssertionError('docs-only gate accepted failed/pending/missing source baseline')
+print('PASS docs-only inherits passed source checks and rejects failed/pending/missing baseline')

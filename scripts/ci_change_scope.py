@@ -25,4 +25,9 @@ if __name__=='__main__':
     event=json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text())
     changed=code_changed(paths_for_event(event,os.environ['GITHUB_EVENT_NAME']))
     print('Full software validation required' if changed else 'Documentation-only update: heavy validation skipped')
-    with open(os.environ['GITHUB_OUTPUT'],'a') as f:f.write('code='+str(changed).lower()+'\n')
+    baseline=event.get('before', '')
+    if os.environ['GITHUB_EVENT_NAME']=='pull_request':
+        baseline=event.get('before') or event['pull_request']['base']['sha']
+    with open(os.environ['GITHUB_OUTPUT'],'a') as f:
+        f.write('code='+str(changed).lower()+'\n')
+        f.write('baseline='+baseline+'\n')

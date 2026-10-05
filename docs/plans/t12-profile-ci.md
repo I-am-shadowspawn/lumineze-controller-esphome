@@ -161,3 +161,11 @@ New commits supersede previous same-ref workflow runs. All five T12 increments
 are complete locally. GitHub's current candidate checks still need review after
 runner scheduling; completed/cancelled obsolete runs are not acceptance evidence.
 Next: T13 identity/compatibility decisions; no hardware promotion.
+
+
+T12.5 follow-up: docs-only success now inherits the preceding source commit's
+successful Required validation check. Heavy-job concurrency applies only when
+code jobs run, so docs do not cancel their baseline. Local tests reject failed,
+missing and pending baseline checks; the gate waits up to 30 minutes then remains
+failed/retryable if infrastructure has not completed. This closes the possibility
+of a doc edit hiding an unverified or failed firmware revision.

@@ -27,8 +27,10 @@ Hardware Gate A/T23/T15 and release/deployment evidence remain separate approval
 
 ## Evidence and resilience
 
-New commits supersede older workflow runs on the same branch/PR so regular
-checkpoint commits do not leave obsolete builds queued.
+New firmware commits supersede older heavy jobs on the same branch/PR. A
+documentation-only update leaves preceding firmware jobs active and its required
+gate waits for the preceding commit’s successful Required validation check. Failed,
+missing or still-pending source checks cannot be hidden by a documentation edit.
 
 Profile jobs retain every compile attempt and a JSON summary for 14 days.
 Three attempts wait 20/40 seconds and final failure remains failure. Do not delete
