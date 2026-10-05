@@ -20,7 +20,7 @@ compilation; preserve those outcomes. Hardware reports remain separate gates.
   shared/independent groups, up to four experimental fixtures and negative
   configurations. Acceptance: each supported profile has a full-build job and
   each topology case declares config-only, compiled or hardware-verified status.
-- [ ] **T12.2 — Deterministic fast gates.** Run schema failures, T10 vectors,
+- [x] **T12.2 — Deterministic fast gates.** Run schema failures, T10 vectors,
   actual policy transitions, transport/generation/T23 tests, seasonal parity,
   safe-off and timeout checks against the checkout. Acceptance: expected-invalid
   cases fail for the intended reason; a deliberately broken schedule case and
@@ -86,3 +86,17 @@ all four T11 baselines while retaining 141,296 static RAM / 235,008 flash bytes
 against the current partition; these do not certify runtime heap. Topology matrix
 full compile remains required CI coverage, not a claim of physical validation.
 Local manifest check passes. Next: deterministic gates and fault injection.
+
+
+### T12.2 — complete
+
+`check_fast_gates.py` runs the manifest-declared checkout-only harnesses and fixture
+C++ tests with named failures. It requires executable PASS coverage for every
+T10 transition ID. Nine real schedule schema cases and both engine topology
+matrices are added to CI alongside existing failures and inventory checks.
+`check_gate_faults.py` copies only source/test assets into a disposable directory
+and proves a changed oracle expectation fails `check_schedule_cases` and an
+obsolete completion that clears pending state fails `check_schedule_policy`.
+Both failed by assertions, not setup/compile errors; no injected fault touched
+the checkout. All unmodified fast gates pass (`/tmp/t12-fast.log`), as do the nine
+schedule and 17 existing schema cases. Next: isolated build inventory gates.

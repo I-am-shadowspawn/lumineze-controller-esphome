@@ -34,12 +34,18 @@ jobs:
           esphome config ci/topology-generic-development.yaml
           esphome -s enable_jungle_dawn false -s enable_prot5 true -s prot5_mac AA:BB:CC:DD:EE:02 config ci/controller.yaml > /dev/null
           esphome -s enable_prot5 true -s prot5_mac AA:BB:CC:DD:EE:02 config ci/controller.yaml > /dev/null
-      - name: Check transport state transitions
-        run: python scripts/check_transport_scenarios.py
+      - name: Check declared software regressions
+        run: |
+          python scripts/check_fast_gates.py
+          python scripts/check_gate_faults.py
       - name: Validate static topology and failure cases
-        run: python scripts/check_topology_schema.py esphome
+        run: |
+          python scripts/check_topology_schema.py esphome
+          python scripts/check_schedule_schema.py esphome
       - name: Validate operational topology matrix
-        run: python scripts/check_topology_matrix.py esphome
+        run: |
+          python scripts/check_topology_matrix.py esphome
+          python scripts/check_topology_matrix.py --schedule esphome
       - name: Check seasonal entity and settings compatibility
         run: python scripts/check_seasonal_inventory.py esphome
       - name: Check real and development input isolation
