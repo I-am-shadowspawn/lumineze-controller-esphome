@@ -22,11 +22,11 @@ def budget(result, limits):
     for field in ('ram_bytes','flash_bytes'):
         assert result[field] <= limits[field],f'{field} {result[field]} exceeds budget {limits[field]}'
 
-def compile_retry(command, directory, attempts=3, delay=time.sleep):
+def compile_retry(command, directory, attempts=3, delay=time.sleep, cwd=ROOT):
     directory.mkdir(parents=True,exist_ok=True)
     for attempt in range(1,attempts+1):
         print(f'Compile attempt {attempt}/{attempts}',flush=True)
-        process=subprocess.run(command,cwd=ROOT,capture_output=True,text=True)
+        process=subprocess.run(command,cwd=cwd,capture_output=True,text=True)
         output=process.stdout+process.stderr
         (directory/f'compile-attempt-{attempt}.log').write_text(output)
         print('\n'.join(output.splitlines()[-30:]),flush=True)

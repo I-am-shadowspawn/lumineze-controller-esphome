@@ -41,7 +41,7 @@ compilation; preserve those outcomes. Hardware reports remain separate gates.
   dummy secrets. Acceptance: final failed compilation fails CI; threshold breach
   fails its profile; artifacts cannot contain live credentials. Runtime heap
   headroom is not claimed from linker output.
-- [ ] **T12.5 — Remote consumption and release gate.** Add a distinct clean
+- [x] **T12.5 — Remote consumption and release gate.** Add a distinct clean
   consumer check against an immutable candidate SHA with package and component
   on that same SHA. Run all profiles remotely at release time; use a representative
   consumer on implementation PRs. Document required check names for repository
@@ -131,3 +131,22 @@ or HA runtime outcome is inferred from these checks.
 - [ ] **T12.4b — Complete topology matrix build record.** Both ten-case engine
   matrices are running locally; record their complete results before closing
   this increment. Static RAM does not certify free/minimum heap.
+
+
+### T12.5 — complete
+
+`check_remote_consumer.py` writes only an ordinary installation wrapper in an
+empty temporary directory, pins packages/component to the same full SHA, rejects
+wrong/missing helper refs, and validates/compiles without local assets or a
+consumer generator requirement. Representative schedule production succeeds at
+remote `78075b90d47e9b856efa11b3a6b7bbbfca37e499`
+(`/tmp/t12-remote-consumer.log`); dispatch release rehearsals compile all four.
+Remote compile also uses the bounded retry helper while retaining the empty
+consumer working directory.
+Always-triggered Change scope and Required validation replace path-ignore.
+Disposable real Git event tests prove docs-only skip and firmware full-check
+selection. The actual final gate script accepts documented skips/all-pass and
+rejects a failed profile or scope job. `docs/ci-validation.md` names required
+checks; repository branch protection is not changed. Both engine topology
+compile matrices are required. T12.4b's local complete matrix record remains
+pending before closing the parent task.

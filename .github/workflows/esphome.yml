@@ -2,21 +2,28 @@ name: ESPHome
 
 on:
   push:
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-      - 'LICENSE'
   pull_request:
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-      - 'LICENSE'
+  workflow_dispatch:
+  merge_group:
 
 permissions:
   contents: read
 
 jobs:
+  changes:
+    name: Change scope
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.scope.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: scope
+        run: python scripts/ci_change_scope.py
   validate:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,6 +46,7 @@ jobs:
           python scripts/check_fast_gates.py
           python scripts/check_gate_faults.py
           python scripts/check_build_resilience.py
+          python scripts/check_ci_change_scope.py
       - name: Validate static topology and failure cases
         run: |
           python scripts/check_topology_schema.py esphome
@@ -81,7 +89,8 @@ jobs:
                esphome compile ci/controller-development.yaml && \
                esphome compile ci/topology-generic.yaml && \
                esphome compile ci/topology-generic-development.yaml && \
-               python scripts/check_topology_matrix.py --compile esphome; then
+               python scripts/check_topology_matrix.py --compile esphome && \
+               python scripts/check_topology_matrix.py --schedule --compile esphome; then
               echo "::endgroup::"
               break
             else
@@ -103,6 +112,8 @@ jobs:
           python scripts/check_diagnostic_profiles.py
 
   profiles:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     name: Profile / ${{ matrix.profile }}
     runs-on: ubuntu-latest
     strategy:
@@ -149,3 +160,48 @@ jobs:
           path: ci/artifacts/${{ matrix.profile }}
           if-no-files-found: warn
           retention-days: 14
+
+  remote-consumer:
+    name: Immutable remote consumer
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements-ci.txt
+      - name: Rehearse immutable consumer
+        env:
+          CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          ALL_PROFILES: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          if [ "$ALL_PROFILES" = "true" ]; then
+            python scripts/check_remote_consumer.py --ref "$CANDIDATE_SHA" --all --compile
+          else
+            python scripts/check_remote_consumer.py --ref "$CANDIDATE_SHA" --compile
+          fi
+  required:
+    name: Required validation
+    needs: [changes, validate, profiles, remote-consumer]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report complete validation or documentation-only success
+        env:
+          CODE: ${{ needs.changes.outputs.code }}
+          SCOPE: ${{ needs.changes.result }}
+          VALIDATE: ${{ needs.validate.result }}
+          PROFILES: ${{ needs.profiles.result }}
+          REMOTE: ${{ needs.remote-consumer.result }}
+        run: |
+          test "$SCOPE" = "success"
+          if [ "$CODE" = "true" ]; then
+            test "$VALIDATE" = "success"
+            test "$PROFILES" = "success"
+            test "$REMOTE" = "success"
+          else
+            test "$CODE" = "false"
+            echo "Documentation-only update; full firmware checks skipped."
+          fi
