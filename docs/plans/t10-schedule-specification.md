@@ -50,7 +50,7 @@ Temporary T23 controls retain their documented seasonal-only scope.
 
 ## Incremental deliveries
 
-- [ ] **T10.1 — Audit and decision record.** Inspect snapshot, output conversion,
+- [x] **T10.1 — Audit and decision record.** Inspect snapshot, output conversion,
   groups, preferences and existing HA entities. Record the choices above and
   alternatives in `docs/schedule-behaviour.md`, including capacity, units,
   interpolation, minimum-change and used/unused role rules. Map every existing
@@ -95,3 +95,15 @@ hardware increments complete because this plan exists.
 
 **Progress:** all increments planned; no implementation or hardware evidence
 is claimed by this document.
+
+## Execution record
+
+### T10.1 — complete
+
+Source: development `e786bee`; branch `t10/schedule-specification`; CI pin
+ESPHome 2026.9.0. Audited generic schema/state, orchestrator, conversion,
+arbitration, preferences and T23 seams. [Contract section 1](../schedule-behaviour.md)
+settles capacity, units, topology, validation and alternatives, with explicit
+entity/storage estimates. Verification: matched owner paths to the checkout,
+reviewed roadmap T10 decisions and ran `git diff --check`. No firmware change;
+Gate A remains pending and gates T11.
