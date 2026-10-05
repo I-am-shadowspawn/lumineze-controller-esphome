@@ -16,7 +16,7 @@ consumers must not invent or automatically inherit a moving-branch version.
 
 ## Incremental deliveries
 
-- [ ] **T13.1 — Identity and compatibility decision record.** Inventory existing
+- [x] **T13.1 — Identity and compatibility decision record.** Inventory existing
   substitutions, entities, preference fingerprints, tags and minimum platform
   APIs. Choose project namespace, version truth and profile identifiers. Define
   compatible versus breaking changes to topology, HA entities, storage, output
@@ -66,3 +66,15 @@ hardware increments complete because this plan exists.
 
 **Progress:** all increments planned; no implementation or hardware evidence
 is claimed by this document.
+
+
+### T13.1 — complete
+
+Source `fd8d778`. Repository tags are `v1.0.0` and `v1.9.0-rc`; neither base declares
+project identity. Supplied deployed wrapper/Builder version are source context,
+not a live inventory. Chose `shadowspawn.lumineze` / `2.0.0-dev` unreleased identity,
+shared version truth, four generic profile IDs and explicit legacy labels.
+`docs/compatibility.md` records topology, entity-name/preference, calibration and
+schema-1 schedule boundaries; legacy/profile migration and rollback are explicit,
+not automatic. Only ESPHome 2026.9.0 / observed IDF 5.5.5 is initially qualified.
+No tags or installed devices changed. Next: metadata composition and checks.
