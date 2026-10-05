@@ -1,0 +1,1627 @@
+{
+  "source_sha": "c250604",
+  "scope": "Resolved seasonal entity/settings contracts before T11.1; dummy CI configurations only",
+  "profiles": {
+    "production": {
+      "number": [
+        {
+          "id": "fixture_a_daily_maximum_value",
+          "name": "Fixture A Today's Automatic Maximum",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "60.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_a_fixed_duration_hours",
+          "name": "Fixture A Fixed Duration",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "2.0",
+          "min_value": "0.25",
+          "max_value": "24.0",
+          "step": "0.25",
+          "unit_of_measurement": "h"
+        },
+        {
+          "id": "fixture_a_fixed_level_value",
+          "name": "Fixture A Fixed Level",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "35.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_a_manual_level",
+          "name": "Fixture A Manual Absolute Level",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "0.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_a_maximum",
+          "name": "Fixture A Calibrated Maximum",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "100.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_a_minimum_change",
+          "name": "Fixture A Minimum Automatic Change",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "2.0",
+          "min_value": "1.0",
+          "max_value": "10.0",
+          "step": "1.0",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_b_daily_maximum_value",
+          "name": "Fixture B Today's Automatic Maximum",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "60.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_b_fixed_duration_hours",
+          "name": "Fixture B Fixed Duration",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "2.0",
+          "min_value": "0.25",
+          "max_value": "24.0",
+          "step": "0.25",
+          "unit_of_measurement": "h"
+        },
+        {
+          "id": "fixture_b_fixed_level_value",
+          "name": "Fixture B Fixed Level",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "35.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_b_manual_level",
+          "name": "Fixture B Manual Absolute Level",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "0.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_b_maximum",
+          "name": "Fixture B Calibrated Maximum",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "100.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_b_minimum_change",
+          "name": "Fixture B Minimum Automatic Change",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "2.0",
+          "min_value": "1.0",
+          "max_value": "10.0",
+          "step": "1.0",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "shared_latitude",
+          "name": "Shared Latitude",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "-28.5",
+          "min_value": "-60.0",
+          "max_value": "60.0",
+          "step": "0.1",
+          "unit_of_measurement": "\u00b0"
+        },
+        {
+          "id": "shared_noon",
+          "name": "Shared Solar Noon",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "750.0",
+          "min_value": "600.0",
+          "max_value": "840.0",
+          "step": "1.0",
+          "unit_of_measurement": "min after midnight"
+        },
+        {
+          "id": "shared_phase",
+          "name": "Shared Season Phase Offset",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "182.6",
+          "min_value": "0.0",
+          "max_value": "366.0",
+          "step": "0.1",
+          "unit_of_measurement": "d"
+        },
+        {
+          "id": "shared_uv_end",
+          "name": "Shared UV End Before Sunset",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "90.0",
+          "min_value": "0.0",
+          "max_value": "300.0",
+          "step": "5.0",
+          "unit_of_measurement": "min"
+        },
+        {
+          "id": "shared_uv_exponent",
+          "name": "Shared UV Curve Exponent",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "1.0",
+          "min_value": "0.25",
+          "max_value": "4.0",
+          "step": "0.05"
+        },
+        {
+          "id": "shared_uv_start",
+          "name": "Shared UV Start After Sunrise",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "90.0",
+          "min_value": "0.0",
+          "max_value": "300.0",
+          "step": "5.0",
+          "unit_of_measurement": "min"
+        },
+        {
+          "id": "shared_uv_summer",
+          "name": "Shared UV Summer Peak",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "100.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "% of maximum"
+        },
+        {
+          "id": "shared_uv_winter",
+          "name": "Shared UV Winter Peak",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "80.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "% of maximum"
+        },
+        {
+          "id": "shared_visible_exponent",
+          "name": "Shared Visible Curve Exponent",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "1.0",
+          "min_value": "0.25",
+          "max_value": "4.0",
+          "step": "0.05"
+        },
+        {
+          "id": "shared_visible_summer",
+          "name": "Shared Visible Summer Peak",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "100.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "% of maximum"
+        },
+        {
+          "id": "shared_visible_winter",
+          "name": "Shared Visible Winter Peak",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "75.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "% of maximum"
+        },
+        {
+          "id": "topology_inter_fixture_quiet",
+          "name": "BLE Inter-Fixture Quiet Time",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "5.0",
+          "min_value": "1.0",
+          "max_value": "30.0",
+          "step": "1.0",
+          "unit_of_measurement": "s"
+        },
+        {
+          "id": "topology_invalid_time_grace",
+          "name": "Invalid Time Grace Period",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "60.0",
+          "min_value": "30.0",
+          "max_value": "3600.0",
+          "step": "10.0",
+          "unit_of_measurement": "s"
+        },
+        {
+          "id": "topology_max_attempts",
+          "name": "BLE Maximum Attempts",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "3.0",
+          "min_value": "1.0",
+          "max_value": "5.0",
+          "step": "1.0"
+        },
+        {
+          "id": "topology_min_fixture_interval",
+          "name": "BLE Minimum Same-Fixture Interval",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "30.0",
+          "min_value": "5.0",
+          "max_value": "600.0",
+          "step": "5.0",
+          "unit_of_measurement": "s"
+        },
+        {
+          "id": "topology_recovery_interval",
+          "name": "Automatic Recovery Interval",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "300.0",
+          "min_value": "60.0",
+          "max_value": "3600.0",
+          "step": "30.0",
+          "unit_of_measurement": "s"
+        },
+        {
+          "id": "topology_retry_base_delay",
+          "name": "BLE Retry Base Delay",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "30.0",
+          "min_value": "5.0",
+          "max_value": "300.0",
+          "step": "5.0",
+          "unit_of_measurement": "s"
+        },
+        {
+          "id": "topology_transaction_timeout",
+          "name": "BLE Transaction Timeout",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "25.0",
+          "min_value": "25.0",
+          "max_value": "120.0",
+          "step": "5.0",
+          "unit_of_measurement": "s"
+        },
+        {
+          "id": "visible_group_manual_fraction",
+          "name": "Shared Visible Manual % of Fixture Maximum",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "0.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "% of fixture maximum"
+        }
+      ],
+      "switch": [
+        {
+          "id": "fixture_a_manual",
+          "name": "Fixture A Manual Override",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_mode": "ALWAYS_OFF"
+        },
+        {
+          "id": "fixture_b_manual",
+          "name": "Fixture B Manual Override",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_mode": "ALWAYS_OFF"
+        },
+        {
+          "id": "topology_invalid_time_safety",
+          "name": "Invalid Time Fail-Safe",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_mode": "RESTORE_DEFAULT_ON"
+        },
+        {
+          "id": "visible_group_automatic",
+          "name": "Visible Group Automatic Control",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_mode": "ALWAYS_OFF"
+        },
+        {
+          "id": "visible_group_manual",
+          "name": "Shared Visible Manual Override",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_mode": "ALWAYS_OFF"
+        }
+      ],
+      "button": [
+        {
+          "id": "fixture_a_apply_daily_maximum",
+          "name": "Fixture A Apply Today's Maximum",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_cancel_temporary",
+          "name": "Fixture A Cancel Temporary Lighting",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_safe_off",
+          "name": "Fixture A Request Off",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_start_fixed_level",
+          "name": "Fixture A Start Fixed Level",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_apply_daily_maximum",
+          "name": "Fixture B Apply Today's Maximum",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_cancel_temporary",
+          "name": "Fixture B Cancel Temporary Lighting",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_safe_off",
+          "name": "Fixture B Request Off",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_start_fixed_level",
+          "name": "Fixture B Start Fixed Level",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "topology_all_off",
+          "name": "Request All Fixtures Off",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "visible_group_safe_off",
+          "name": "Shared Visible Request Off",
+          "platform": "template",
+          "disabled_by_default": "false"
+        }
+      ],
+      "sensor": [
+        {
+          "id": "fixture_a_completed_level",
+          "name": "Fixture A Last Completed Level",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_a_completed_transactions",
+          "name": "Fixture A Completed Transactions",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_failed_transactions",
+          "name": "Fixture A Failed Transactions",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_reported_level",
+          "name": "Fixture A Lamp Reported Level",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_a_requested_level",
+          "name": "Fixture A Requested Level",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_a_status_notification",
+          "name": "fixture_a_status_notification",
+          "platform": "ble_client",
+          "internal": "true",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_temporary_time_remaining",
+          "name": "Fixture A Temporary Time Remaining",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "min"
+        },
+        {
+          "id": "fixture_b_completed_level",
+          "name": "Fixture B Last Completed Level",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_b_completed_transactions",
+          "name": "Fixture B Completed Transactions",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_failed_transactions",
+          "name": "Fixture B Failed Transactions",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_reported_level",
+          "name": "Fixture B Lamp Reported Level",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_b_requested_level",
+          "name": "Fixture B Requested Level",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_b_status_notification",
+          "name": "fixture_b_status_notification",
+          "platform": "ble_client",
+          "internal": "true",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_temporary_time_remaining",
+          "name": "Fixture B Temporary Time Remaining",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "min"
+        },
+        {
+          "id": "shared_uv_demand",
+          "name": "Shared UV Demand",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "% of fixture maximum"
+        },
+        {
+          "id": "shared_visible_demand",
+          "name": "Shared Visible Demand",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "% of fixture maximum"
+        }
+      ],
+      "binary_sensor": [
+        {
+          "id": "fixture_a_connected",
+          "name": "Fixture A BLE Connected",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_daily_maximum_active",
+          "name": "Fixture A Temporary Maximum Active",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_fixed_level_active",
+          "name": "Fixture A Fixed Level Active",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_pending",
+          "name": "Fixture A Request Pending",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_readback_fresh",
+          "name": "Fixture A Readback Fresh",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_readback_mismatch",
+          "name": "Fixture A Readback Mismatch",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_connected",
+          "name": "Fixture B BLE Connected",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_daily_maximum_active",
+          "name": "Fixture B Temporary Maximum Active",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_fixed_level_active",
+          "name": "Fixture B Fixed Level Active",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_pending",
+          "name": "Fixture B Request Pending",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_readback_fresh",
+          "name": "Fixture B Readback Fresh",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_readback_mismatch",
+          "name": "Fixture B Readback Mismatch",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "topology_controller_time_valid",
+          "name": "Controller Time Valid",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        }
+      ],
+      "text_sensor": [
+        {
+          "id": "fixture_a_dispatch_status",
+          "name": "Fixture A Dispatch Status",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_readback_status",
+          "name": "Fixture A Readback Status",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_temporary_status",
+          "name": "Fixture A Temporary Lighting Status",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_dispatch_status",
+          "name": "Fixture B Dispatch Status",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_readback_status",
+          "name": "Fixture B Readback Status",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_temporary_status",
+          "name": "Fixture B Temporary Lighting Status",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "shared_status",
+          "name": "Shared Evaluation Status",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "visible_group_delivery",
+          "name": "Shared Visible Delivery",
+          "platform": "template",
+          "disabled_by_default": "false"
+        }
+      ]
+    },
+    "development": {
+      "number": [
+        {
+          "id": "fixture_a_daily_maximum_value",
+          "name": "Fixture A Today's Automatic Maximum",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "60.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_a_fixed_duration_hours",
+          "name": "Fixture A Fixed Duration",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "2.0",
+          "min_value": "0.25",
+          "max_value": "24.0",
+          "step": "0.25",
+          "unit_of_measurement": "h"
+        },
+        {
+          "id": "fixture_a_fixed_level_value",
+          "name": "Fixture A Fixed Level",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "35.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_a_manual_level",
+          "name": "Fixture A Manual Absolute Level",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "0.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_a_maximum",
+          "name": "Fixture A Calibrated Maximum",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "100.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_a_minimum_change",
+          "name": "Fixture A Minimum Automatic Change",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "2.0",
+          "min_value": "1.0",
+          "max_value": "10.0",
+          "step": "1.0",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_b_daily_maximum_value",
+          "name": "Fixture B Today's Automatic Maximum",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "60.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_b_fixed_duration_hours",
+          "name": "Fixture B Fixed Duration",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "2.0",
+          "min_value": "0.25",
+          "max_value": "24.0",
+          "step": "0.25",
+          "unit_of_measurement": "h"
+        },
+        {
+          "id": "fixture_b_fixed_level_value",
+          "name": "Fixture B Fixed Level",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "35.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_b_manual_level",
+          "name": "Fixture B Manual Absolute Level",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "0.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_b_maximum",
+          "name": "Fixture B Calibrated Maximum",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "100.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_b_minimum_change",
+          "name": "Fixture B Minimum Automatic Change",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "2.0",
+          "min_value": "1.0",
+          "max_value": "10.0",
+          "step": "1.0",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "shared_latitude",
+          "name": "Shared Latitude",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "-28.5",
+          "min_value": "-60.0",
+          "max_value": "60.0",
+          "step": "0.1",
+          "unit_of_measurement": "\u00b0"
+        },
+        {
+          "id": "shared_noon",
+          "name": "Shared Solar Noon",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "750.0",
+          "min_value": "600.0",
+          "max_value": "840.0",
+          "step": "1.0",
+          "unit_of_measurement": "min after midnight"
+        },
+        {
+          "id": "shared_phase",
+          "name": "Shared Season Phase Offset",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "182.6",
+          "min_value": "0.0",
+          "max_value": "366.0",
+          "step": "0.1",
+          "unit_of_measurement": "d"
+        },
+        {
+          "id": "shared_uv_end",
+          "name": "Shared UV End Before Sunset",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "90.0",
+          "min_value": "0.0",
+          "max_value": "300.0",
+          "step": "5.0",
+          "unit_of_measurement": "min"
+        },
+        {
+          "id": "shared_uv_exponent",
+          "name": "Shared UV Curve Exponent",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "1.0",
+          "min_value": "0.25",
+          "max_value": "4.0",
+          "step": "0.05"
+        },
+        {
+          "id": "shared_uv_start",
+          "name": "Shared UV Start After Sunrise",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "90.0",
+          "min_value": "0.0",
+          "max_value": "300.0",
+          "step": "5.0",
+          "unit_of_measurement": "min"
+        },
+        {
+          "id": "shared_uv_summer",
+          "name": "Shared UV Summer Peak",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "100.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "% of maximum"
+        },
+        {
+          "id": "shared_uv_winter",
+          "name": "Shared UV Winter Peak",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "80.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "% of maximum"
+        },
+        {
+          "id": "shared_visible_exponent",
+          "name": "Shared Visible Curve Exponent",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "1.0",
+          "min_value": "0.25",
+          "max_value": "4.0",
+          "step": "0.05"
+        },
+        {
+          "id": "shared_visible_summer",
+          "name": "Shared Visible Summer Peak",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "100.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "% of maximum"
+        },
+        {
+          "id": "shared_visible_winter",
+          "name": "Shared Visible Winter Peak",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "75.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "% of maximum"
+        },
+        {
+          "id": "topology_inter_fixture_quiet",
+          "name": "BLE Inter-Fixture Quiet Time",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "5.0",
+          "min_value": "1.0",
+          "max_value": "30.0",
+          "step": "1.0",
+          "unit_of_measurement": "s"
+        },
+        {
+          "id": "topology_invalid_time_grace",
+          "name": "Invalid Time Grace Period",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "60.0",
+          "min_value": "30.0",
+          "max_value": "3600.0",
+          "step": "10.0",
+          "unit_of_measurement": "s"
+        },
+        {
+          "id": "topology_max_attempts",
+          "name": "BLE Maximum Attempts",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "3.0",
+          "min_value": "1.0",
+          "max_value": "5.0",
+          "step": "1.0"
+        },
+        {
+          "id": "topology_min_fixture_interval",
+          "name": "BLE Minimum Same-Fixture Interval",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "30.0",
+          "min_value": "5.0",
+          "max_value": "600.0",
+          "step": "5.0",
+          "unit_of_measurement": "s"
+        },
+        {
+          "id": "topology_recovery_interval",
+          "name": "Automatic Recovery Interval",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "300.0",
+          "min_value": "60.0",
+          "max_value": "3600.0",
+          "step": "30.0",
+          "unit_of_measurement": "s"
+        },
+        {
+          "id": "topology_retry_base_delay",
+          "name": "BLE Retry Base Delay",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "30.0",
+          "min_value": "5.0",
+          "max_value": "300.0",
+          "step": "5.0",
+          "unit_of_measurement": "s"
+        },
+        {
+          "id": "topology_simulation_day",
+          "name": "Simulation Day of Year",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "355.0",
+          "min_value": "1.0",
+          "max_value": "366.0",
+          "step": "1.0"
+        },
+        {
+          "id": "topology_simulation_time",
+          "name": "Simulation Time",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "750.0",
+          "min_value": "0.0",
+          "max_value": "1439.0",
+          "step": "1.0",
+          "unit_of_measurement": "min after midnight"
+        },
+        {
+          "id": "topology_simulation_year",
+          "name": "Simulation Calendar Year",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "2026.0",
+          "min_value": "2000.0",
+          "max_value": "2099.0",
+          "step": "1.0"
+        },
+        {
+          "id": "topology_transaction_timeout",
+          "name": "BLE Transaction Timeout",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "true",
+          "initial_value": "25.0",
+          "min_value": "25.0",
+          "max_value": "120.0",
+          "step": "5.0",
+          "unit_of_measurement": "s"
+        },
+        {
+          "id": "visible_group_manual_fraction",
+          "name": "Shared Visible Manual % of Fixture Maximum",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_value": "false",
+          "initial_value": "0.0",
+          "min_value": "0.0",
+          "max_value": "100.0",
+          "step": "1.0",
+          "unit_of_measurement": "% of fixture maximum"
+        }
+      ],
+      "switch": [
+        {
+          "id": "fixture_a_manual",
+          "name": "Fixture A Manual Override",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_mode": "ALWAYS_OFF"
+        },
+        {
+          "id": "fixture_b_manual",
+          "name": "Fixture B Manual Override",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_mode": "ALWAYS_OFF"
+        },
+        {
+          "id": "topology_invalid_time_safety",
+          "name": "Invalid Time Fail-Safe",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_mode": "RESTORE_DEFAULT_ON"
+        },
+        {
+          "id": "topology_simulated_output_enable",
+          "name": "Allow Simulated Automatic Output",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_mode": "ALWAYS_OFF"
+        },
+        {
+          "id": "topology_simulation_enabled",
+          "name": "Seasonal Simulation Input",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_mode": "ALWAYS_OFF"
+        },
+        {
+          "id": "visible_group_automatic",
+          "name": "Visible Group Automatic Control",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_mode": "ALWAYS_OFF"
+        },
+        {
+          "id": "visible_group_manual",
+          "name": "Shared Visible Manual Override",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_mode": "ALWAYS_OFF"
+        }
+      ],
+      "button": [
+        {
+          "id": "fixture_a_apply_daily_maximum",
+          "name": "Fixture A Apply Today's Maximum",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_cancel_temporary",
+          "name": "Fixture A Cancel Temporary Lighting",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_safe_off",
+          "name": "Fixture A Request Off",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_start_fixed_level",
+          "name": "Fixture A Start Fixed Level",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_apply_daily_maximum",
+          "name": "Fixture B Apply Today's Maximum",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_cancel_temporary",
+          "name": "Fixture B Cancel Temporary Lighting",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_safe_off",
+          "name": "Fixture B Request Off",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_start_fixed_level",
+          "name": "Fixture B Start Fixed Level",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "topology_all_off",
+          "name": "Request All Fixtures Off",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "visible_group_safe_off",
+          "name": "Shared Visible Request Off",
+          "platform": "template",
+          "disabled_by_default": "false"
+        }
+      ],
+      "sensor": [
+        {
+          "id": "fixture_a_automatic_preview",
+          "name": "Fixture A Automatic Preview",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_a_completed_level",
+          "name": "Fixture A Last Completed Level",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_a_completed_transactions",
+          "name": "Fixture A Completed Transactions",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_failed_transactions",
+          "name": "Fixture A Failed Transactions",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_reported_level",
+          "name": "Fixture A Lamp Reported Level",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_a_requested_level",
+          "name": "Fixture A Requested Level",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_a_status_notification",
+          "name": "fixture_a_status_notification",
+          "platform": "ble_client",
+          "internal": "true",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_temporary_time_remaining",
+          "name": "Fixture A Temporary Time Remaining",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "min"
+        },
+        {
+          "id": "fixture_b_automatic_preview",
+          "name": "Fixture B Automatic Preview",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_b_completed_level",
+          "name": "Fixture B Last Completed Level",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_b_completed_transactions",
+          "name": "Fixture B Completed Transactions",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_failed_transactions",
+          "name": "Fixture B Failed Transactions",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_reported_level",
+          "name": "Fixture B Lamp Reported Level",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_b_requested_level",
+          "name": "Fixture B Requested Level",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "%"
+        },
+        {
+          "id": "fixture_b_status_notification",
+          "name": "fixture_b_status_notification",
+          "platform": "ble_client",
+          "internal": "true",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_temporary_time_remaining",
+          "name": "Fixture B Temporary Time Remaining",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "min"
+        },
+        {
+          "id": "shared_uv_demand",
+          "name": "Shared UV Demand",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "% of fixture maximum"
+        },
+        {
+          "id": "shared_visible_demand",
+          "name": "Shared Visible Demand",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "% of fixture maximum"
+        }
+      ],
+      "binary_sensor": [
+        {
+          "id": "fixture_a_connected",
+          "name": "Fixture A BLE Connected",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_daily_maximum_active",
+          "name": "Fixture A Temporary Maximum Active",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_fixed_level_active",
+          "name": "Fixture A Fixed Level Active",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_pending",
+          "name": "Fixture A Request Pending",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_readback_fresh",
+          "name": "Fixture A Readback Fresh",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_readback_mismatch",
+          "name": "Fixture A Readback Mismatch",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_connected",
+          "name": "Fixture B BLE Connected",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_daily_maximum_active",
+          "name": "Fixture B Temporary Maximum Active",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_fixed_level_active",
+          "name": "Fixture B Fixed Level Active",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_pending",
+          "name": "Fixture B Request Pending",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_readback_fresh",
+          "name": "Fixture B Readback Fresh",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_readback_mismatch",
+          "name": "Fixture B Readback Mismatch",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "topology_controller_time_valid",
+          "name": "Controller Time Valid",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        }
+      ],
+      "text_sensor": [
+        {
+          "id": "fixture_a_dispatch_status",
+          "name": "Fixture A Dispatch Status",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_readback_status",
+          "name": "Fixture A Readback Status",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_a_temporary_status",
+          "name": "Fixture A Temporary Lighting Status",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_dispatch_status",
+          "name": "Fixture B Dispatch Status",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_readback_status",
+          "name": "Fixture B Readback Status",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "fixture_b_temporary_status",
+          "name": "Fixture B Temporary Lighting Status",
+          "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "shared_status",
+          "name": "Shared Evaluation Status",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "visible_group_delivery",
+          "name": "Shared Visible Delivery",
+          "platform": "template",
+          "disabled_by_default": "false"
+        }
+      ]
+    }
+  }
+}

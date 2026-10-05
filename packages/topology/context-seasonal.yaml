@@ -13,7 +13,7 @@ number:
     restore_value: true
     optimistic: true
     on_value:
-      - lambda: id(topology_contexts)[lumineze_topology::context_index("${context_id}")].latitude = x;
+      - lambda: id(topology_seasonal_settings)[lumineze_topology::context_index("${context_id}")].latitude = x;
       - script.execute: evaluate_topology
   - platform: template
     id: ${context_id}_noon
@@ -27,7 +27,7 @@ number:
     restore_value: true
     optimistic: true
     on_value:
-      - lambda: id(topology_contexts)[lumineze_topology::context_index("${context_id}")].noon_minutes = x;
+      - lambda: id(topology_seasonal_settings)[lumineze_topology::context_index("${context_id}")].noon_minutes = x;
       - script.execute: evaluate_topology
   - platform: template
     id: ${context_id}_phase
@@ -41,7 +41,7 @@ number:
     restore_value: true
     optimistic: true
     on_value:
-      - lambda: id(topology_contexts)[lumineze_topology::context_index("${context_id}")].phase_days = x;
+      - lambda: id(topology_seasonal_settings)[lumineze_topology::context_index("${context_id}")].phase_days = x;
       - script.execute: evaluate_topology
   - platform: template
     id: ${context_id}_visible_winter
@@ -55,7 +55,7 @@ number:
     restore_value: true
     optimistic: true
     on_value:
-      - lambda: id(topology_contexts)[lumineze_topology::context_index("${context_id}")].visible_winter = x / 100.0f;
+      - lambda: id(topology_seasonal_settings)[lumineze_topology::context_index("${context_id}")].visible_winter = x / 100.0f;
       - script.execute: evaluate_topology
   - platform: template
     id: ${context_id}_visible_summer
@@ -69,7 +69,7 @@ number:
     restore_value: true
     optimistic: true
     on_value:
-      - lambda: id(topology_contexts)[lumineze_topology::context_index("${context_id}")].visible_summer = x / 100.0f;
+      - lambda: id(topology_seasonal_settings)[lumineze_topology::context_index("${context_id}")].visible_summer = x / 100.0f;
       - script.execute: evaluate_topology
   - platform: template
     id: ${context_id}_visible_exponent
@@ -82,7 +82,7 @@ number:
     restore_value: true
     optimistic: true
     on_value:
-      - lambda: id(topology_contexts)[lumineze_topology::context_index("${context_id}")].visible_exponent = x;
+      - lambda: id(topology_seasonal_settings)[lumineze_topology::context_index("${context_id}")].visible_exponent = x;
       - script.execute: evaluate_topology
   - platform: template
     id: ${context_id}_uv_start
@@ -96,7 +96,7 @@ number:
     restore_value: true
     optimistic: true
     on_value:
-      - lambda: id(topology_contexts)[lumineze_topology::context_index("${context_id}")].uv_start_minutes = x;
+      - lambda: id(topology_seasonal_settings)[lumineze_topology::context_index("${context_id}")].uv_start_minutes = x;
       - script.execute: evaluate_topology
   - platform: template
     id: ${context_id}_uv_end
@@ -110,7 +110,7 @@ number:
     restore_value: true
     optimistic: true
     on_value:
-      - lambda: id(topology_contexts)[lumineze_topology::context_index("${context_id}")].uv_end_minutes = x;
+      - lambda: id(topology_seasonal_settings)[lumineze_topology::context_index("${context_id}")].uv_end_minutes = x;
       - script.execute: evaluate_topology
   - platform: template
     id: ${context_id}_uv_winter
@@ -124,7 +124,7 @@ number:
     restore_value: true
     optimistic: true
     on_value:
-      - lambda: id(topology_contexts)[lumineze_topology::context_index("${context_id}")].uv_winter = x / 100.0f;
+      - lambda: id(topology_seasonal_settings)[lumineze_topology::context_index("${context_id}")].uv_winter = x / 100.0f;
       - script.execute: evaluate_topology
   - platform: template
     id: ${context_id}_uv_summer
@@ -138,7 +138,7 @@ number:
     restore_value: true
     optimistic: true
     on_value:
-      - lambda: id(topology_contexts)[lumineze_topology::context_index("${context_id}")].uv_summer = x / 100.0f;
+      - lambda: id(topology_seasonal_settings)[lumineze_topology::context_index("${context_id}")].uv_summer = x / 100.0f;
       - script.execute: evaluate_topology
   - platform: template
     id: ${context_id}_uv_exponent
@@ -151,7 +151,7 @@ number:
     restore_value: true
     optimistic: true
     on_value:
-      - lambda: id(topology_contexts)[lumineze_topology::context_index("${context_id}")].uv_exponent = x;
+      - lambda: id(topology_seasonal_settings)[lumineze_topology::context_index("${context_id}")].uv_exponent = x;
       - script.execute: evaluate_topology
 
 sensor:

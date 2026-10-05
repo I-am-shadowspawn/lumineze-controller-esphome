@@ -305,6 +305,11 @@ async def to_code(config):
         cg.RawStatement('#include "esphome/components/lumineze_topology/transport_logic.h"'),
         prepend=True,
     )
+    if config["engine_family"] == "seasonal":
+        cg.add_global(
+            cg.RawStatement('#include "esphome/components/lumineze_topology/seasonal_types.h"'),
+            prepend=True,
+        )
     contexts = config["contexts"]
     groups = config["groups"]
     fixtures = [fixture for fixture in config["fixtures"] if fixture["enabled"]]

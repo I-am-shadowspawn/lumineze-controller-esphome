@@ -1,0 +1,14 @@
+# Exactly one captured input, selected engine and policy pass per evaluation.
+script:
+  - id: evaluate_topology
+    mode: restart
+    then:
+      - script.execute: ${topology_snapshot_provider}
+      - script.execute: ${topology_engine_evaluator}
+      - script.execute: apply_topology_policy
+
+interval:
+  - interval: 10s
+    startup_delay: 5s
+    then:
+      - script.execute: evaluate_topology

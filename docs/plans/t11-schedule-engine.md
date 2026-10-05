@@ -1,6 +1,8 @@
 # T11 — Implement one schedule engine per build
 
-**Entry:** Gate A evidence recorded and T10 contract/vector set finalized.
+**Entry:** T10 contract/vector set finalized. The owner explicitly authorized
+isolated T11–T14 software work while Gate A remains open on 5 October 2026.
+Hardware, stable release and live deployment gates remain unchanged.
 **Dependencies:** T10, T09/Gate A. **Delivery:** schedule production/development
 profiles using the existing generic fixture policy and BLE path.
 
@@ -34,7 +36,7 @@ lighting is a separate contract change, not implicit T11 scope.
 
 ## Incremental deliveries
 
-- [ ] **T11.1 — Mechanical engine boundary extraction.** Separate shared output
+- [x] **T11.1 — Mechanical engine boundary extraction.** Separate shared output
   records, seasonal private records and orchestrator/composition while retaining
   existing public aliases, preference identities and entities. Capture resolved
   inventories before/after. Acceptance: seasonal golden parity, both existing
@@ -90,5 +92,25 @@ remaining work beside that increment. Proposed filenames may change; ownership
 and acceptance criteria may not silently change. Do not mark implementation or
 hardware increments complete because this plan exists.
 
-**Progress:** all increments planned; no implementation or hardware evidence
-is claimed by this document.
+**Progress:** T11.1 software extraction complete; remaining increments tracked
+below. Physical Gate A/T23 evidence remains pending.
+
+## Execution record
+
+### T11.1 — complete
+
+Branch `implementation/t11-t17`, source `c250604`, ESPHome 2026.9.0. Owner
+reply: “Proceed with software; keep hardware gates open.” Created common
+`orchestrator.yaml`, moved selected-engine composition into seasonal profiles,
+and split `SeasonalSettings` into an engine-owned header/global. Shared
+`ContextState` now contains output state only. Public entity IDs, names, defaults,
+restore settings and compatibility aliases retain their resolved baseline.
+
+Evidence: both generic seasonal ESP32-C3 profiles compile; 1,600 seasonal targets,
+provider parity, T23 policy, fixture conversion/transport, safe-off and timeout
+checks pass. Input isolation and 17 topology schema cases pass; diagnostic
+inventories pass. `scripts/check_seasonal_inventory.py` compares both resolved
+profiles against source `c250604`'s dummy-fixture entity/settings inventory and
+runs in CI. No persisted keys/calibration mapping changed. Full logs are local
+`/tmp/t11-1-{production,development}-build.log`; CI reruns the committed checks.
+Gate A remains open. Next increment: T11.2 pure evaluator and T10 numeric cases.

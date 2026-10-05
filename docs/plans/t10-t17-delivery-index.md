@@ -118,3 +118,13 @@ Eight implementation plans and their incremental trackers are documented and
 linked from the roadmap. T10 specification work is complete; actual T11–T17
 implementation remains unstarted. No live controller
 is flashed, no release is promoted, and no hardware gate is marked complete.
+
+## Active implementation checkpoint — 5 October 2026
+
+Owner authorized T11–T14 isolated software work while hardware gates remain open.
+Branch: `implementation/t11-t17`, based on completed T10 `c250604` (development
+contains the planning baseline). T11.1 extraction is complete with seasonal
+build/parity/entity/transport evidence in its plan. T11 is not yet complete;
+Gate A, T23 physical acceptance, release and deployment gates are still open.
+Commit each increment and update its canonical plan before proceeding. If usage
+ends, resume the first unchecked T11 increment; do not restart the extraction.
