@@ -75,7 +75,8 @@ The user selects a fixture level from 0–100% and a duration from 0.25 to 24
 hours in 0.25-hour steps, then presses **Start Fixed Level**. The requested
 absolute level still passes through the fixture's permanent calibrated maximum
 and existing safety checks. A 0% level is a timed off request. A duration of
-zero, a non-finite value or a value outside the supported range is rejected.
+zero, a non-finite value, a value outside the supported range, or a value not
+on a quarter-hour step is rejected. Validation also applies to API actions.
 
 - Start submits the fixed target immediately through the normal fixture policy
   and dispatcher. Its duration starts at the accepted **Start** action, not at
@@ -110,7 +111,10 @@ under the ordinary permanent limits and BLE rules.
 - Both modes are volatile and default inactive on boot. The editable Home
   Assistant values may display defaults, but they must not activate themselves
   through restore, API reconnect or a package update.
-- A new temporary decision revokes obsolete pending/retry generations. Existing
+- Every accepted Apply, Start/restart, replacement, release, cancellation or
+  expiry revokes obsolete pending/retry generations, including a write already
+  in flight. An obsolete completion remains physical history and cannot mark
+  the latest request readback fresh. Existing
   transaction tokens and readback freshness rules still determine whether a
   lamp actually followed a command. A failed or disconnected lamp is reported
   as pending/faulted, never as confirmed at the requested level.

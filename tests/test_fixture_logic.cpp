@@ -31,6 +31,7 @@ int main() {
   assert(!daily.holding && daily.force_submit && daily.target == 50 &&
          armed_correction.temporary_mode == DAILY_MAXIMUM &&
          !armed_correction.temporary_maximum_crossed);
+  armed_correction.temporary_status = TEMP_STATUS_ARMED;  // confirmed by policy
   daily = apply_daily_maximum_to_target(armed_correction, 50, false, false);
   assert(!daily.released && !daily.holding &&
          armed_correction.temporary_status == TEMP_STATUS_ARMED);
@@ -48,6 +49,88 @@ int main() {
   const auto fixed_result = convert_fixture(fixed_input);
   assert(fixed_result.valid && fixed_result.submit && fixed_result.target == 80 &&
          fixed_result.limit_applied);
+
+  for (int quarter = 1; quarter <= 96; ++quarter)
+    assert(valid_fixed_duration_hours(quarter / 4.0f));
+  for (float hours : {0.0f, 0.24f, 0.3f, 1.1f, 24.25f,
+                     std::numeric_limits<float>::infinity(),
+                     std::numeric_limits<float>::quiet_NaN()})
+    assert(!valid_fixed_duration_hours(hours));
+  const auto valid_generation = temporary.generation;
+  assert(!start_timed_fixed_level(temporary, 35, 1080000U, 0));
+  assert(temporary.generation == valid_generation &&
+         temporary.temporary_mode == TIMED_FIXED_LEVEL);
+
+  // Release follows historical exceedance, independent of diagnostic status.
+  FixtureState crossed;
+  assert(apply_daily_maximum(crossed, 60, 2026, 100));
+  crossed.target = 60;
+  daily = apply_daily_maximum_to_target(crossed, 60, false, false);
+  assert(!daily.released && crossed.temporary_mode == DAILY_MAXIMUM);
+  apply_daily_maximum_to_target(crossed, 61, false, false);
+  crossed.temporary_status = TEMP_STATUS_ARMED;
+  daily = apply_daily_maximum_to_target(crossed, 60, false, false);
+  assert(daily.released && !daily.force_submit);
+
+  // A same-level restart is a new authorization, even during an old write.
+  FixtureState restarted;
+  DispatchState restart_dispatch;
+  assert(start_timed_fixed_level(restarted, 35, 900000U, 100));
+  accept_target(restarted, 35, TEMPORARY_FIXED, 1, false);
+  begin_transaction(restarted, restart_dispatch, 0, 200);
+  const auto old_generation = restarted.generation;
+  restarted.readback_received = true;
+  assert(start_timed_fixed_level(restarted, 35, 1800000U, 300));
+  assert(restarted.generation != old_generation && !restarted.pending &&
+         !restarted.readback_received && !restarted.readback_fresh);
+  accept_target(restarted, 35, TEMPORARY_FIXED, 2, true);
+  restarted.readback_received = true;  // late old readback cannot confirm restart
+  assert(complete_transaction(restarted, restart_dispatch, 0,
+                              restart_dispatch.token));
+  assert(restarted.target == 35 && restarted.pending &&
+         restarted.completed == 35 && !restarted.readback_fresh);
+  begin_transaction(restarted, restart_dispatch, 0, 400);
+  restarted.reported = 35;
+  restarted.readback_received = true;
+  assert(complete_transaction(restarted, restart_dispatch, 0,
+                              restart_dispatch.token));
+  assert(!restarted.pending && restarted.readback_fresh);
+
+  // Unsolicited/obsolete readback remains a report, never fresh confirmation.
+  record_readback(restarted, restart_dispatch, 0, 80);
+  assert(restarted.reported == 80 && !restarted.readback_fresh &&
+         !restarted.readback_received);
+  accept_target(restarted, 35, TEMPORARY_FIXED, 3, false);
+  begin_transaction(restarted, restart_dispatch, 0, 450);
+  record_readback(restarted, restart_dispatch, 0, 35);
+  assert(!restarted.readback_received);  // response before readback window
+  restart_dispatch.write_completed = true;
+  record_readback(restarted, restart_dispatch, 1, 35);
+  assert(!restarted.readback_received);  // wrong slot
+  record_readback(restarted, restart_dispatch, 0, 20);
+  assert(restarted.readback_received);  // valid response, mismatched level
+  assert(complete_transaction(restarted, restart_dispatch, 0,
+                              restart_dispatch.token));
+  assert(restarted.readback_fresh && restarted.reported != restarted.completed);
+
+  // Replacing fixed with daily revokes its retries; old completion is physical
+  // history only. Cancellation also revokes an in-flight-only generation.
+  assert(start_timed_fixed_level(restarted, 80, 900000U, 500));
+  accept_target(restarted, 80, TEMPORARY_FIXED, 3, false);
+  begin_transaction(restarted, restart_dispatch, 0, 600);
+  assert(apply_daily_maximum(restarted, 60, 2026, 100));
+  accept_target(restarted, 60, AUTOMATIC, 4, true);
+  restarted.readback_received = true;
+  assert(complete_transaction(restarted, restart_dispatch, 0,
+                              restart_dispatch.token));
+  assert(restarted.target == 60 && restarted.completed == 80 &&
+         restarted.pending && !restarted.readback_fresh);
+  begin_transaction(restarted, restart_dispatch, 0, 700);
+  restarted.pending = false;
+  cancel_temporary(restarted);
+  assert(fail_transaction(restarted, restart_dispatch, 0,
+                          restart_dispatch.token, 800, 3, 30000) == CANCELLED_FAILURE);
+  assert(!restarted.pending && !restarted.readback_fresh);
 
   assert(resolve_source(true, true, GROUP_MANUAL) == SAFETY);
   assert(resolve_source(false, true, GROUP_MANUAL) == FIXTURE_MANUAL);

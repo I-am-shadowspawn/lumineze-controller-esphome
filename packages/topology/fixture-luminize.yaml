@@ -137,6 +137,7 @@ button:
     id: ${fixture_id}_apply_daily_maximum
     name: ${fixture_name} Apply Today's Maximum
     on_press:
+      - script.execute: evaluate_topology
       - lambda: |-
           using namespace lumineze_topology;
           const int slot = fixture_slot("${fixture_id}");
@@ -149,6 +150,8 @@ button:
           if (!std::isfinite(staged) || staged < 0.0f || staged > 100.0f ||
               !id(topology_snapshot_valid) || id(topology_snapshot).simulated ||
               !context.valid || !fixture.calibration_ready ||
+              !std::isfinite(fixture.maximum) || fixture.maximum < 0.0f ||
+              fixture.maximum > 100.0f ||
               !group.automatic || group.manual || fixture.manual ||
               !group.valid) {
             fixture.temporary_rejection = 1;
@@ -163,6 +166,7 @@ button:
     id: ${fixture_id}_start_fixed_level
     name: ${fixture_name} Start Fixed Level
     on_press:
+      - script.execute: evaluate_topology
       - lambda: |-
           using namespace lumineze_topology;
           const int slot = fixture_slot("${fixture_id}");
@@ -173,12 +177,13 @@ button:
           const auto &context = id(topology_contexts)[group_binding.context];
           const float staged_level = id(${fixture_id}_fixed_level_value).state;
           const float staged_hours = id(${fixture_id}_fixed_duration_hours).state;
-          const bool valid_duration = std::isfinite(staged_hours) &&
-              staged_hours >= 0.25f && staged_hours <= 24.0f;
+          const bool valid_duration = valid_fixed_duration_hours(staged_hours);
           if (!std::isfinite(staged_level) || staged_level < 0.0f ||
               staged_level > 100.0f || !valid_duration ||
               !id(topology_snapshot_valid) || !context.valid ||
-              !fixture.calibration_ready || !group.automatic || group.manual ||
+              !fixture.calibration_ready || !std::isfinite(fixture.maximum) ||
+              fixture.maximum < 0.0f || fixture.maximum > 100.0f ||
+              !group.automatic || group.manual ||
               fixture.manual || !group.valid ||
               !automatic_output_allowed(context.simulated,
                                         context.simulated_output_enabled)) {
@@ -201,9 +206,6 @@ button:
           auto &fixture = id(topology_fixtures)[slot];
           const bool was_active = fixture.temporary_mode !=
               lumineze_topology::TEMPORARY_NONE;
-          if (fixture.pending && fixture.source ==
-              lumineze_topology::TEMPORARY_FIXED)
-            lumineze_topology::revoke_pending(fixture);
           lumineze_topology::cancel_temporary(fixture);
           if (was_active) fixture.temporary_status =
               lumineze_topology::TEMP_STATUS_RETURNING;
@@ -265,11 +267,11 @@ sensor:
             if (!std::isfinite(x)) return;
             const int slot = lumineze_topology::fixture_slot("${fixture_id}");
             auto &fixture = id(topology_fixtures)[slot];
-            fixture.reported = static_cast<int>(x);
-            if (id(topology_dispatch).active &&
-                id(topology_dispatch).active_slot == slot &&
-                id(topology_dispatch).write_completed)
-              fixture.readback_received = true;
+            lumineze_topology::record_readback(
+                fixture, id(topology_dispatch), slot, static_cast<int>(x));
+            id(${fixture_id}_readback_status).publish_state(
+                fixture.readback_received ? "Awaiting transaction completion" :
+                "Unsolicited or obsolete report; latest decision not confirmed");
   - platform: template
     id: ${fixture_id}_reported_level
     name: ${fixture_name} Lamp Reported Level
@@ -351,7 +353,7 @@ text_sensor:
         return {"Rejected: fixed level needs valid duration, calibration and automatic control"};
       switch (fixture.temporary_status) {
         case lumineze_topology::TEMP_STATUS_ARMED: return {"Armed"};
-        case lumineze_topology::TEMP_STATUS_HOLDING: return {"Holding at temporary maximum"};
+        case lumineze_topology::TEMP_STATUS_HOLDING: return {"Above-maximum automatic targets held; check readback"};
         case lumineze_topology::TEMP_STATUS_ENFORCING: return {"Enforcing temporary maximum; awaiting confirmation"};
         case lumineze_topology::TEMP_STATUS_FIXED: return {"Fixed level active"};
         case lumineze_topology::TEMP_STATUS_RETURNING: return {"Returning to current automatic curve"};

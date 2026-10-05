@@ -109,6 +109,7 @@ struct FixtureState {
   bool temporary_force_reevaluation = false;
   int temporary_maximum = 0;
   bool temporary_maximum_crossed = false;
+  bool temporary_correction_required = false;
   int temporary_fixed_level = 0;
   int temporary_year = 0;
   int temporary_day = 0;

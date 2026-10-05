@@ -25,16 +25,46 @@ inline bool automatic_refresh_required(bool previous_simulated,
   return previous_simulated && !simulated;
 }
 
+// Revoke authorization even when only an old in-flight write remains. Physical
+// completion is still recorded, but it cannot confirm or retry this generation.
+inline void revoke_authorization(FixtureState &fixture) {
+  fixture.generation++;
+  fixture.pending = false;
+  fixture.readback_received = false;
+  fixture.readback_fresh = false;
+  fixture.attempts = 0;
+  fixture.consecutive_failures = 0;
+  fixture.retry_delay_ms = 0;
+}
+
+inline bool valid_fixed_duration_hours(float hours) {
+  if (!std::isfinite(hours) || hours < 0.25f || hours > 24.0f)
+    return false;
+  const float quarters = hours * 4.0f;
+  return std::abs(quarters - std::round(quarters)) < 1e-6f;
+}
+
 inline void cancel_temporary(FixtureState &fixture) {
+  if (fixture.temporary_mode != TEMPORARY_NONE) {
+    revoke_authorization(fixture);
+    fixture.temporary_force_reevaluation = true;
+  }
   fixture.temporary_mode = TEMPORARY_NONE;
   fixture.temporary_status = TEMP_STATUS_INACTIVE;
   fixture.temporary_duration_ms = 0;
+  fixture.temporary_correction_required = false;
 }
 
 inline bool apply_daily_maximum(FixtureState &fixture, int maximum,
                                 int year, int day_of_year) {
   if (maximum < 0 || maximum > 100 || year < 2000 ||
       (day_of_year < 1 || day_of_year > 366)) return false;
+  // Retain an above-cap observation as a correction reason before revoking
+  // freshness. It is not confirmation of the newly authorized decision.
+  fixture.temporary_correction_required = fixture.readback_fresh &&
+      fixture.reported > maximum;
+  revoke_authorization(fixture);
+  fixture.temporary_force_reevaluation = true;
   fixture.temporary_mode = DAILY_MAXIMUM;
   fixture.temporary_status = TEMP_STATUS_ARMED;
   fixture.temporary_maximum = maximum;
@@ -50,7 +80,10 @@ inline bool start_timed_fixed_level(FixtureState &fixture, int level,
   constexpr uint32_t minimum_duration_ms = 15U * 60U * 1000U;
   constexpr uint32_t maximum_duration_ms = 24U * 60U * 60U * 1000U;
   if (level < 0 || level > 100 || duration_ms < minimum_duration_ms ||
-      duration_ms > maximum_duration_ms) return false;
+      duration_ms > maximum_duration_ms ||
+      duration_ms % minimum_duration_ms != 0) return false;
+  revoke_authorization(fixture);
+  fixture.temporary_force_reevaluation = true;
   fixture.temporary_mode = TIMED_FIXED_LEVEL;
   fixture.temporary_status = TEMP_STATUS_FIXED;
   fixture.temporary_fixed_level = level;
@@ -94,21 +127,23 @@ inline DailyMaximumResult apply_daily_maximum_to_target(
   }
   if (normal_target > fixture.temporary_maximum) {
     fixture.temporary_maximum_crossed = true;
-    fixture.temporary_status = TEMP_STATUS_HOLDING;
+    if (fixture.temporary_status != TEMP_STATUS_ENFORCING)
+      fixture.temporary_status = TEMP_STATUS_HOLDING;
     result.holding = true;
     result.target = fixture.temporary_maximum;
     result.force_submit = physical_above_maximum;
     if (result.force_submit) fixture.temporary_status = TEMP_STATUS_ENFORCING;
     return result;
   }
-  if (fixture.temporary_maximum_crossed &&
-      (fixture.temporary_status == TEMP_STATUS_HOLDING ||
-       fixture.temporary_status == TEMP_STATUS_ENFORCING)) {
+  if (fixture.temporary_maximum_crossed) {
+    // First <= maximum sample after any exceedance is an explicit transition:
+    // bypass minimum-change, but avoid a duplicate already confirmed target.
+    const bool unconfirmed = fixture.pending;
+    cancel_temporary(fixture);
     fixture.temporary_status = TEMP_STATUS_RETURNING;
-    fixture.temporary_mode = TEMPORARY_NONE;
     result.released = true;
     result.force_submit = normal_target != fixture.target ||
-        physical_above_maximum;
+        physical_above_maximum || unconfirmed;
     return result;
   }
   if (physical_above_maximum) {
@@ -116,9 +151,8 @@ inline DailyMaximumResult apply_daily_maximum_to_target(
     result.force_submit = true;
     return result;
   }
-  if (fixture.temporary_status == TEMP_STATUS_ENFORCING)
+  if (fixture.temporary_status != TEMP_STATUS_ENFORCING)
     fixture.temporary_status = TEMP_STATUS_ARMED;
-  fixture.temporary_status = TEMP_STATUS_ARMED;
   result.force_submit = normal_submit;
   return result;
 }
