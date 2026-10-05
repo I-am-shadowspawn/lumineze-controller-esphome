@@ -1,0 +1,210 @@
+{
+  "schema_version": 1,
+  "toolchain": {
+    "esphome": "2026.9.0",
+    "python": "3.12",
+    "variant": "esp32c3",
+    "framework": "esp-idf",
+    "idf_observed": "5.5.5"
+  },
+  "profiles": {
+    "seasonal-production": {
+      "fixture": "ci/topology-generic.yaml",
+      "engine": "seasonal",
+      "provider": "real",
+      "temporary_lighting": true,
+      "simulation_entities": false,
+      "build_directory": "lumineze-generic-ci",
+      "support": "software-candidate; hardware pending",
+      "checks": [
+        "config",
+        "full-compile",
+        "compiled-isolation",
+        "static-size-budget"
+      ]
+    },
+    "seasonal-development": {
+      "fixture": "ci/topology-generic-development.yaml",
+      "engine": "seasonal",
+      "provider": "development",
+      "temporary_lighting": true,
+      "simulation_entities": true,
+      "build_directory": "lumineze-generic-development-ci",
+      "support": "software-candidate; hardware pending",
+      "checks": [
+        "config",
+        "full-compile",
+        "compiled-isolation",
+        "static-size-budget"
+      ]
+    },
+    "schedule-production": {
+      "fixture": "ci/schedule-generic.yaml",
+      "engine": "schedule",
+      "provider": "real",
+      "temporary_lighting": false,
+      "simulation_entities": false,
+      "build_directory": "lumineze-schedule-ci",
+      "support": "software-candidate; hardware pending",
+      "checks": [
+        "config",
+        "full-compile",
+        "compiled-isolation",
+        "static-size-budget"
+      ]
+    },
+    "schedule-development": {
+      "fixture": "ci/schedule-generic-development.yaml",
+      "engine": "schedule",
+      "provider": "development",
+      "temporary_lighting": false,
+      "simulation_entities": true,
+      "build_directory": "lumineze-schedule-dev-ci",
+      "support": "software-candidate; hardware pending",
+      "checks": [
+        "config",
+        "full-compile",
+        "compiled-isolation",
+        "static-size-budget"
+      ]
+    }
+  },
+  "static_budgets": {
+    "ram_bytes": 180000,
+    "flash_bytes": 1600000
+  },
+  "hardware_evidence": "pending Gate A/T23/T15; no physical support inferred",
+  "topology_cases": [
+    {
+      "id": "visible-sparse",
+      "engines": [
+        "seasonal",
+        "schedule"
+      ],
+      "software_status": "config-validated",
+      "ci_coverage": "full-compile",
+      "hardware_status": "pending",
+      "experimental": false
+    },
+    {
+      "id": "uv-zero",
+      "engines": [
+        "seasonal",
+        "schedule"
+      ],
+      "software_status": "config-validated",
+      "ci_coverage": "full-compile",
+      "hardware_status": "pending",
+      "experimental": false
+    },
+    {
+      "id": "visible-shared",
+      "engines": [
+        "seasonal",
+        "schedule"
+      ],
+      "software_status": "config-validated",
+      "ci_coverage": "full-compile",
+      "hardware_status": "pending",
+      "experimental": false
+    },
+    {
+      "id": "visible-reordered",
+      "engines": [
+        "seasonal",
+        "schedule"
+      ],
+      "software_status": "config-validated",
+      "ci_coverage": "full-compile",
+      "hardware_status": "pending",
+      "experimental": false
+    },
+    {
+      "id": "uv-shared",
+      "engines": [
+        "seasonal",
+        "schedule"
+      ],
+      "software_status": "config-validated",
+      "ci_coverage": "full-compile",
+      "hardware_status": "pending",
+      "experimental": false
+    },
+    {
+      "id": "reversed-mixed",
+      "engines": [
+        "seasonal",
+        "schedule"
+      ],
+      "software_status": "config-validated",
+      "ci_coverage": "full-compile",
+      "hardware_status": "pending",
+      "experimental": false
+    },
+    {
+      "id": "independent-groups",
+      "engines": [
+        "seasonal",
+        "schedule"
+      ],
+      "software_status": "config-validated",
+      "ci_coverage": "full-compile",
+      "hardware_status": "pending",
+      "experimental": false
+    },
+    {
+      "id": "four-shared",
+      "engines": [
+        "seasonal",
+        "schedule"
+      ],
+      "software_status": "config-validated",
+      "ci_coverage": "full-compile",
+      "hardware_status": "pending",
+      "experimental": true
+    },
+    {
+      "id": "four-independent",
+      "engines": [
+        "seasonal",
+        "schedule"
+      ],
+      "software_status": "config-validated",
+      "ci_coverage": "full-compile",
+      "hardware_status": "pending",
+      "experimental": true
+    },
+    {
+      "id": "development-input",
+      "engines": [
+        "seasonal",
+        "schedule"
+      ],
+      "software_status": "config-validated",
+      "ci_coverage": "full-compile",
+      "hardware_status": "pending",
+      "experimental": false
+    }
+  ],
+  "compatibility_fixtures": [
+    "ci/controller.yaml",
+    "ci/controller-development.yaml"
+  ],
+  "negative_checks": [
+    "scripts/check_topology_schema.py",
+    "scripts/check_schedule_schema.py"
+  ],
+  "fast_checks": [
+    "check_transport_scenarios.py",
+    "check_temporary_policy.py",
+    "check_schedule_cases.py",
+    "check_schedule_storage.py",
+    "check_schedule_editor.py",
+    "check_schedule_policy.py",
+    "check_protocol_trace.py",
+    "check_seasonal_parity.py",
+    "check_seasonal_profile_parity.py",
+    "check_safe_off_scopes.py",
+    "check_topology_dispatcher_timeout.py"
+  ]
+}

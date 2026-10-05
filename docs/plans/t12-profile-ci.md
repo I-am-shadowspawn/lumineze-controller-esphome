@@ -14,7 +14,7 @@ compilation; preserve those outcomes. Hardware reports remain separate gates.
 
 ## Incremental deliveries
 
-- [ ] **T12.1 — Explicit coverage manifest.** Record profile, fixture, provider,
+- [x] **T12.1 — Explicit coverage manifest.** Record profile, fixture, provider,
   engine, temporary capability, expected entities/state, toolchain and checks in
   a machine-readable manifest. Include repeated products, swapped/sparse slots,
   shared/independent groups, up to four experimental fixtures and negative
@@ -72,3 +72,17 @@ hardware increments complete because this plan exists.
 
 **Progress:** all increments planned; no implementation or hardware evidence
 is claimed by this document.
+
+
+### T12.1 — complete
+
+Source `b3bc3bd`. `ci/profile-matrix.json` declares all four full-build profiles,
+providers/capabilities/build directories, pin, dummy compatibility fixtures,
+negative/fast checks and ten topology cases with separate software/physical
+status. Dedicated `Profile / <profile>` jobs use the manifest fixture. The
+manifest checker rejects missing entries, mismatched workflow matrix, pin or
+capabilities. Static budgets are 180,000 RAM / 1,600,000 flash bytes, chosen above
+all four T11 baselines while retaining 141,296 static RAM / 235,008 flash bytes
+against the current partition; these do not certify runtime heap. Topology matrix
+full compile remains required CI coverage, not a claim of physical validation.
+Local manifest check passes. Next: deterministic gates and fault injection.
