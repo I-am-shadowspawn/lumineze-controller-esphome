@@ -53,8 +53,35 @@ script:
                 id(topology_dispatch).active_slot == slot;
             // Group/controller safe-off is held while its controls stay off.
             // A deliberate manual/automatic request replaces it unless clock safety is active.
-            const Source source = resolve_source(
+            Source source = resolve_source(
                 safety_active, fixture.manual, group.source);
+            const bool temporary_expired = expire_temporary(
+                fixture, id(topology_snapshot_valid), context.simulated,
+                id(topology_snapshot).year, id(topology_snapshot).day_of_year,
+                now);
+            if (source != AUTOMATIC && fixture.temporary_mode != TEMPORARY_NONE)
+              cancel_temporary(fixture);
+            if (temporary_expired) {
+              fixture.temporary_force_reevaluation = true;
+              if (source == AUTOMATIC)
+                fixture.temporary_status = TEMP_STATUS_RETURNING;
+            }
+            if (fixture.temporary_mode == TIMED_FIXED_LEVEL &&
+                source == AUTOMATIC)
+              source = TEMPORARY_FIXED;
+            if (fixture.temporary_mode == TEMPORARY_NONE &&
+                fixture.temporary_status == TEMP_STATUS_RETURNING &&
+                !in_flight && !fixture.pending && fixture.readback_fresh &&
+                fixture.reported == fixture.target)
+              fixture.temporary_status = TEMP_STATUS_INACTIVE;
+            if (fixture.temporary_mode == DAILY_MAXIMUM &&
+                fixture.temporary_status == TEMP_STATUS_ENFORCING &&
+                fixture.readback_fresh &&
+                fixture.reported <= fixture.temporary_maximum)
+              fixture.temporary_status = fixture.temporary_maximum_crossed
+                  ? TEMP_STATUS_HOLDING : TEMP_STATUS_ARMED;
+            if (!fixture.readback_fresh)
+              readback_status(slot, "Latest decision not confirmed; report may be stale");
             const bool cap_valid = std::isfinite(fixture.maximum) &&
                 fixture.maximum >= 0.0f && fixture.maximum <= 100.0f;
             const bool previous_invalid = fixture.invalid_output;
@@ -63,9 +90,11 @@ script:
             fixture.last_maximum = fixture.maximum;
             fixture.invalid_output = false;
             fixture.limit_applied = false;
-            if (source == AUTOMATIC && !automatic_output_allowed(
+            if ((source == AUTOMATIC || source == TEMPORARY_FIXED) &&
+                !automatic_output_allowed(
                     context.simulated, context.simulated_output_enabled)) {
-              if (fixture.pending && fixture.source == AUTOMATIC)
+              if (fixture.pending && (fixture.source == AUTOMATIC ||
+                                      fixture.source == TEMPORARY_FIXED))
                 revoke_pending(fixture);
               status(slot, "Simulation is calculation-only; output not enabled");
               continue;
@@ -93,10 +122,13 @@ script:
             const ConversionInput input{
                 source, fixture.maximum, group.demand,
                 context.peak[group_binding.role],
-                context.curve[group_binding.role], fixture.manual_level,
+                context.curve[group_binding.role],
+                source == TEMPORARY_FIXED ? fixture.temporary_fixed_level :
+                    fixture.manual_level,
                 fixture.target, fixture.minimum_change,
                 fixture.automatic_queued, cap_reduced, previous_invalid,
                 recovery_due, fixture.source != source ||
+                    fixture.temporary_force_reevaluation ||
                     automatic_refresh_required(
                         fixture.target_simulated, context.simulated)};
             const ConversionResult decision = convert_fixture(input);
@@ -109,9 +141,62 @@ script:
               continue;
             }
             fixture.limit_applied = decision.limit_applied;
-            if (!decision.submit) continue;
-            accept_target(fixture, decision.target, source, group.revision,
+            int target = decision.target;
+            bool submit = decision.submit;
+            if (fixture.temporary_force_reevaluation && source == AUTOMATIC) {
+              submit = decision.target != fixture.target || recovery_due ||
+                  fixture.source != source || (!fixture.readback_fresh &&
+                  (fixture.completed != decision.target || in_flight));
+              if (!submit) fixture.temporary_force_reevaluation = false;
+            }
+            if (source == AUTOMATIC &&
+                fixture.temporary_mode == DAILY_MAXIMUM) {
+              const bool physical_above = fixture.temporary_correction_required ||
+                  fixture.target > fixture.temporary_maximum ||
+                  fixture.completed > fixture.temporary_maximum ||
+                  (fixture.readback_fresh &&
+                   fixture.reported > fixture.temporary_maximum);
+              const auto temporary = apply_daily_maximum_to_target(
+                  fixture, decision.target, submit, physical_above);
+              target = temporary.target;
+              submit = temporary.force_submit;
+              // Preserve a revoked, unconfirmed under-cap request when Apply
+              // interrupts it. Do not raise it to the cap just because the curve rose.
+              if (temporary.holding && !submit &&
+                  fixture.temporary_force_reevaluation &&
+                  fixture.target <= fixture.temporary_maximum &&
+                  (fixture.completed != fixture.target || in_flight)) {
+                target = fixture.target;
+                submit = true;
+              }
+              // A corrective target already queued/in flight keeps its retry
+              // budget. Above-cap completion must not restart it every policy pass.
+              if (submit && fixture.target == target && fixture.source == source &&
+                  !fixture.temporary_force_reevaluation &&
+                  (fixture.pending || (fixture.attempts >= maximum_attempts &&
+                   fixture.consecutive_failures > 0 && !recovery_due)))
+                submit = false;
+              if (temporary.holding && !submit) {
+                if (fixture.pending && fixture.source == AUTOMATIC &&
+                    fixture.target > fixture.temporary_maximum)
+                  revoke_pending(fixture);
+                continue;
+              }
+            }
+            if (!submit) {
+              // A transition that needs no write is already operationally
+              // inactive; this does not assert fresh physical confirmation.
+              if (fixture.temporary_mode == TEMPORARY_NONE &&
+                  fixture.temporary_status == TEMP_STATUS_RETURNING &&
+                  !fixture.pending && !in_flight && fixture.completed == target)
+                fixture.temporary_status = TEMP_STATUS_INACTIVE;
+              continue;
+            }
+            accept_target(fixture, target, source, group.revision,
                           in_flight, context.simulated);
+            fixture.temporary_force_reevaluation = false;
+            fixture.temporary_correction_required = false;
+            readback_status(slot, "Latest decision pending fresh lamp status");
             status(slot, "Latest authorised target pending");
           }
 

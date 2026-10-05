@@ -11,6 +11,18 @@ enum Source : uint8_t {
   GROUP_MANUAL = 2,
   FIXTURE_MANUAL = 3,
   SAFETY = 4,
+  TEMPORARY_FIXED = 5,
+};
+
+enum TemporaryMode : uint8_t { TEMPORARY_NONE, DAILY_MAXIMUM, TIMED_FIXED_LEVEL };
+enum TemporaryStatus : uint8_t {
+  TEMP_STATUS_INACTIVE,
+  TEMP_STATUS_ARMED,
+  TEMP_STATUS_HOLDING,
+  TEMP_STATUS_ENFORCING,
+  TEMP_STATUS_FIXED,
+  TEMP_STATUS_RETURNING,
+  TEMP_STATUS_REJECTED,
 };
 
 // The external component defines storage types and immutable bindings only.
@@ -91,6 +103,18 @@ struct FixtureState {
   bool invalid_output = false;
   bool limit_applied = false;
   bool failsafe_sent = false;
+  TemporaryMode temporary_mode = TEMPORARY_NONE;
+  TemporaryStatus temporary_status = TEMP_STATUS_INACTIVE;
+  uint8_t temporary_rejection = 0;
+  bool temporary_force_reevaluation = false;
+  int temporary_maximum = 0;
+  bool temporary_maximum_crossed = false;
+  bool temporary_correction_required = false;
+  int temporary_fixed_level = 0;
+  int temporary_year = 0;
+  int temporary_day = 0;
+  uint32_t temporary_started_ms = 0;
+  uint32_t temporary_duration_ms = 0;
 };
 
 struct DispatchState {
