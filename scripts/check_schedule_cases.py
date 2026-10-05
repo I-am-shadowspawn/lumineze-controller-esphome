@@ -87,7 +87,7 @@ def main():
                         '-I', str(ROOT), str(cpp), '-o', str(binary)], check=True)
         subprocess.run([str(binary)], check=True)
     print('PASS schedule helper: 56 output, 22 validation and 8 conversion cases')
-    print('Policy/HA and persistence scenarios remain owned by later T11 increments')
+    print('Policy/HA and persistence are checked by the separate production-policy and storage harnesses')
 
 
 if __name__ == '__main__':

@@ -67,7 +67,7 @@ lighting is a separate contract change, not implicit T11 scope.
   the existing non-restoring input/bench gate. Acceptance: schedule production
   has no seasonal private state/entities or development controls; seasonal
   production retains T23; simulated output cannot escape the common bench gate.
-- [ ] **T11.6 — Build and behavioral handoff.** Validate/compile both schedule
+- [x] **T11.6 — Build and behavioral handoff.** Validate/compile both schedule
   profiles and rerun seasonal/T23 regressions. Exercise the actual production
   policy with schedule contexts, calibration reduction, Apply during a write,
   reconnect, invalid restore and shared groups. Record ESP32-C3 sizes, resolved
@@ -92,7 +92,7 @@ remaining work beside that increment. Proposed filenames may change; ownership
 and acceptance criteria may not silently change. Do not mark implementation or
 hardware increments complete because this plan exists.
 
-**Progress:** T11.1 extraction and T11.2 pure evaluator complete; T11.3 is next. Physical Gate A/T23 evidence remains pending.
+**Progress:** all six software increments complete. Physical Gate A/T23/T15 evidence remains pending.
 
 ## Execution record
 
@@ -199,3 +199,15 @@ Both schedule builds pass after extraction: production RAM 147,792 / flash
 inventories still exactly match the pre-T11 baseline. Protocol trace, actual T23
 policy, all 21 schedule policy scenarios, safe-off, dispatcher timeout and seasonal
 parity checks pass. Final current-source seasonal rebuilds are T11.6.
+
+
+### T11.6 — complete
+
+All four current-source generic profiles compile on the pin, generated isolation
+and seasonal inventory pass. Numeric, storage, editor, actual schedule/T23 policy,
+conversion, transport, protocol, safe-off, timeout and seasonal parity regressions
+pass. Nine schedule ownership/editor configurations include expected-invalid
+cases; ten topology compositions validate. Full evidence, sizes, commands,
+coverage boundaries and physical handoff are in
+[the software acceptance record](../evidence/t11-software.md).
+No firmware is flashed and no hardware gate is closed. Next delivery: T12 matrix.
