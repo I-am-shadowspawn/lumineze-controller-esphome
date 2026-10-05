@@ -130,4 +130,6 @@ jobs:
             sleep $((attempt * 20))
           done
       - name: Check compiled profile isolation
-        run: python scripts/check_profile_isolation.py "${{ matrix.profile }}"
+        run: |
+          python scripts/check_profile_isolation.py "${{ matrix.profile }}"
+          python scripts/check_build_gate_faults.py "${{ matrix.profile }}"

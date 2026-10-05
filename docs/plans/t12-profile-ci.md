@@ -26,7 +26,7 @@ compilation; preserve those outcomes. Hardware reports remain separate gates.
   cases fail for the intended reason; a deliberately broken schedule case and
   stale-generation case each fail their named check. Remove injected faults
   before commit. No network package reference may hide a checkout change.
-- [ ] **T12.3 — Isolated profile builds and inventories.** Compile all four
+- [x] **T12.3 — Isolated profile builds and inventories.** Compile all four
   profiles on `requirements-ci.txt`'s pin with distinct job/build directories.
   Assert exactly one provider/orchestrator/engine and one common output path.
   Compare production/development inventories; reject production test state and
@@ -100,3 +100,17 @@ obsolete completion that clears pending state fails `check_schedule_policy`.
 Both failed by assertions, not setup/compile errors; no injected fault touched
 the checkout. All unmodified fast gates pass (`/tmp/t12-fast.log`), as do the nine
 schedule and 17 existing schema cases. Next: isolated build inventory gates.
+
+
+### T12.3 — complete
+
+Each profile has its own matrix job/checkout/build directory with fail-fast off.
+Generated-source gates require the selected provider/engine/common policy and
+forbid the alternative provider, engine-private state and unsupported capability
+entities. Production test symbols are absent. All four current-source checks pass.
+`check_build_gate_faults.py` proves deleting schedule-development is rejected by
+manifest validation and injecting cross-engine state into each real generated
+source is rejected by its named isolation check. CI runs these checks after each
+profile build. T11 records local pinned full builds; the complete experimental
+matrix is additionally running and will be recorded under T12.4. No hardware
+or HA runtime outcome is inferred from these checks.
