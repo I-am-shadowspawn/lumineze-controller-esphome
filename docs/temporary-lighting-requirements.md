@@ -1,7 +1,8 @@
 # Feature request: temporary lighting controls
 
-**Status:** requirements for a future implementation. Start implementation only
-after T09 and Gate A are complete. This document changes no controller behavior.
+**Status:** software implementation is on branch `t23-codex`. Physical
+ESP32-C3/BLE acceptance evidence remains outstanding. The behavior contract for
+that bench validation is below.
 
 ## Scope and meaning
 

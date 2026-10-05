@@ -53,8 +53,36 @@ script:
                 id(topology_dispatch).active_slot == slot;
             // Group/controller safe-off is held while its controls stay off.
             // A deliberate manual/automatic request replaces it unless clock safety is active.
-            const Source source = resolve_source(
+            Source source = resolve_source(
                 safety_active, fixture.manual, group.source);
+            const bool temporary_expired = expire_temporary(
+                fixture, id(topology_snapshot_valid), context.simulated,
+                id(topology_snapshot).year, id(topology_snapshot).day_of_year,
+                now);
+            if (source != AUTOMATIC && fixture.temporary_mode != TEMPORARY_NONE)
+              cancel_temporary(fixture);
+            if (temporary_expired && fixture.pending &&
+                fixture.source == TEMPORARY_FIXED)
+              revoke_pending(fixture);
+            if (temporary_expired) {
+              fixture.temporary_force_reevaluation = true;
+              if (source == AUTOMATIC)
+                fixture.temporary_status = TEMP_STATUS_RETURNING;
+            }
+            if (fixture.temporary_mode == TIMED_FIXED_LEVEL &&
+                source == AUTOMATIC)
+              source = TEMPORARY_FIXED;
+            if (fixture.temporary_mode == TEMPORARY_NONE &&
+                fixture.temporary_status == TEMP_STATUS_RETURNING &&
+                !fixture.pending && fixture.readback_fresh &&
+                fixture.reported == fixture.target)
+              fixture.temporary_status = TEMP_STATUS_INACTIVE;
+            if (fixture.temporary_mode == DAILY_MAXIMUM &&
+                fixture.temporary_status == TEMP_STATUS_ENFORCING &&
+                fixture.readback_fresh &&
+                fixture.reported <= fixture.temporary_maximum)
+              fixture.temporary_status = fixture.temporary_maximum_crossed
+                  ? TEMP_STATUS_HOLDING : TEMP_STATUS_ARMED;
             const bool cap_valid = std::isfinite(fixture.maximum) &&
                 fixture.maximum >= 0.0f && fixture.maximum <= 100.0f;
             const bool previous_invalid = fixture.invalid_output;
@@ -63,9 +91,11 @@ script:
             fixture.last_maximum = fixture.maximum;
             fixture.invalid_output = false;
             fixture.limit_applied = false;
-            if (source == AUTOMATIC && !automatic_output_allowed(
+            if ((source == AUTOMATIC || source == TEMPORARY_FIXED) &&
+                !automatic_output_allowed(
                     context.simulated, context.simulated_output_enabled)) {
-              if (fixture.pending && fixture.source == AUTOMATIC)
+              if (fixture.pending && (fixture.source == AUTOMATIC ||
+                                      fixture.source == TEMPORARY_FIXED))
                 revoke_pending(fixture);
               status(slot, "Simulation is calculation-only; output not enabled");
               continue;
@@ -93,10 +123,13 @@ script:
             const ConversionInput input{
                 source, fixture.maximum, group.demand,
                 context.peak[group_binding.role],
-                context.curve[group_binding.role], fixture.manual_level,
+                context.curve[group_binding.role],
+                source == TEMPORARY_FIXED ? fixture.temporary_fixed_level :
+                    fixture.manual_level,
                 fixture.target, fixture.minimum_change,
                 fixture.automatic_queued, cap_reduced, previous_invalid,
                 recovery_due, fixture.source != source ||
+                    fixture.temporary_force_reevaluation ||
                     automatic_refresh_required(
                         fixture.target_simulated, context.simulated)};
             const ConversionResult decision = convert_fixture(input);
@@ -109,9 +142,34 @@ script:
               continue;
             }
             fixture.limit_applied = decision.limit_applied;
-            if (!decision.submit) continue;
-            accept_target(fixture, decision.target, source, group.revision,
+            int target = decision.target;
+            bool submit = decision.submit;
+            if (fixture.temporary_force_reevaluation && source == AUTOMATIC) {
+              submit = decision.target != fixture.target || recovery_due ||
+                  fixture.source != source;
+              if (!submit) fixture.temporary_force_reevaluation = false;
+            }
+            if (source == AUTOMATIC &&
+                fixture.temporary_mode == DAILY_MAXIMUM) {
+              const bool physical_above = fixture.target > fixture.temporary_maximum ||
+                  fixture.completed > fixture.temporary_maximum ||
+                  (fixture.readback_fresh &&
+                   fixture.reported > fixture.temporary_maximum);
+              const auto temporary = apply_daily_maximum_to_target(
+                  fixture, decision.target, decision.submit, physical_above);
+              target = temporary.target;
+              submit = temporary.force_submit;
+              if (temporary.holding && !temporary.force_submit) {
+                if (fixture.pending && fixture.source == AUTOMATIC &&
+                    fixture.target > fixture.temporary_maximum)
+                  revoke_pending(fixture);
+                continue;
+              }
+            }
+            if (!submit) continue;
+            accept_target(fixture, target, source, group.revision,
                           in_flight, context.simulated);
+            fixture.temporary_force_reevaluation = false;
             status(slot, "Latest authorised target pending");
           }
 

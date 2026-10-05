@@ -1,8 +1,14 @@
 # Implementation plan: temporary lighting controls
 
-**Dependency:** complete T09 and Gate A first. Implement this as T23 on its
-own branch. It does not depend on T10–T22, and its first release covers only
-the supported generic seasonal production/development profiles. The
+**Implementation status:** the software work is on branch `t23-codex`.
+Deterministic policy tests, both seasonal profile builds, no-override parity,
+and generated-input isolation pass. The final ESP32-C3 lamp/readback bench
+acceptance remains outstanding.
+
+**Dependency/status:** T09 is merged. T23 software is implemented on its own
+branch while Gate A's physical evidence remains pending; keep T23 open until
+that evidence is recorded. It does not depend on T10–T22, and its first release
+covers only the supported generic seasonal production/development profiles. The
 [requirements](../temporary-lighting-requirements.md) are the behavior
 contract; resolve any T09 interface renames against that contract before
 changing firmware.

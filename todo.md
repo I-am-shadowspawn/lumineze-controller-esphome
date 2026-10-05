@@ -544,7 +544,9 @@ Do not commit private live-device YAML or raw backups merely to fit this layout.
 
 **Implementation:** [post-T09 implementation plan](docs/plans/temporary-lighting-implementation.md).
 
-**Done when:** the requirements' acceptance cases, seasonal profile builds, no-override parity and physical BLE/readback behavior are recorded. The normal seasonal calculator and permanent calibration remain unchanged.
+**Software implementation:** added on branch `t23-codex`; deterministic policy tests, seasonal production/development profile builds, input-isolation checks, diagnostic inventory, and no-override seasonal parity pass. User workflow is documented in the README.
+
+**Done when:** the requirements' acceptance cases and physical BLE/readback behavior are recorded on the ESP32-C3 bench. That hardware evidence remains outstanding; the checkbox stays open until then. The normal seasonal calculator and permanent calibration remain unchanged.
 
 ## Decisions to carry into planning
 

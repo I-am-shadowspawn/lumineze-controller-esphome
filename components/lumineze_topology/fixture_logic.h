@@ -8,6 +8,10 @@
 
 namespace lumineze_topology {
 
+inline bool elapsed(uint32_t now, uint32_t since, uint32_t duration) {
+  return static_cast<uint32_t>(now - since) >= duration;
+}
+
 inline bool automatic_output_allowed(bool simulated, bool bench_enabled) {
   return !simulated || bench_enabled;
 }
@@ -19,6 +23,104 @@ inline bool invalid_real_clock(bool snapshot_valid, bool simulated) {
 inline bool automatic_refresh_required(bool previous_simulated,
                                        bool simulated) {
   return previous_simulated && !simulated;
+}
+
+inline void cancel_temporary(FixtureState &fixture) {
+  fixture.temporary_mode = TEMPORARY_NONE;
+  fixture.temporary_status = TEMP_STATUS_INACTIVE;
+  fixture.temporary_duration_ms = 0;
+}
+
+inline bool apply_daily_maximum(FixtureState &fixture, int maximum,
+                                int year, int day_of_year) {
+  if (maximum < 0 || maximum > 100 || year < 2000 ||
+      (day_of_year < 1 || day_of_year > 366)) return false;
+  fixture.temporary_mode = DAILY_MAXIMUM;
+  fixture.temporary_status = TEMP_STATUS_ARMED;
+  fixture.temporary_maximum = maximum;
+  fixture.temporary_maximum_crossed = false;
+  fixture.temporary_year = year;
+  fixture.temporary_day = day_of_year;
+  fixture.temporary_duration_ms = 0;
+  return true;
+}
+
+inline bool start_timed_fixed_level(FixtureState &fixture, int level,
+                                    uint32_t duration_ms, uint32_t now) {
+  constexpr uint32_t minimum_duration_ms = 15U * 60U * 1000U;
+  constexpr uint32_t maximum_duration_ms = 24U * 60U * 60U * 1000U;
+  if (level < 0 || level > 100 || duration_ms < minimum_duration_ms ||
+      duration_ms > maximum_duration_ms) return false;
+  fixture.temporary_mode = TIMED_FIXED_LEVEL;
+  fixture.temporary_status = TEMP_STATUS_FIXED;
+  fixture.temporary_fixed_level = level;
+  fixture.temporary_started_ms = now;
+  fixture.temporary_duration_ms = duration_ms;
+  return true;
+}
+
+inline bool expire_temporary(FixtureState &fixture, bool live_time_valid,
+                             bool simulated, int year, int day_of_year,
+                             uint32_t now) {
+  if (fixture.temporary_mode == TEMPORARY_NONE) return false;
+  const bool invalid_live_time = !live_time_valid ||
+      (fixture.temporary_mode == DAILY_MAXIMUM && simulated);
+  const bool date_changed = fixture.temporary_mode == DAILY_MAXIMUM &&
+      (fixture.temporary_year != year || fixture.temporary_day != day_of_year);
+  const bool duration_elapsed = fixture.temporary_mode == TIMED_FIXED_LEVEL &&
+      elapsed(now, fixture.temporary_started_ms, fixture.temporary_duration_ms);
+  if (invalid_live_time || date_changed || duration_elapsed) {
+    cancel_temporary(fixture);
+    return true;
+  }
+  return false;
+}
+
+struct DailyMaximumResult {
+  bool holding = false;
+  bool released = false;
+  bool force_submit = false;
+  int target = 0;
+};
+
+inline DailyMaximumResult apply_daily_maximum_to_target(
+    FixtureState &fixture, int normal_target, bool normal_submit,
+    bool physical_above_maximum) {
+  DailyMaximumResult result;
+  result.target = normal_target;
+  if (fixture.temporary_mode != DAILY_MAXIMUM) {
+    result.force_submit = normal_submit;
+    return result;
+  }
+  if (normal_target > fixture.temporary_maximum) {
+    fixture.temporary_maximum_crossed = true;
+    fixture.temporary_status = TEMP_STATUS_HOLDING;
+    result.holding = true;
+    result.target = fixture.temporary_maximum;
+    result.force_submit = physical_above_maximum;
+    if (result.force_submit) fixture.temporary_status = TEMP_STATUS_ENFORCING;
+    return result;
+  }
+  if (fixture.temporary_maximum_crossed &&
+      (fixture.temporary_status == TEMP_STATUS_HOLDING ||
+       fixture.temporary_status == TEMP_STATUS_ENFORCING)) {
+    fixture.temporary_status = TEMP_STATUS_RETURNING;
+    fixture.temporary_mode = TEMPORARY_NONE;
+    result.released = true;
+    result.force_submit = normal_target != fixture.target ||
+        physical_above_maximum;
+    return result;
+  }
+  if (physical_above_maximum) {
+    fixture.temporary_status = TEMP_STATUS_ENFORCING;
+    result.force_submit = true;
+    return result;
+  }
+  if (fixture.temporary_status == TEMP_STATUS_ENFORCING)
+    fixture.temporary_status = TEMP_STATUS_ARMED;
+  fixture.temporary_status = TEMP_STATUS_ARMED;
+  result.force_submit = normal_submit;
+  return result;
 }
 
 inline void update_group_demand(GroupState &group, float demand, bool valid) {
@@ -75,6 +177,11 @@ inline ConversionResult convert_fixture(const ConversionInput &input) {
     if (!cap_valid && requested > 0) return result;
     result.target = std::min(requested, static_cast<int>(std::lround(cap)));
     result.limit_applied = result.target < requested;
+  } else if (input.source == TEMPORARY_FIXED) {
+    const int requested = std::max(0, std::min(100, input.manual_level));
+    if (!cap_valid && requested > 0) return result;
+    result.target = std::min(requested, static_cast<int>(std::lround(cap)));
+    result.limit_applied = result.target < requested;
   } else if (input.source == GROUP_MANUAL) {
     if (!std::isfinite(input.demand) || input.demand < 0.0f ||
         input.demand > 1.0f || (!cap_valid && input.demand > 0.0f))
@@ -114,10 +221,6 @@ inline ConversionResult convert_fixture(const ConversionInput &input) {
     result.submit = true;
   }
   return result;
-}
-
-inline bool elapsed(uint32_t now, uint32_t since, uint32_t duration) {
-  return static_cast<uint32_t>(now - since) >= duration;
 }
 
 inline int select_due_slot(int next_slot, const bool enabled[4],

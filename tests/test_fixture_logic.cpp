@@ -8,6 +8,47 @@
 using namespace lumineze_topology;
 
 int main() {
+  FixtureState temporary;
+  assert(apply_daily_maximum(temporary, 60, 2026, 100));
+  assert(temporary.temporary_mode == DAILY_MAXIMUM &&
+         temporary.temporary_status == TEMP_STATUS_ARMED);
+  auto daily = apply_daily_maximum_to_target(temporary, 65, true, false);
+  assert(daily.holding && !daily.force_submit && daily.target == 60);
+  daily = apply_daily_maximum_to_target(temporary, 80, true, true);
+  assert(daily.holding && daily.force_submit && daily.target == 60 &&
+         temporary.temporary_status == TEMP_STATUS_ENFORCING);
+  temporary.target = 60;
+  daily = apply_daily_maximum_to_target(temporary, 59, false, false);
+  assert(daily.released && daily.force_submit && daily.target == 59 &&
+         temporary.temporary_mode == TEMPORARY_NONE);
+  assert(apply_daily_maximum(temporary, 60, 2026, 100));
+  assert(expire_temporary(temporary, true, false, 2026, 101, 1000));
+  assert(temporary.temporary_mode == TEMPORARY_NONE);
+  FixtureState armed_correction;
+  assert(apply_daily_maximum(armed_correction, 60, 2026, 100));
+  armed_correction.target = 80;
+  daily = apply_daily_maximum_to_target(armed_correction, 50, false, true);
+  assert(!daily.holding && daily.force_submit && daily.target == 50 &&
+         armed_correction.temporary_mode == DAILY_MAXIMUM &&
+         !armed_correction.temporary_maximum_crossed);
+  daily = apply_daily_maximum_to_target(armed_correction, 50, false, false);
+  assert(!daily.released && !daily.holding &&
+         armed_correction.temporary_status == TEMP_STATUS_ARMED);
+  daily = apply_daily_maximum_to_target(armed_correction, 65, true, false);
+  assert(daily.holding && !daily.force_submit && daily.target == 60 &&
+         armed_correction.temporary_maximum_crossed);
+  assert(start_timed_fixed_level(temporary, 35, 7200000U, UINT32_MAX - 1000U));
+  assert(temporary.temporary_mode == TIMED_FIXED_LEVEL);
+  assert(!expire_temporary(temporary, true, false, 2026, 101, 1000U));
+  assert(expire_temporary(temporary, true, false, 2026, 101, 7199000U));
+  assert(!start_timed_fixed_level(temporary, 35, 1000U, 0));
+  assert(start_timed_fixed_level(temporary, 100, 900000U, 0));
+  ConversionInput fixed_input{TEMPORARY_FIXED, 80.0f, 0.0f, 0.0f, 0.0f,
+                              100, 0, 2, false, false, false, false, true};
+  const auto fixed_result = convert_fixture(fixed_input);
+  assert(fixed_result.valid && fixed_result.submit && fixed_result.target == 80 &&
+         fixed_result.limit_applied);
+
   assert(resolve_source(true, true, GROUP_MANUAL) == SAFETY);
   assert(resolve_source(false, true, GROUP_MANUAL) == FIXTURE_MANUAL);
   assert(resolve_source(false, false, GROUP_MANUAL) == GROUP_MANUAL);
