@@ -7,6 +7,7 @@ import sys
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
+METADATA_IDS = {'controller_project_version', 'controller_build_profile', 'controller_esphome_version', 'controller_source_revision'}
 FIELDS = ('id', 'name', 'platform', 'internal', 'entity_category',
           'disabled_by_default', 'restore_value', 'restore_mode', 'initial_value',
           'min_value', 'max_value', 'step', 'unit_of_measurement')
@@ -18,7 +19,7 @@ PROFILES = {'production': 'ci/topology-generic.yaml',
 def inventory(text):
     config = yaml.load(text, Loader=yaml.BaseLoader)
     return {kind: sorted(({key: item[key] for key in FIELDS if key in item}
-                         for item in config.get(kind, [])), key=lambda item: item['id'])
+                         for item in config.get(kind, []) if item['id'] not in METADATA_IDS), key=lambda item: item['id'])
             for kind in KINDS}
 
 

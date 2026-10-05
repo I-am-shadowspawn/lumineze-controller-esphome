@@ -1,0 +1,34 @@
+# Single version truth; this is an unreleased candidate, not a stable support claim.
+substitutions:
+  controller_profile: legacy-seasonal-production
+  controller_ref: unrecorded
+  controller_source_expression: '"Unverified legacy reference: ${controller_ref}"'
+esphome:
+  min_version: 2026.9.0
+  project:
+    name: shadowspawn.lumineze
+    version: 2.0.0-dev
+text_sensor:
+  - platform: template
+    id: controller_project_version
+    name: Controller Project Version
+    entity_category: diagnostic
+    lambda: return {ESPHOME_PROJECT_VERSION};
+    update_interval: 60s
+  - platform: template
+    id: controller_build_profile
+    name: Controller Build Profile
+    entity_category: diagnostic
+    lambda: return {"${controller_profile}"};
+    update_interval: 60s
+  - platform: version
+    id: controller_esphome_version
+    name: Controller ESPHome Version
+    entity_category: diagnostic
+    hide_timestamp: true
+  - platform: template
+    id: controller_source_revision
+    name: Controller Source Revision
+    entity_category: diagnostic
+    lambda: return {${controller_source_expression}};
+    update_interval: 60s

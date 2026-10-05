@@ -78,3 +78,20 @@ shared version truth, four generic profile IDs and explicit legacy labels.
 schema-1 schedule boundaries; legacy/profile migration and rollback are explicit,
 not automatic. Only ESPHome 2026.9.0 / observed IDF 5.5.5 is initially qualified.
 No tags or installed devices changed. Next: metadata composition and checks.
+
+
+### T13.2 — in progress
+
+- [x] **T13.2a — Shared metadata and read-only diagnostics.**
+  `core/project.yaml` holds the namespace/version/minimum and four read-only
+  diagnostics. Generic profiles identify their engine/provider flavour; legacy
+  wrappers are explicitly labelled legacy. The component recovers its actual Git
+  SHA and marks changed firmware assets dirty, or reports unknown without its
+  own Git root. Package/component pin equality remains the consumer contract.
+  Six resolved configurations pass identity checks. Existing seasonal inventory
+  entries remain exact; only four explicitly checked diagnostics are added.
+  Schedule production compiles and its generated project/profile/source identity
+  passes (`/tmp/t13-schedule-build.log`, RAM 148,064 / flash 1,256,208 bytes).
+- [ ] **T13.2b — All-profile compiled identity proof.** Build all four from the
+  clean committed source and compare namespace/version/profile/SHA; integrate
+  metadata checks in CI. No live HA display proof is claimed.

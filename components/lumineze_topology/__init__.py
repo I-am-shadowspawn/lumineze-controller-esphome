@@ -6,6 +6,8 @@ clients and transaction scripts, while the final pass checks those bindings.
 
 import re
 import hashlib
+from pathlib import Path
+import subprocess
 
 import esphome.codegen as cg
 import esphome.config_validation as cv
@@ -17,6 +19,24 @@ DEPENDENCIES = ["esp32_ble_tracker", "ble_client"]
 _IDENTIFIER = re.compile(r"^[a-z][a-z0-9_]*$")
 _MAC = re.compile(r"^(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$")
 _ROLE_BY_PRODUCT = {"jungle_dawn": "visible", "prot5": "uv"}
+
+
+def _source_revision():
+    """Report actual component Git identity; no guessed ref or network access."""
+    root = Path(__file__).resolve().parents[2]
+    try:
+        git_root = subprocess.check_output(["git", "rev-parse", "--show-toplevel"], cwd=root, stderr=subprocess.DEVNULL, text=True).strip()
+        if Path(git_root).resolve() != root:
+            return "unknown"
+        revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root,
+                                           stderr=subprocess.DEVNULL, text=True).strip()
+        if not re.fullmatch(r"[0-9a-f]{40}", revision):
+            return "unknown"
+        tracked_dirty = subprocess.run(["git", "diff", "--quiet", "HEAD", "--", "components", "packages"], cwd=root).returncode != 0
+        untracked = subprocess.check_output(["git", "ls-files", "--others", "--exclude-standard", "--", "components", "packages"], cwd=root, text=True).strip()
+        return revision + ("+dirty" if tracked_dirty or untracked else "")
+    except (OSError, subprocess.CalledProcessError):
+        return "unknown"
 
 
 def _calibration_key(fixture):
@@ -397,6 +417,7 @@ async def to_code(config):
             cg.RawStatement('#include "esphome/components/lumineze_topology/schedule_preferences.h"'),
             prepend=True,
         )
+    cg.add_global(cg.RawStatement('namespace lumineze_topology { constexpr const char *build_source_revision = "' + _source_revision() + '"; }'))
     contexts = config["contexts"]
     groups = config["groups"]
     fixtures = [fixture for fixture in config["fixtures"] if fixture["enabled"]]

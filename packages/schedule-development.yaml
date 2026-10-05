@@ -1,4 +1,5 @@
 substitutions:
+  controller_profile: schedule-development
   topology_engine_evaluator: evaluate_schedule_contexts
   topology_snapshot_provider: capture_topology_development_snapshot
   logger_level: DEBUG

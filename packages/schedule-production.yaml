@@ -1,5 +1,6 @@
 # Work-in-progress schedule profile; physical support remains gated by T15.
 substitutions:
+  controller_profile: schedule-production
   topology_engine_evaluator: evaluate_schedule_contexts
   topology_snapshot_provider: capture_topology_real_snapshot
   logger_level: INFO

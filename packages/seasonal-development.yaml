@@ -1,5 +1,6 @@
 # Seasonal development profile uses the same engine with explicit dev inputs.
 substitutions:
+  controller_profile: seasonal-development
   topology_engine_evaluator: evaluate_seasonal_contexts
   topology_snapshot_provider: capture_topology_development_snapshot
   logger_level: DEBUG

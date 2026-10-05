@@ -1,3 +1,6 @@
+packages:
+  project_metadata: !include project.yaml
+
 substitutions:
   device_name: "lumineze-controller"
   friendly_name: "LuminEZE Controller"
