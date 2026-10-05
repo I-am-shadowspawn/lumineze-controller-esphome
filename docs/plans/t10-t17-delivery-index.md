@@ -30,7 +30,8 @@ regressions and explicitly compose its seasonal-only capability.
 
 ## Plans and canonical task trackers
 
-All increments below are **planned**, unchecked. A checked parent in `todo.md`
+T10.1–T10.4 are complete as a specification delivery on `t10/schedule-specification`.
+T11–T17 increments remain planned and unchecked. A checked parent in `todo.md`
 requires its complete software and physical exit evidence, not just all code
 committed. Each linked plan owns its incremental checkboxes; do not maintain a
 second contradictory copy of those checkboxes in an issue or another file.
@@ -50,7 +51,7 @@ second contradictory copy of those checkboxes in an issue or another file.
 
 | Work | Can prepare while physical testing proceeds | Implementation/completion gate |
 | --- | --- | --- |
-| T10 | Full draft specification, edge-case tables and vectors | Review against T09/Gate A findings before final handoff |
+| T10 | Completed contract, edge-case tables and acceptance corpus | Review later T09/Gate A findings as amendments before T11 |
 | T11 | Seam inventory, entity/persistence mapping and evaluator design | Gate A passed and T10 finalized before firmware edits |
 | T12 | Coverage manifest, CI architecture and size/report design | T11 profiles exist and software acceptance passes |
 | T13 | Namespace/version/compatibility decisions, release checklist | T12 evidence; runtime identity observations for completion |
@@ -114,5 +115,6 @@ be closed by an expected result, successful compilation or a plan document.
 ## Completion boundary of this planning delivery
 
 Eight implementation plans and their incremental trackers are documented and
-linked from the roadmap. Actual T10–T17 work remains unstarted. No live controller
+linked from the roadmap. T10 specification work is complete; actual T11–T17
+implementation remains unstarted. No live controller
 is flashed, no release is promoted, and no hardware gate is marked complete.

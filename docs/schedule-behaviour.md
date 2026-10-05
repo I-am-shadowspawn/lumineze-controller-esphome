@@ -63,6 +63,9 @@ enabled points. An unused role has no editor entities, may have zero enabled
 points, and emits invalid output; no group may consume it without a rebuild and
 valid schedule. Unknown role names are rejected. Context Apply validates all used
 roles atomically; a bad UV edit cannot partially apply a valid visible edit.
+Validity must be role-aware: an unused invalid output cannot invalidate the
+context's configured visible output. Context active-valid aggregates used roles
+only; topology validation prevents a group consuming an unused role.
 Two all-zero points are valid and mean off, not invalid output. Disabling a point
 removes it from interpolation; there is no separate disabled-window switch.
 
@@ -205,7 +208,7 @@ friendly explanation but must not alter preference identity.
 | `<context>_apply_schedule` | Button | Validate and commit the entire context |
 | `<context>_cancel_schedule_edits` | Button | Reload staging from active or empty defaults; no output change |
 | `<context>_schedule_status` | Text | Active/unconfigured/editing or precise rejection/storage reason |
-| `<context>_schedule_revision` | Sensor, integer | Last durably committed revision; 0 when absent |
+| `<context>_schedule_revision` | Text sensor, decimal uint32 | Last durably committed revision; 0 when absent |
 | `<context>_schedule_valid` | Boolean sensor | All used roles have a valid active snapshot |
 | `<context>_schedule_dirty` | Boolean sensor | Staged data differs from active snapshot/defaults |
 
@@ -245,6 +248,10 @@ from staged values and requested/completed/reported lamp levels.
    values; with no active snapshot, load mode `step` and all slots disabled at
    minute/level 0. Cancel Edits is not Cancel Temporary Lighting and sends no BLE
    command. Switching HA connections never acts as Apply.
+
+The revision is represented as decimal text to preserve exact uint32 identity,
+including rollover, without a float sensor's precision limit. Active-valid means
+validated stored settings, not valid current clock or physical confirmation.
 
 Active output continues during staging. A rejected action's diagnostic does not
 mean the active schedule is invalid. Status distinguishes active revision from
@@ -341,3 +348,50 @@ readback windows or stale-generation protections. Requested, pending, in-flight,
 completed and reported values remain distinct; unknown/stale readback is never
 physical confirmation. Other contexts and higher-priority fixture overrides
 continue independently when one context is edited or invalid.
+
+## 4. Acceptance corpus and T11 execution checklist
+
+The checked-in [schedule cases](../tests/data/schedule-cases.json) are the
+independent expected results. Their schema version describes the corpus, not
+firmware persistence. Missing editor slots expand to disabled zero slots;
+validation defaults and tagged NaN/infinity injection are described in its
+`encoding` field. Numeric percentage tolerance is 0.0001 percentage points for
+embedded float evaluation; final integer targets must match exactly. At a true
+rounding boundary, test the established conversion operation order rather than
+relaxing integer acceptance.
+
+The corpus contains named schedules, direct timestamp/output expectations,
+validation failures, exact fixture conversions, authorization transitions and
+persistence/recovery scenarios. T11 must execute the scenario descriptions in
+its policy/storage harness, not count JSON parsing as a behavioral pass.
+
+- **AC1 — Model/validation:** execute `validations`, including enabled duplicates,
+  malformed disabled fields, unused roles, capacity, sorting and all-zero output.
+- **AC2 — Time/shape:** execute every `evaluations` entry with both providers;
+  include cyclic wrap, exact midnight, fractional seconds, UV versus visible,
+  leap-day equivalence and DST/correction snapshots. No event replay is allowed.
+- **AC3 — Units:** execute `fixture_conversions`; two members of a shared group
+  scale independently, UV zero stays zero, half ties match conversion, and
+  fractional interpolation is not rounded early. For 09:00 minus 30 seconds in
+  the visible rise, 49.583333% of a maximum 83 produces 41; rounding the schedule
+  percent first would incorrectly produce 42.
+- **AC4 — Editing/authorization:** execute `transitions`, proving atomic context
+  rejection, dirty/Cancel behavior, Apply versus Unchanged, changed step bypass,
+  unchanged retry budget, independent contexts and stale completion/readback.
+- **AC5 — Control/capability:** preserve manual/calibration/safety/automatic-off
+  priorities, autonomous HA-disconnected operation, simulation bench gating and
+  live return. Schedule profiles omit T23 UI and seasonal private state.
+- **AC6 — Durable state:** execute all `persistence_cases`, plus binary schema
+  length/CRC/range/key-collision tests and torn-write injection. Reboot never
+  enables automatic/manual output or restores staging/transactions.
+- **AC7 — Profile/physical delivery:** both schedule profiles validate/compile
+  with one engine/provider/orchestrator, no direct BLE path from the editor, and
+  seasonal/T23 regressions still pass. T12/T15 add full matrix and physical traces;
+  an Apply success is not physical lamp confirmation.
+
+T10 completion means this behavior contract and independent expectations are
+recorded. It does not mean schedule firmware exists, Gate A passed or this corpus
+has passed against that future firmware. T11 must reference these IDs in its
+results, implement missing negative/time-transition cases from the full contract,
+and update the contract explicitly for any approved deviation. T15 supplies
+actual schedule/storage/HA/ESP32-C3 observations before stable support is claimed.

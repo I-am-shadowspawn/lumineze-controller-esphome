@@ -201,3 +201,13 @@ For questions or problems, include the board model, ESPHome version, selected
 package path, and sanitized validation/log output. Remove Wi-Fi passwords,
 encryption keys, real MAC addresses, and private network details before
 sharing logs.
+
+## Planned daily schedule mode
+
+The [T10 daily schedule contract](docs/schedule-behaviour.md) defines independent
+visible/UV schedules per context, cyclic local-time step or linear interpolation,
+and staged Home Assistant settings with explicit Apply/Cancel. Schedule mode is
+specified but **not implemented or available to install**. Seasonal profiles
+remain the current software entry points; Gate A hardware evidence still gates
+schedule implementation. See the [delivery roadmap](docs/plans/t10-t17-delivery-index.md)
+for implementation, verification and release tasks.

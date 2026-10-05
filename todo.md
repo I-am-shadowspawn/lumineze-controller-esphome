@@ -98,7 +98,7 @@ Work in the listed order by default. Dependencies identify prerequisites, not pe
 
 Implementation planning reviewed on 5 October 2026: see the [T10–T17 delivery index](docs/plans/t10-t17-delivery-index.md) for 42 canonical incremental tasks, readiness and evidence gates. Documentation/preparation can proceed during Gate A/T23 bench testing; schedule firmware changes still wait for Gate A.
 
-- [ ] T10 — Specify configurable schedule behaviour and edge cases. [Implementation plan and incremental tracker](docs/plans/t10-schedule-specification.md).
+- [x] T10 — Specify configurable schedule behaviour and edge cases. Completed specification and independent acceptance corpus: [schedule contract](docs/schedule-behaviour.md). Gate A still gates T11 firmware work. [Implementation plan and incremental tracker](docs/plans/t10-schedule-specification.md).
 - [ ] T11 — Implement schedule mode behind the same control contract. [Implementation plan and incremental tracker](docs/plans/t11-schedule-engine.md).
 - [ ] T12 — Enforce the four-profile build and regression matrix. [Implementation plan and incremental tracker](docs/plans/t12-profile-ci.md).
 - [ ] T13 — Add project identity, compatibility policy and release metadata. [Implementation plan and incremental tracker](docs/plans/t13-release-metadata.md).
@@ -326,6 +326,8 @@ Do not commit private live-device YAML or raw backups merely to fit this layout.
 - Specify how common maximums, manual overrides, automatic disable and invalid-clock policy apply without duplication or double scaling.
 
 **Done when:** expected outputs can be determined from the specification without guessing. All boundary cases have an explicit policy and test examples; the scope fits the agreed configuration interface.
+
+**Evidence (5 October 2026):** [schedule contract](docs/schedule-behaviour.md), [acceptance corpus](tests/data/schedule-cases.json), and completed T10.1–T10.4 records define topology, eight-point roles, cyclic step/linear time semantics, HA atomic edits, versioned persistence, common control and independent expectations. The owner authorized specification completion during ongoing hardware testing. No schedule firmware was added; Gate A findings must be reviewed before T11, and Gate A/T23 remain open.
 
 ### T11 — Implement schedule mode behind the same control contract
 

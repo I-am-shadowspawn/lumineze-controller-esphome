@@ -1,15 +1,19 @@
 # T10 — Specify the daily schedule contract
 
 **Entry:** documentation and test-vector design can proceed while Gate A is
-pending. Finalize the contract after reviewing T09 hardware findings; no
-schedule firmware changes before Gate A passes.
-**Dependencies:** T09/Gate A. **Delivery:** an unambiguous specification and
+pending. The owner requested completion of the specification before those
+findings on 5 October 2026. Contract is finalized for T11 handoff; review any
+subsequent T09 findings as explicit amendments. No schedule firmware changes
+before Gate A passes.
+**Dependencies:** T09 software baseline; review subsequent Gate A findings before
+T11 firmware work. Owner-authorized T10 documentation completion precedes the
+physical gate. **Delivery:** an unambiguous specification and
 independent expected results for T11; no firmware implementation.
 
-## Recommended bounded design for the specification
+## Settled design summary
 
-These are proposed decisions for T10 to settle and record, not existing product
-capabilities. Use the generic topology: up to two contexts, each with independent
+These decisions are settled in the [T10 contract](../schedule-behaviour.md);
+they describe future schedule behavior, not existing product capabilities. Use the generic topology: up to two contexts, each with independent
 `visible` and `uv` schedules, routed through up to four groups/fixtures. Product
 and physical slot do not select a schedule. Groups can share one context/role.
 
@@ -67,7 +71,7 @@ Temporary T23 controls retain their documented seasonal-only scope.
   fraction output, calibration once, manual/off/safety priority, and independent
   group effects. Acceptance: a failed edit never changes active output or
   persistence; a successful edit has an explicit application boundary.
-- [ ] **T10.4 — Independent golden cases and handoff.** Store hand-worked input
+- [x] **T10.4 — Independent golden cases and handoff.** Store hand-worked input
   and expected fractional/final-target vectors (proposed
   `tests/data/schedule-cases.json`) and explain calculations. Include 08:00=0,
   10:00=100, 18:00=100, 20:00=0: linear 09:00=50, step 09:00=0, midnight=0;
@@ -78,8 +82,9 @@ Temporary T23 controls retain their documented seasonal-only scope.
 
 ## Exit and scope control
 
-T10 is complete when all four records are reviewed against the roadmap and Gate A
-findings. Keep specification changes separate from engine code. Revision of a
+T10's specification delivery is complete against the roadmap and current source.
+Physical Gate A findings remain pending and must be reviewed before T11 firmware
+work; they are not claimed as completed evidence for this documentation task. Keep specification changes separate from engine code. Revision of a
 settled output rule requires updated vectors and an explicit compatibility note.
 Weekly calendars, dynamic topology and T23 schedule support are follow-up scope.
 
@@ -93,8 +98,8 @@ remaining work beside that increment. Proposed filenames may change; ownership
 and acceptance criteria may not silently change. Do not mark implementation or
 hardware increments complete because this plan exists.
 
-**Progress:** all increments planned; no implementation or hardware evidence
-is claimed by this document.
+**Progress:** T10.1–T10.4 complete as a specification delivery. No schedule
+firmware implementation or physical acceptance is claimed.
 
 ## Execution record
 
@@ -126,3 +131,21 @@ calibration/manual/safety/authorization behavior is preserved. Verification:
 record arithmetic is 4+2+2+4+4+1+33+33+4=87 bytes; checked controls against current
 policy and reviewed invalid-edit/power-loss paths. `git diff --check` passes.
 Storage and hardware implementation proofs belong to T11/T15, not this task.
+
+### T10.4 — complete
+
+Added [schedule-cases.json](../../tests/data/schedule-cases.json) with independently
+recorded numerical expectations and named validation/control/persistence cases.
+Contract section 4 maps acceptance to the future evaluator/policy/storage tests.
+README and roadmap link the settled contract. Verification: strict JSON parsing,
+120 unique case IDs and fixture references; 56 independent rational checks of
+numerical shape examples; eight exact current fixture-conversion checks compiled
+with `g++ -std=c++17 -Wall -Wextra -Werror`; local documentation links and
+`git diff --check`. These validate the specification/corpus, not an
+unimplemented schedule engine. Gate A/T23 remain open; T11–T17 stay unchecked.
+
+**Configuration/rollback impact:** none on deployed firmware. Schema and entity
+patterns are requirements for T11, with explicit migration/unknown-write rules.
+Each T10 increment was committed independently; inspect branch history for SHAs.
+**Remaining for T10:** none. **External gates:** Gate A before T11; T23 physical
+acceptance before declaring that capability verified.

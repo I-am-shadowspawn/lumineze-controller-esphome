@@ -1,0 +1,1344 @@
+{
+  "schema_version": 1,
+  "scope": "T10 acceptance inputs and independently recorded expectations; no schedule implementation",
+  "encoding": "Absent point slots expand to disabled minute=0 level=0; default role=visible, used=true and mode=linear. Tagged non_finite values are injected by the T11 harness, not interpreted as ordinary JSON numbers.",
+  "expected_percent_tolerance": 0.0001,
+  "integer_targets": "exact; positive half ties upward",
+  "fixtures": {
+    "visible_linear": {
+      "mode": "linear",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 480,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 600,
+          "level": 100
+        },
+        {
+          "slot": 3,
+          "enabled": true,
+          "minute": 1080,
+          "level": 100
+        },
+        {
+          "slot": 4,
+          "enabled": true,
+          "minute": 1200,
+          "level": 0
+        }
+      ]
+    },
+    "visible_step": {
+      "mode": "step",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 480,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 600,
+          "level": 100
+        },
+        {
+          "slot": 3,
+          "enabled": true,
+          "minute": 1080,
+          "level": 100
+        },
+        {
+          "slot": 4,
+          "enabled": true,
+          "minute": 1200,
+          "level": 0
+        }
+      ]
+    },
+    "uv_linear": {
+      "mode": "linear",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 540,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 600,
+          "level": 80
+        },
+        {
+          "slot": 3,
+          "enabled": true,
+          "minute": 960,
+          "level": 80
+        },
+        {
+          "slot": 4,
+          "enabled": true,
+          "minute": 1020,
+          "level": 0
+        }
+      ]
+    },
+    "uv_step": {
+      "mode": "step",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 540,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 600,
+          "level": 80
+        },
+        {
+          "slot": 3,
+          "enabled": true,
+          "minute": 960,
+          "level": 80
+        },
+        {
+          "slot": 4,
+          "enabled": true,
+          "minute": 1020,
+          "level": 0
+        }
+      ]
+    },
+    "wrap_linear": {
+      "mode": "linear",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 120,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 1320,
+          "level": 40
+        }
+      ]
+    },
+    "wrap_step": {
+      "mode": "step",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 120,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 1320,
+          "level": 40
+        }
+      ]
+    },
+    "disabled_middle": {
+      "mode": "linear",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 480,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": false,
+          "minute": 540,
+          "level": 100
+        },
+        {
+          "slot": 3,
+          "enabled": true,
+          "minute": 600,
+          "level": 0
+        }
+      ]
+    },
+    "unordered": {
+      "mode": "linear",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 1200,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 600,
+          "level": 100
+        },
+        {
+          "slot": 3,
+          "enabled": true,
+          "minute": 480,
+          "level": 0
+        },
+        {
+          "slot": 4,
+          "enabled": true,
+          "minute": 1080,
+          "level": 100
+        }
+      ]
+    },
+    "zero": {
+      "mode": "linear",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 0,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 720,
+          "level": 0
+        }
+      ]
+    },
+    "constant": {
+      "mode": "step",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 0,
+          "level": 75
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 720,
+          "level": 75
+        }
+      ]
+    },
+    "midnight_step": {
+      "mode": "step",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 0,
+          "level": 30
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 720,
+          "level": 60
+        }
+      ]
+    },
+    "clock_jump": {
+      "mode": "linear",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 60,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 180,
+          "level": 100
+        },
+        {
+          "slot": 3,
+          "enabled": true,
+          "minute": 1380,
+          "level": 0
+        }
+      ]
+    },
+    "tiny_step": {
+      "mode": "step",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 0,
+          "level": 50
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 600,
+          "level": 51
+        },
+        {
+          "slot": 3,
+          "enabled": true,
+          "minute": 1200,
+          "level": 0
+        }
+      ]
+    }
+  },
+  "evaluations": [
+    {
+      "id": "vl-midnight",
+      "fixture": "visible_linear",
+      "minute": 0,
+      "expected_percent": 0,
+      "reason": "Last and first points are both zero"
+    },
+    {
+      "id": "vl-before-first",
+      "fixture": "visible_linear",
+      "minute": 479,
+      "expected_percent": 0,
+      "reason": "Overnight zero segment"
+    },
+    {
+      "id": "vl-first",
+      "fixture": "visible_linear",
+      "minute": 480,
+      "expected_percent": 0,
+      "reason": "Exact enabled point"
+    },
+    {
+      "id": "vl-half-rise",
+      "fixture": "visible_linear",
+      "minute": 540,
+      "expected_percent": 50,
+      "reason": "100 * 60 / 120"
+    },
+    {
+      "id": "vl-quarter-rise",
+      "fixture": "visible_linear",
+      "minute": 510,
+      "expected_percent": 25,
+      "reason": "100 * 30 / 120"
+    },
+    {
+      "id": "vl-seconds",
+      "fixture": "visible_linear",
+      "minute": 540.5,
+      "expected_percent": 50.416666666666664,
+      "reason": "100 * 60.5 / 120; do not round before scaling"
+    },
+    {
+      "id": "vl-before-peak",
+      "fixture": "visible_linear",
+      "minute": 599,
+      "expected_percent": 99.16666666666667,
+      "reason": "100 * 119 / 120"
+    },
+    {
+      "id": "vl-peak",
+      "fixture": "visible_linear",
+      "minute": 600,
+      "expected_percent": 100,
+      "reason": "Exact peak point"
+    },
+    {
+      "id": "vl-noon",
+      "fixture": "visible_linear",
+      "minute": 720,
+      "expected_percent": 100,
+      "reason": "Flat segment"
+    },
+    {
+      "id": "vl-dusk-start",
+      "fixture": "visible_linear",
+      "minute": 1080,
+      "expected_percent": 100,
+      "reason": "Exact dusk point"
+    },
+    {
+      "id": "vl-half-descent",
+      "fixture": "visible_linear",
+      "minute": 1140,
+      "expected_percent": 50,
+      "reason": "100 - 100 * 60 / 120"
+    },
+    {
+      "id": "vl-off",
+      "fixture": "visible_linear",
+      "minute": 1200,
+      "expected_percent": 0,
+      "reason": "Exact off point"
+    },
+    {
+      "id": "vl-after-last",
+      "fixture": "visible_linear",
+      "minute": 1439,
+      "expected_percent": 0,
+      "reason": "Cyclic zero tail"
+    },
+    {
+      "id": "vs-before-first",
+      "fixture": "visible_step",
+      "minute": 479,
+      "expected_percent": 0,
+      "reason": "Hold previous zero"
+    },
+    {
+      "id": "vs-first",
+      "fixture": "visible_step",
+      "minute": 480,
+      "expected_percent": 0,
+      "reason": "Exact point"
+    },
+    {
+      "id": "vs-rise-hold",
+      "fixture": "visible_step",
+      "minute": 540,
+      "expected_percent": 0,
+      "reason": "Previous point until 600"
+    },
+    {
+      "id": "vs-before-peak",
+      "fixture": "visible_step",
+      "minute": 599,
+      "expected_percent": 0,
+      "reason": "No linear ramp"
+    },
+    {
+      "id": "vs-peak",
+      "fixture": "visible_step",
+      "minute": 600,
+      "expected_percent": 100,
+      "reason": "Exact new segment"
+    },
+    {
+      "id": "vs-descent-hold",
+      "fixture": "visible_step",
+      "minute": 1140,
+      "expected_percent": 100,
+      "reason": "Hold until off point"
+    },
+    {
+      "id": "vs-off",
+      "fixture": "visible_step",
+      "minute": 1200,
+      "expected_percent": 0,
+      "reason": "Exact off point"
+    },
+    {
+      "id": "vs-midnight",
+      "fixture": "visible_step",
+      "minute": 0,
+      "expected_percent": 0,
+      "reason": "Hold last point across midnight"
+    },
+    {
+      "id": "ul-before",
+      "fixture": "uv_linear",
+      "minute": 480,
+      "expected_percent": 0,
+      "reason": "Explicit zero overnight"
+    },
+    {
+      "id": "ul-first",
+      "fixture": "uv_linear",
+      "minute": 540,
+      "expected_percent": 0,
+      "reason": "Exact point"
+    },
+    {
+      "id": "ul-rise",
+      "fixture": "uv_linear",
+      "minute": 570,
+      "expected_percent": 40,
+      "reason": "80 * 30 / 60"
+    },
+    {
+      "id": "ul-high",
+      "fixture": "uv_linear",
+      "minute": 600,
+      "expected_percent": 80,
+      "reason": "Exact point"
+    },
+    {
+      "id": "ul-plateau",
+      "fixture": "uv_linear",
+      "minute": 720,
+      "expected_percent": 80,
+      "reason": "Flat segment"
+    },
+    {
+      "id": "ul-dusk",
+      "fixture": "uv_linear",
+      "minute": 990,
+      "expected_percent": 40,
+      "reason": "80 - 80 * 30 / 60"
+    },
+    {
+      "id": "ul-off",
+      "fixture": "uv_linear",
+      "minute": 1020,
+      "expected_percent": 0,
+      "reason": "Exact point"
+    },
+    {
+      "id": "us-rise",
+      "fixture": "uv_step",
+      "minute": 570,
+      "expected_percent": 0,
+      "reason": "Hold before 600"
+    },
+    {
+      "id": "us-high",
+      "fixture": "uv_step",
+      "minute": 600,
+      "expected_percent": 80,
+      "reason": "New segment"
+    },
+    {
+      "id": "us-dusk",
+      "fixture": "uv_step",
+      "minute": 990,
+      "expected_percent": 80,
+      "reason": "Hold before 1020"
+    },
+    {
+      "id": "us-off",
+      "fixture": "uv_step",
+      "minute": 1020,
+      "expected_percent": 0,
+      "reason": "New zero segment"
+    },
+    {
+      "id": "wl-last",
+      "fixture": "wrap_linear",
+      "minute": 1320,
+      "expected_percent": 40,
+      "reason": "Exact point"
+    },
+    {
+      "id": "wl-before-midnight",
+      "fixture": "wrap_linear",
+      "minute": 1380,
+      "expected_percent": 30,
+      "reason": "40 - 40 * 60 / 240"
+    },
+    {
+      "id": "wl-midnight",
+      "fixture": "wrap_linear",
+      "minute": 0,
+      "expected_percent": 20,
+      "reason": "40 - 40 * 120 / 240"
+    },
+    {
+      "id": "wl-after-midnight",
+      "fixture": "wrap_linear",
+      "minute": 60,
+      "expected_percent": 10,
+      "reason": "40 - 40 * 180 / 240"
+    },
+    {
+      "id": "wl-first",
+      "fixture": "wrap_linear",
+      "minute": 120,
+      "expected_percent": 0,
+      "reason": "Exact point"
+    },
+    {
+      "id": "wl-day-rise",
+      "fixture": "wrap_linear",
+      "minute": 720,
+      "expected_percent": 20,
+      "reason": "40 * 600 / 1200"
+    },
+    {
+      "id": "ws-midnight",
+      "fixture": "wrap_step",
+      "minute": 0,
+      "expected_percent": 40,
+      "reason": "Previous point is last point"
+    },
+    {
+      "id": "ws-first",
+      "fixture": "wrap_step",
+      "minute": 120,
+      "expected_percent": 0,
+      "reason": "Exact first point"
+    },
+    {
+      "id": "ws-before-last",
+      "fixture": "wrap_step",
+      "minute": 1319,
+      "expected_percent": 0,
+      "reason": "Hold zero before 1320"
+    },
+    {
+      "id": "ws-last",
+      "fixture": "wrap_step",
+      "minute": 1320,
+      "expected_percent": 40,
+      "reason": "New segment"
+    },
+    {
+      "id": "disabled-ignored",
+      "fixture": "disabled_middle",
+      "minute": 540,
+      "expected_percent": 0,
+      "reason": "Disabled high point cannot contribute"
+    },
+    {
+      "id": "sort-enabled",
+      "fixture": "unordered",
+      "minute": 540,
+      "expected_percent": 50,
+      "reason": "Slot order is irrelevant"
+    },
+    {
+      "id": "all-zero-valid",
+      "fixture": "zero",
+      "minute": 100,
+      "expected_percent": 0,
+      "reason": "Zero is valid output"
+    },
+    {
+      "id": "constant-two-points",
+      "fixture": "constant",
+      "minute": 100,
+      "expected_percent": 75,
+      "reason": "Two equal points implement constant demand"
+    },
+    {
+      "id": "exact-midnight",
+      "fixture": "midnight_step",
+      "minute": 0,
+      "expected_percent": 30,
+      "reason": "Minute zero belongs to new segment"
+    },
+    {
+      "id": "spring-before",
+      "fixture": "clock_jump",
+      "minute": 90,
+      "expected_percent": 25,
+      "reason": "100 * 30 / 120"
+    },
+    {
+      "id": "spring-after",
+      "fixture": "clock_jump",
+      "minute": 180,
+      "expected_percent": 100,
+      "reason": "Evaluate jumped-to point, no replay"
+    },
+    {
+      "id": "fold-later",
+      "fixture": "clock_jump",
+      "minute": 150,
+      "expected_percent": 75,
+      "reason": "100 * 90 / 120"
+    },
+    {
+      "id": "fold-repeated",
+      "fixture": "clock_jump",
+      "minute": 90,
+      "expected_percent": 25,
+      "reason": "Same repeated local time, same output"
+    },
+    {
+      "id": "tiny-before",
+      "fixture": "tiny_step",
+      "minute": 599,
+      "expected_percent": 50,
+      "reason": "Old segment"
+    },
+    {
+      "id": "tiny-at",
+      "fixture": "tiny_step",
+      "minute": 600,
+      "expected_percent": 51,
+      "reason": "New segment even with threshold 2"
+    },
+    {
+      "id": "vl-seconds-before-half",
+      "fixture": "visible_linear",
+      "minute": 539.5,
+      "expected_percent": 49.583333333333336,
+      "reason": "100 * 59.5 / 120; preserve fractional percent"
+    },
+    {
+      "id": "leap-day-equivalence",
+      "fixture": "visible_linear",
+      "minute": 540,
+      "calendar": {
+        "year": 2024,
+        "day_of_year": 60,
+        "days_in_year": 366
+      },
+      "expected_percent": 50,
+      "reason": "Daily schedule uses local time, not season or day length"
+    },
+    {
+      "id": "ordinary-day-equivalence",
+      "fixture": "visible_linear",
+      "minute": 540,
+      "calendar": {
+        "year": 2023,
+        "day_of_year": 60,
+        "days_in_year": 365
+      },
+      "expected_percent": 50,
+      "reason": "Daily schedule uses local time, not season or day length"
+    }
+  ],
+  "validations": [
+    {
+      "id": "duplicates-enabled",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 480,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 480,
+          "level": 100
+        }
+      ],
+      "expected": "reject",
+      "reason": "duplicate_enabled_minute"
+    },
+    {
+      "id": "duplicate-disabled",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 0,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 720,
+          "level": 0
+        },
+        {
+          "slot": 3,
+          "enabled": false,
+          "minute": 0,
+          "level": 0
+        }
+      ],
+      "expected": "accept"
+    },
+    {
+      "id": "one-used-point",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 480,
+          "level": 0
+        }
+      ],
+      "expected": "reject",
+      "reason": "used_role_requires_two_points"
+    },
+    {
+      "id": "zero-used-points",
+      "points": [],
+      "expected": "reject",
+      "reason": "used_role_requires_two_points"
+    },
+    {
+      "id": "zero-unused-points",
+      "points": [],
+      "used": false,
+      "expected": "accept_invalid_output"
+    },
+    {
+      "id": "nine-slots",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 0,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 60,
+          "level": 0
+        },
+        {
+          "slot": 3,
+          "enabled": true,
+          "minute": 120,
+          "level": 0
+        },
+        {
+          "slot": 4,
+          "enabled": true,
+          "minute": 180,
+          "level": 0
+        },
+        {
+          "slot": 5,
+          "enabled": true,
+          "minute": 240,
+          "level": 0
+        },
+        {
+          "slot": 6,
+          "enabled": true,
+          "minute": 300,
+          "level": 0
+        },
+        {
+          "slot": 7,
+          "enabled": true,
+          "minute": 360,
+          "level": 0
+        },
+        {
+          "slot": 8,
+          "enabled": true,
+          "minute": 420,
+          "level": 0
+        },
+        {
+          "slot": 9,
+          "enabled": true,
+          "minute": 480,
+          "level": 0
+        }
+      ],
+      "expected": "reject",
+      "reason": "capacity"
+    },
+    {
+      "id": "fractional-minute",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 480.5,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 600,
+          "level": 100
+        }
+      ],
+      "expected": "reject",
+      "reason": "integer_minute"
+    },
+    {
+      "id": "fractional-level",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 480,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 600,
+          "level": 50.5
+        }
+      ],
+      "expected": "reject",
+      "reason": "integer_level"
+    },
+    {
+      "id": "minute-1440",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 0,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 1440,
+          "level": 0
+        }
+      ],
+      "expected": "reject",
+      "reason": "minute_range"
+    },
+    {
+      "id": "negative-minute",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": -1,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 600,
+          "level": 0
+        }
+      ],
+      "expected": "reject",
+      "reason": "minute_range"
+    },
+    {
+      "id": "level-high",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 480,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 600,
+          "level": 101
+        }
+      ],
+      "expected": "reject",
+      "reason": "level_range"
+    },
+    {
+      "id": "level-negative",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 480,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 600,
+          "level": -1
+        }
+      ],
+      "expected": "reject",
+      "reason": "level_range"
+    },
+    {
+      "id": "nan-level",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 480,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 600,
+          "level": {
+            "non_finite": "nan"
+          }
+        }
+      ],
+      "expected": "reject",
+      "reason": "finite_level"
+    },
+    {
+      "id": "infinite-minute",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 480,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": {
+            "non_finite": "infinity"
+          },
+          "level": 0
+        }
+      ],
+      "expected": "reject",
+      "reason": "finite_minute"
+    },
+    {
+      "id": "disabled-invalid-field",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 0,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 720,
+          "level": 0
+        },
+        {
+          "slot": 3,
+          "enabled": false,
+          "minute": 0,
+          "level": 101
+        }
+      ],
+      "expected": "reject",
+      "reason": "level_range"
+    },
+    {
+      "id": "unknown-mode",
+      "mode": "spline",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 0,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 720,
+          "level": 0
+        }
+      ],
+      "expected": "reject",
+      "reason": "mode"
+    },
+    {
+      "id": "unknown-role",
+      "role": "led",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 0,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 720,
+          "level": 0
+        }
+      ],
+      "expected": "reject",
+      "reason": "role"
+    },
+    {
+      "id": "all-zero",
+      "points": [
+        {
+          "slot": 1,
+          "enabled": true,
+          "minute": 0,
+          "level": 0
+        },
+        {
+          "slot": 2,
+          "enabled": true,
+          "minute": 720,
+          "level": 0
+        }
+      ],
+      "expected": "accept"
+    },
+    {
+      "id": "unordered-valid",
+      "fixture": "unordered",
+      "expected": "accept"
+    },
+    {
+      "id": "invalid-time-range",
+      "fixture": "visible_linear",
+      "snapshot": {
+        "valid": true,
+        "minute": 1440
+      },
+      "expected": "invalid_output"
+    },
+    {
+      "id": "invalid-time-nan",
+      "fixture": "visible_linear",
+      "snapshot": {
+        "valid": true,
+        "minute": {
+          "non_finite": "nan"
+        }
+      },
+      "expected": "invalid_output"
+    },
+    {
+      "id": "invalid-provider",
+      "fixture": "visible_linear",
+      "snapshot": {
+        "valid": false,
+        "minute": 540
+      },
+      "expected": "invalid_output"
+    }
+  ],
+  "fixture_conversions": [
+    {
+      "id": "shared-full",
+      "percent": 75,
+      "maximum": 100,
+      "expected_target": 75
+    },
+    {
+      "id": "shared-calibrated",
+      "percent": 75,
+      "maximum": 60,
+      "expected_target": 45
+    },
+    {
+      "id": "uv-calibrated",
+      "percent": 40,
+      "maximum": 50,
+      "expected_target": 20
+    },
+    {
+      "id": "uv-default-zero",
+      "percent": 80,
+      "maximum": 0,
+      "expected_target": 0
+    },
+    {
+      "id": "positive-half-tie",
+      "percent": 50,
+      "maximum": 83,
+      "expected_target": 42,
+      "reason": "41.5 rounds upward"
+    },
+    {
+      "id": "fraction-not-rounded-first",
+      "percent": 49.583333333333336,
+      "maximum": 83,
+      "expected_target": 41,
+      "reason": "83 * (59.5 / 120) = 41.1541667; rounding percent to 50 first would incorrectly give 42"
+    },
+    {
+      "id": "manual-absolute",
+      "source": "fixture_manual",
+      "requested": 80,
+      "maximum": 60,
+      "expected_target": 60
+    },
+    {
+      "id": "group-manual-relative",
+      "source": "group_manual",
+      "percent": 75,
+      "maximum": 60,
+      "expected_target": 45
+    }
+  ],
+  "transitions": [
+    {
+      "id": "step-bypass",
+      "input": "step segment changes 50 to 51, maximum 100, previous target 50, threshold 2",
+      "expected": "authorize 51 once; unchanged next sample preserves generation/retry budget"
+    },
+    {
+      "id": "linear-filter",
+      "input": "linear intermediate target 50 to 51, threshold 2",
+      "expected": "no new request; accepted target stays 50"
+    },
+    {
+      "id": "apply-revokes",
+      "input": "changed Apply while automatic 80 is in flight; new final target 40",
+      "expected": "old completion may record 80; target stays 40 pending and old report is not fresh for 40"
+    },
+    {
+      "id": "apply-identical-pending",
+      "input": "changed schedule, same final 40 but old automatic write pending/in flight",
+      "expected": "revoke old generation; replace authorized 40; obsolete completion cannot clear it"
+    },
+    {
+      "id": "apply-identical-confirmed",
+      "input": "changed schedule, same final 40 already confirmed",
+      "expected": "no duplicate write; next point still uses new active snapshot"
+    },
+    {
+      "id": "apply-unchanged",
+      "input": "exact active slot payload staged again",
+      "expected": "Unchanged; no preference write, revision increment or queue reset"
+    },
+    {
+      "id": "atomic-context-rejection",
+      "input": "valid changed visible staging, invalid UV duplicate times",
+      "expected": "reject entire context; active revision, both outputs and pending generations unchanged"
+    },
+    {
+      "id": "staging-only",
+      "input": "edit staged point while active curve runs",
+      "expected": "active evaluation uses old snapshot; dirty true; no Apply caused by edit"
+    },
+    {
+      "id": "cancel-edits",
+      "input": "Cancel while dirty and an automatic write is pending",
+      "expected": "reload active staging; dirty false; pending write unchanged"
+    },
+    {
+      "id": "apply-invalid-clock",
+      "input": "valid staged schedule with invalid live clock",
+      "expected": "save revision without enabling automatic; no nonzero automatic request; shared safety remains authoritative"
+    },
+    {
+      "id": "manual-priority",
+      "input": "fixture manual 30 active while schedule asks 75 and Apply occurs",
+      "expected": "manual 30 remains; automatic does not replace its generation"
+    },
+    {
+      "id": "automatic-off",
+      "input": "turn group automatic off with its write in flight",
+      "expected": "revoke automatic retries; no off write implied; old completion cannot revive it"
+    },
+    {
+      "id": "safe-off",
+      "input": "group safe-off during a schedule request",
+      "expected": "disable group controls, release member overrides, authorize 0; preserve pending safety in hold"
+    },
+    {
+      "id": "clock-loss",
+      "input": "invalid live snapshot after boot grace with fail-safe on",
+      "expected": "cancel temporary automatic work and authorize safety 0, including during manual; physical output unknown without readback"
+    },
+    {
+      "id": "invalid-schedule-manual",
+      "input": "no valid active schedule and independent fixture manual 30",
+      "expected": "automatic invalid; manual remains eligible under calibration/safety"
+    },
+    {
+      "id": "independent-context",
+      "input": "reject Apply in context A while context B runs",
+      "expected": "B revision/output/retries unaffected"
+    },
+    {
+      "id": "startup-midday",
+      "input": "valid active schedule restored at noon",
+      "expected": "calculate noon demand; automatic controls still off until deliberately enabled"
+    },
+    {
+      "id": "ha-disconnected",
+      "input": "HA unavailable after valid Apply and automatic enable",
+      "expected": "controller continues daily evaluation from active data and clock"
+    },
+    {
+      "id": "sim-output-disabled",
+      "input": "development simulated snapshot valid, bench output off",
+      "expected": "calculate only; no automatic transmission"
+    },
+    {
+      "id": "sim-return-live",
+      "input": "live target differs by 1 from accepted simulated target, threshold 2",
+      "expected": "fresh live authorization replaces simulated request despite threshold"
+    },
+    {
+      "id": "skip-step-events",
+      "input": "last evaluation before several points, next evaluation after them",
+      "expected": "only current segment may be requested, not each missed step"
+    }
+  ],
+  "persistence_cases": [
+    {
+      "id": "empty-boot",
+      "input": "neither bank valid",
+      "expected": "revision 0; schedule invalid; stage disabled zeros; groups/manual off"
+    },
+    {
+      "id": "normal-restore",
+      "input": "bank revision 7 valid and bank revision 6 valid",
+      "expected": "restore 7; populate staging; no automatic enabling"
+    },
+    {
+      "id": "torn-newest",
+      "input": "newer bank incomplete/CRC invalid and older 6 valid",
+      "expected": "restore complete 6; no mixed fields"
+    },
+    {
+      "id": "unknown-schema",
+      "input": "only bank schema 2, firmware supports schema 1",
+      "expected": "unconfigured; no guessed migration or nonzero automatic demand"
+    },
+    {
+      "id": "wrong-fingerprint",
+      "input": "context ID or used-role mask differs",
+      "expected": "reject record; unconfigured"
+    },
+    {
+      "id": "label-only",
+      "input": "same context ID/used roles, changed display label",
+      "expected": "restore active settings"
+    },
+    {
+      "id": "uncommitted-edit-reboot",
+      "input": "dirty staging never Applied; active 7 valid",
+      "expected": "restore 7 into staging; discard edit"
+    },
+    {
+      "id": "power-cut-apply",
+      "input": "power loss before Apply response",
+      "expected": "restore newest complete valid record, old or new; no mixed context and no controls enabled"
+    },
+    {
+      "id": "known-write-failure",
+      "input": "backend proves candidate write failed",
+      "expected": "older active snapshot/revision retained; no success acknowledgement"
+    },
+    {
+      "id": "unknown-write-outcome",
+      "input": "flush/readback outcome uncertain",
+      "expected": "report unknown and block Apply until recovery; do not falsely claim rejection or success"
+    },
+    {
+      "id": "revision-wrap",
+      "input": "valid new revision 1 and old 4294967295",
+      "expected": "restore 1; modulo difference 2 is newer"
+    },
+    {
+      "id": "equal-conflicting-revisions",
+      "input": "both banks same revision but different payload",
+      "expected": "reject pair; unconfigured"
+    },
+    {
+      "id": "half-range-ambiguous",
+      "input": "bank revisions differ by 2147483648",
+      "expected": "reject pair; unconfigured"
+    }
+  ]
+}
