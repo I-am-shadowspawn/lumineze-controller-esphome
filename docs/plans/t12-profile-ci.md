@@ -33,7 +33,7 @@ compilation; preserve those outcomes. Hardware reports remain separate gates.
   cross-engine private settings/state. Acceptance: remove one profile entry or
   inject an unwanted seasonal symbol in schedule and demonstrate detection;
   compiled-source evidence proves omission rather than hidden HA entities.
-- [ ] **T12.4 — Resilience, size and artifacts.** Retain bounded retry/backoff
+- [x] **T12.4 — Resilience, size and artifacts.** Retain bounded retry/backoff
   for transient external downloads, cache by toolchain/profile/source inputs,
   and retain per-attempt logs without masking the final error. Record flash/RAM
   static sizes and warnings, with explicit reviewed budgets (aligned with T15).
@@ -70,8 +70,7 @@ remaining work beside that increment. Proposed filenames may change; ownership
 and acceptance criteria may not silently change. Do not mark implementation or
 hardware increments complete because this plan exists.
 
-**Progress:** all increments planned; no implementation or hardware evidence
-is claimed by this document.
+**Progress:** all software increments complete. Current GitHub execution remains a review gate; hardware/release gates remain open.
 
 
 ### T12.1 — complete
@@ -128,7 +127,7 @@ or HA runtime outcome is inferred from these checks.
   20/40 seconds, all three logs remain, a RAM breach fails and private input fails
   before build logging. A real schedule-production run passes its budget and
   artifact scan (`/tmp/t12-build-artifacts`, `/tmp/t12-profile-build.log`).
-- [ ] **T12.4b — Complete topology matrix build record.** Both ten-case engine
+- [x] **T12.4b — Complete topology matrix build record.** Both ten-case engine
   matrices are running locally; record their complete results before closing
   this increment. Static RAM does not certify free/minimum heap.
 
@@ -150,3 +149,15 @@ rejects a failed profile or scope job. `docs/ci-validation.md` names required
 checks; repository branch protection is not changed. Both engine topology
 compile matrices are required. T12.4b's local complete matrix record remains
 pending before closing the parent task.
+
+
+T12.4b complete: both ten-case topology matrices pass config and full compile on
+ESPHome 2026.9.0, including swapped/sparse/repeated products, independent groups,
+one/two contexts, four experimental fixtures and development input. Declaration
+reordering retains slot/calibration identities for both engines. Logs:
+`/tmp/t12-seasonal-matrix-build.log`, `/tmp/t12-schedule-matrix-build.log`.
+Manifest statuses now record actual compile evidence and retain physical pending.
+New commits supersede previous same-ref workflow runs. All five T12 increments
+are complete locally. GitHub's current candidate checks still need review after
+runner scheduling; completed/cancelled obsolete runs are not acceptance evidence.
+Next: T13 identity/compatibility decisions; no hardware promotion.

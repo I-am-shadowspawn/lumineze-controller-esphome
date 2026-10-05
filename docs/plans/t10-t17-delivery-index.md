@@ -124,7 +124,7 @@ is flashed, no release is promoted, and no hardware gate is marked complete.
 Owner authorized T11–T14 isolated software work while hardware gates remain open.
 Branch: `implementation/t11-t17`, based on completed T10 `c250604` (development
 contains the planning baseline). T11 software implementation is complete through six verified increments;
-see `t11-schedule-engine.md` and `../evidence/t11-software.md`. Next: T12.1 explicit
-CI coverage manifest. Gate A/T23/T15 hardware, release and deployment remain open.
+see `t11-schedule-engine.md` and `../evidence/t11-software.md`. T12 software gates and 20 topology builds are complete. Next: T13.1
+identity/compatibility decision record. Gate A/T23/T15 hardware, release and deployment remain open.
 Commit each increment and update its canonical plan before proceeding. If usage
 ends, resume the first unchecked increment in the active plan; do not restart the extraction.

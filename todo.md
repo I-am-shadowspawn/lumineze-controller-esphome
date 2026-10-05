@@ -98,9 +98,9 @@ Work in the listed order by default. Dependencies identify prerequisites, not pe
 
 Implementation planning reviewed on 5 October 2026: see the [T10–T17 delivery index](docs/plans/t10-t17-delivery-index.md) for 42 canonical incremental tasks, readiness and evidence gates. Documentation/preparation can proceed during Gate A/T23 bench testing; schedule firmware changes still wait for Gate A.
 
-- [x] T10 — Specify configurable schedule behaviour and edge cases. Completed specification and independent acceptance corpus: [schedule contract](docs/schedule-behaviour.md). Gate A still gates T11 firmware work. [Implementation plan and incremental tracker](docs/plans/t10-schedule-specification.md).
+- [x] T10 — Specify configurable schedule behaviour and edge cases. Completed specification and independent acceptance corpus: [schedule contract](docs/schedule-behaviour.md). Gate A hardware evidence remains open; isolated T11–T14 software work was explicitly authorized. [Implementation plan and incremental tracker](docs/plans/t10-schedule-specification.md).
 - [x] T11 — Implement schedule mode behind the same control contract. Software acceptance recorded; Gate A/T23/T15 physical gates remain open. [Implementation plan and incremental tracker](docs/plans/t11-schedule-engine.md).
-- [ ] T12 — Enforce the four-profile build and regression matrix. [Implementation plan and incremental tracker](docs/plans/t12-profile-ci.md).
+- [x] T12 — Enforce the four-profile build and regression matrix. Local matrix and gate-fault evidence pass; current GitHub checks remain required before merge. [Implementation plan and incremental tracker](docs/plans/t12-profile-ci.md).
 - [ ] T13 — Add project identity, compatibility policy and release metadata. [Implementation plan and incremental tracker](docs/plans/t13-release-metadata.md).
 - [ ] T14 — Create minimal device examples and installation documentation. [Implementation plan and incremental tracker](docs/plans/t14-user-installation.md).
 - [ ] T15 — Validate hardware behaviour, resource headroom and upgrade compatibility. [Implementation plan and incremental tracker](docs/plans/t15-hardware-compatibility.md).
