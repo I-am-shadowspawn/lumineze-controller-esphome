@@ -2,6 +2,7 @@ substitutions:
   topology_engine_evaluator: evaluate_schedule_contexts
   topology_snapshot_provider: capture_topology_development_snapshot
   logger_level: DEBUG
+  topology_simulation_name: Schedule Simulation Input
 packages:
   schedule_engine: !include topology/schedule-engine.yaml
   controller: !include topology/controller-core.yaml

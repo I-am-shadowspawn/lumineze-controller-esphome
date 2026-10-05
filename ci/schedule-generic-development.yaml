@@ -14,19 +14,25 @@ packages:
     file: ../packages/topology/group.yaml
     vars: {group_id: visible_group, group_name: Shared Visible}
   first: !include
-    file: ../packages/topology/fixture-luminize.yaml
+    file: ../packages/topology/fixture-luminize-schedule.yaml
     vars:
       fixture_id: fixture_a
       fixture_name: Fixture A
       fixture_mac: 'AA:BB:CC:DD:EE:01'
       fixture_default_maximum: 100
   second: !include
-    file: ../packages/topology/fixture-luminize.yaml
+    file: ../packages/topology/fixture-luminize-schedule.yaml
     vars:
       fixture_id: fixture_b
       fixture_name: Fixture B
       fixture_mac: 'AA:BB:CC:DD:EE:02'
       fixture_default_maximum: 100
+  first_debug: !include
+    file: ../packages/topology/fixture-luminize-development.yaml
+    vars: {fixture_id: fixture_a, fixture_name: Fixture A}
+  second_debug: !include
+    file: ../packages/topology/fixture-luminize-development.yaml
+    vars: {fixture_id: fixture_b, fixture_name: Fixture B}
 external_components:
   - source: {type: local, path: ../components}
     components: [lumineze_topology]

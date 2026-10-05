@@ -61,7 +61,7 @@ lighting is a separate contract change, not implicit T11 scope.
   stale-write revocation and current-time reevaluation. Acceptance: swapped,
   repeated and sparse fixtures work; min-change bypass does not reset retries;
   manual, automatic-off, safe-off and invalid-clock cases use common policy.
-- [ ] **T11.5 — Capability and diagnostic isolation.** Expose schedule status
+- [x] **T11.5 — Capability and diagnostic isolation.** Expose schedule status
   with the schedule engine; generic health entities remain engine independent.
   Compose T23 controls only for seasonal profiles. Development simulation uses
   the existing non-restoring input/bench gate. Acceptance: schedule production
@@ -182,3 +182,20 @@ repeated, reordered, shared/independent and experimental compositions as seasona
 Both schedule provider configurations validate; development ESP32-C3 build passes
 (149,976 bytes RAM, 1,274,620 bytes flash, `/tmp/t11-schedule-dev-build.log`).
 The 17 existing topology schema cases pass. Physical BLE behavior remains T15.
+
+
+### T11.5 — complete
+
+Extracted fixture transport/common controls verbatim into
+`fixture-luminize-common.yaml` and T23 entities into
+`fixture-seasonal-temporary.yaml`; the original fixture path remains a seasonal
+compatibility wrapper. Schedule fixtures include only the common fragment.
+Final validation rejects T23 UI in schedule compositions. Schedule development
+labels its simulation input explicitly and uses the same volatile bench gate.
+`check_profile_isolation.py` inspects generated source for selected engine,
+provider, common path and absence of private cross-engine/test/T23 entity symbols.
+Both schedule builds pass after extraction: production RAM 147,792 / flash
+1,254,672 bytes; development RAM 148,616 / flash 1,268,122 bytes. Seasonal resolved
+inventories still exactly match the pre-T11 baseline. Protocol trace, actual T23
+policy, all 21 schedule policy scenarios, safe-off, dispatcher timeout and seasonal
+parity checks pass. Final current-source seasonal rebuilds are T11.6.

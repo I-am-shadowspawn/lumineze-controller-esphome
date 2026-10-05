@@ -62,7 +62,7 @@ def compose(name, contexts, groups, fixtures, *, experimental=False, reserved=()
         lines.extend(
             [
                 f"  fixture_{identity}: !include",
-                "    file: ../packages/topology/fixture-luminize.yaml",
+                "    file: ../packages/topology/fixture-luminize-schedule.yaml" if engine == "schedule" else "    file: ../packages/topology/fixture-luminize.yaml",
                 "    vars:",
                 f"      fixture_id: {identity}",
                 f"      fixture_name: {identity}",

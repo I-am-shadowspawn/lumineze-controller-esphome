@@ -294,6 +294,15 @@ def _final_validate(config):
                     )
         else:
             buttons = {str(item["id"]) for item in full.get("button", [])}
+            for fixture in enabled:
+                identity = fixture["id"]
+                if any(f"{identity}_{suffix}" in all_ids for suffix in (
+                    "apply_daily_maximum", "start_fixed_level", "cancel_temporary",
+                    "daily_maximum_value", "fixed_level_value", "fixed_duration_hours",
+                    "temporary_status", "temporary_time_remaining",
+                    "daily_maximum_active", "fixed_level_active",
+                )):
+                    raise cv.Invalid("schedule profiles cannot expose seasonal temporary controls")
             selects = {str(item["id"]): item for item in full.get("select", [])}
             for context in config["contexts"]:
                 identity = context["id"]
