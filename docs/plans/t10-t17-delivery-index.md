@@ -123,8 +123,8 @@ is flashed, no release is promoted, and no hardware gate is marked complete.
 
 Owner authorized T11–T14 isolated software work while hardware gates remain open.
 Branch: `implementation/t11-t17`, based on completed T10 `c250604` (development
-contains the planning baseline). T11.1 extraction is complete with seasonal
-build/parity/entity/transport evidence in its plan. T11 is not yet complete;
+contains the planning baseline). T11.1 extraction and T11.2 pure evaluator are complete with evidence in the T11
+plan. Next: T11.3 transactional editor/storage. T11 is not yet complete;
 Gate A, T23 physical acceptance, release and deployment gates are still open.
 Commit each increment and update its canonical plan before proceeding. If usage
 ends, resume the first unchecked T11 increment; do not restart the extraction.

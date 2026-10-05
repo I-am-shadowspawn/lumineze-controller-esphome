@@ -42,7 +42,7 @@ lighting is a separate contract change, not implicit T11 scope.
   inventories before/after. Acceptance: seasonal golden parity, both existing
   builds, generated provider isolation, policy/transport and T23 regressions
   pass; no schedule behavior in this increment.
-- [ ] **T11.2 — Pure schedule evaluator.** Implement the finalized T10 cyclic
+- [x] **T11.2 — Pure schedule evaluator.** Implement the finalized T10 cyclic
   step/linear algorithm and validation in a small helper, with fixed capacity.
   Acceptance: every T10 vector passes, including exact points, midnight, disabled
   and sorted points, empty/invalid roles and DST/correction snapshots; no clock,
@@ -92,8 +92,7 @@ remaining work beside that increment. Proposed filenames may change; ownership
 and acceptance criteria may not silently change. Do not mark implementation or
 hardware increments complete because this plan exists.
 
-**Progress:** T11.1 software extraction complete; remaining increments tracked
-below. Physical Gate A/T23 evidence remains pending.
+**Progress:** T11.1 extraction and T11.2 pure evaluator complete; T11.3 is next. Physical Gate A/T23 evidence remains pending.
 
 ## Execution record
 
@@ -114,3 +113,19 @@ profiles against source `c250604`'s dummy-fixture entity/settings inventory and
 runs in CI. No persisted keys/calibration mapping changed. Full logs are local
 `/tmp/t11-1-{production,development}-build.log`; CI reruns the committed checks.
 Gate A remains open. Next increment: T11.2 pure evaluator and T10 numeric cases.
+
+### T11.2 — complete
+
+Source: `0e85b29`. Added bounded `schedule_logic.h`: atomic staged-field
+validation before narrowing, cyclic step/linear evaluation, sorted enabled-point
+lookup without mutating editor slots, explicit validity and stable segment slot.
+The helper has no clocks, preferences, HA or BLE dependency. No schedule code is
+composed into firmware yet.
+
+`scripts/check_schedule_cases.py` compiles and runs the checked-in T10 oracle
+against the helper and existing fixture converter: 56 outputs, 22 validations
+and eight exact target conversions pass under C++17 with warnings as errors.
+Rejected validation preserves the destination. CI runs the harness. T10's 21
+policy/HA and 13 persistence scenarios are intentionally deferred to their
+owning increments, not counted as passed from JSON parsing. `git diff --check`
+passes. Next: T11.3 editor, two-bank durable storage and fault-injection coverage.
