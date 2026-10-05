@@ -114,3 +114,20 @@ source is rejected by its named isolation check. CI runs these checks after each
 profile build. T11 records local pinned full builds; the complete experimental
 matrix is additionally running and will be recorded under T12.4. No hardware
 or HA runtime outcome is inferred from these checks.
+
+
+### T12.4 — in progress
+
+- [x] **T12.4a — Bounded retries, budgets and artifact boundary.** The shared
+  `build_profile.py` retains each attempt and propagates the final failure,
+  validates dummy inputs before logging, checks the reviewed RAM/flash budgets,
+  and records exact source/toolchain/size/warnings without claiming hardware proof.
+  Per-profile/source/toolchain cache keys and 14-day sanitized log/summary artifacts
+  are configured. Artifact upload requires its boundary check to succeed.
+  `check_build_resilience.py` proves three failures propagate exit 23, waits are
+  20/40 seconds, all three logs remain, a RAM breach fails and private input fails
+  before build logging. A real schedule-production run passes its budget and
+  artifact scan (`/tmp/t12-build-artifacts`, `/tmp/t12-profile-build.log`).
+- [ ] **T12.4b — Complete topology matrix build record.** Both ten-case engine
+  matrices are running locally; record their complete results before closing
+  this increment. Static RAM does not certify free/minimum heap.
