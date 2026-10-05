@@ -129,3 +129,25 @@ Rejected validation preserves the destination. CI runs the harness. T10's 21
 policy/HA and 13 persistence scenarios are intentionally deferred to their
 owning increments, not counted as passed from JSON parsing. `git diff --check`
 passes. Next: T11.3 editor, two-bank durable storage and fault-injection coverage.
+
+### T11.3 — in progress
+
+- [x] **T11.3a — Durable record/storage core.** `schedule_store.h` implements
+  the specified packed schema, independent two-bank restore, modulo revisions,
+  context-atomic validation, Unchanged/Cancel, deferred activation and uncertain
+  storage locking. `schedule_preferences.h` allocates each backend once and
+  requires flush/readback before success. No restoring per-field editor values.
+- [ ] **T11.3b — HA editor and lifecycle composition.** Next: context/role/point
+  fragments, stable entity IDs, Apply/Cancel/status and boot publication. Validate
+  and compile a schedule composition and prove UI rejection/restore behavior.
+
+T11.3a evidence: `scripts/check_schedule_storage.py` compiles/runs the C++ storage
+fault harness, covering the 13 T10 persistence scenarios plus context rejection,
+all 88 replacement-write prefix lengths, every single-byte corruption, malformed
+checksummed fields and uncertain flush/readback. Independent zlib verifies the
+87-byte record CRC. T10's 86 numeric/validation/conversion cases still pass.
+A temporary compile-only dummy topology included the real ESPHome adapter and
+restore call; the ESP32-C3 firmware compiled successfully (log:
+`/tmp/t11-3-storage-adapter-build.log`). The temporary fixture was removed and
+never flashed. CI now runs the fault harness. No hardware persistence proof is
+claimed; that remains T15. T11.3 stays unchecked until editor integration passes.

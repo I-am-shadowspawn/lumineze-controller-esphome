@@ -12,10 +12,14 @@ constexpr int SCHEDULE_POINTS = 8;
 enum ScheduleMode : uint8_t { STEP = 0, LINEAR = 1, INVALID_MODE = 255 };
 
 struct SchedulePoint {
-  bool enabled = false;
   uint16_t minute = 0;
   uint8_t level = 0;
+  bool enabled = false;
+  constexpr SchedulePoint() = default;
+  constexpr SchedulePoint(bool enabled, uint16_t minute, uint8_t level)
+      : minute(minute), level(level), enabled(enabled) {}
 };
+static_assert(sizeof(SchedulePoint) == 4, "Bounded point storage budget changed");
 struct ScheduleRole {
   ScheduleMode mode = STEP;
   std::array<SchedulePoint, SCHEDULE_POINTS> points{};
