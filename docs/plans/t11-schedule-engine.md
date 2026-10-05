@@ -1,0 +1,94 @@
+# T11 — Implement one schedule engine per build
+
+**Entry:** Gate A evidence recorded and T10 contract/vector set finalized.
+**Dependencies:** T10, T09/Gate A. **Delivery:** schedule production/development
+profiles using the existing generic fixture policy and BLE path.
+
+## Observed seams and intended boundaries
+
+`topology/controller-core.yaml` currently includes the seasonal engine; that
+engine owns `evaluate_topology` and its 10-second interval. `ContextState` and
+`topology_contexts` mix seasonal settings with shared outputs, and topology
+validation currently accepts only `engine_family: seasonal`. These are actual
+couplings to address, not an invitation to reuse seasonal entity IDs for schedules.
+
+Separate a shared output envelope from engine-owned state. Preserve desired,
+peak, curve, validity and simulation provenance used by conversion. For schedule
+levels, publish desired=level/100, peak=1 and curve=desired so calibration is
+applied once at the fixture boundary. Add a role-scoped transition revision only
+for T10's Apply/step-boundary semantics, with zero/default behavior preserving
+seasonal parity. Keep seasonal context settings/state absent in schedule firmware.
+
+An engine-free orchestrator captures one selected provider snapshot, evaluates
+the selected engine once per context, then runs policy. It owns the single tick.
+Profiles compose exactly one engine and provider; schema/final validation must
+agree with that selection. Do not embed schedules, MACs or interpolation in BLE.
+Use fixed-size point records, pure bounded evaluation, and transactional active
+snapshot storage. No host generator is required for Device Builder consumers.
+
+T23 is merged but its UI is currently in the shared fixture fragment. Compose
+seasonal temporary controls as an explicit capability rather than accidentally
+exposing them in schedule profiles. Preserve seasonal entity IDs and behavior;
+shared revocation/transport helpers remain common. Schedule support for temporary
+lighting is a separate contract change, not implicit T11 scope.
+
+## Incremental deliveries
+
+- [ ] **T11.1 — Mechanical engine boundary extraction.** Separate shared output
+  records, seasonal private records and orchestrator/composition while retaining
+  existing public aliases, preference identities and entities. Capture resolved
+  inventories before/after. Acceptance: seasonal golden parity, both existing
+  builds, generated provider isolation, policy/transport and T23 regressions
+  pass; no schedule behavior in this increment.
+- [ ] **T11.2 — Pure schedule evaluator.** Implement the finalized T10 cyclic
+  step/linear algorithm and validation in a small helper, with fixed capacity.
+  Acceptance: every T10 vector passes, including exact points, midnight, disabled
+  and sorted points, empty/invalid roles and DST/correction snapshots; no clock,
+  preference, BLE or HA access inside the evaluator.
+- [ ] **T11.3 — Runtime editor and persistence.** Add context/role schedule
+  fragments, staged HA controls, atomic Apply/Cancel, active revision/status and
+  versioned integrity validation. If the platform cannot atomically save the
+  bounded record, use two records plus a validated commit selection and test
+  power-loss recovery. Acceptance: rejected/half-edited/corrupt snapshots never
+  replace active output; reboot restores the last complete valid schedule;
+  automatic/manual controls still start off and no implicit activation occurs.
+- [ ] **T11.4 — Generic composition and authorization.** Add schedule entry
+  points, `context-schedule.yaml` and real/development build fixtures. Extend
+  schema to schedule family and enforce matching context fragments, role routing
+  and single-engine ownership. Implement one-time transition authorization,
+  stale-write revocation and current-time reevaluation. Acceptance: swapped,
+  repeated and sparse fixtures work; min-change bypass does not reset retries;
+  manual, automatic-off, safe-off and invalid-clock cases use common policy.
+- [ ] **T11.5 — Capability and diagnostic isolation.** Expose schedule status
+  with the schedule engine; generic health entities remain engine independent.
+  Compose T23 controls only for seasonal profiles. Development simulation uses
+  the existing non-restoring input/bench gate. Acceptance: schedule production
+  has no seasonal private state/entities or development controls; seasonal
+  production retains T23; simulated output cannot escape the common bench gate.
+- [ ] **T11.6 — Build and behavioral handoff.** Validate/compile both schedule
+  profiles and rerun seasonal/T23 regressions. Exercise the actual production
+  policy with schedule contexts, calibration reduction, Apply during a write,
+  reconnect, invalid restore and shared groups. Record ESP32-C3 sizes, resolved
+  inventories and required T15 physical cases. Acceptance: software results map
+  to every T10 case; physical evidence is explicitly pending, not inferred.
+
+## Migration and rollback
+
+Preserve legacy entry points and seasonal settings. Engine changes require a
+rebuild plus explicit commissioning; schedules never reinterpret seasonal
+preferences. Record new persistence schema and recovery/export before testing.
+Revert extraction independently if baseline parity fails. Incompatible storage
+requires explicit reset/re-entry instructions; no automatic lamp enabling.
+
+## Execution and evidence rules
+
+Use the [delivery index](t10-t17-delivery-index.md) for gate definitions and the
+baseline. The checkboxes below are the canonical incremental tracker for this
+task. Complete each increment in a separate reviewable commit after its checks
+pass. Record source SHA, files, commands/results, evidence links, deviations and
+remaining work beside that increment. Proposed filenames may change; ownership
+and acceptance criteria may not silently change. Do not mark implementation or
+hardware increments complete because this plan exists.
+
+**Progress:** all increments planned; no implementation or hardware evidence
+is claimed by this document.

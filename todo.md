@@ -96,14 +96,16 @@ Work in the listed order by default. Dependencies identify prerequisites, not pe
 
 ### B — Add schedule mode and establish a stable release
 
-- [ ] T10 — Specify configurable schedule behaviour and edge cases.
-- [ ] T11 — Implement schedule mode behind the same control contract.
-- [ ] T12 — Enforce the four-profile build and regression matrix.
-- [ ] T13 — Add project identity, compatibility policy and release metadata.
-- [ ] T14 — Create minimal device examples and installation documentation.
-- [ ] T15 — Validate hardware behaviour, resource headroom and upgrade compatibility.
-- [ ] T16 — Publish the first verified modular release.
-- [ ] T17 — Migrate the existing controller and provision a second controller.
+Implementation planning reviewed on 5 October 2026: see the [T10–T17 delivery index](docs/plans/t10-t17-delivery-index.md) for 42 canonical incremental tasks, readiness and evidence gates. Documentation/preparation can proceed during Gate A/T23 bench testing; schedule firmware changes still wait for Gate A.
+
+- [ ] T10 — Specify configurable schedule behaviour and edge cases. [Implementation plan and incremental tracker](docs/plans/t10-schedule-specification.md).
+- [ ] T11 — Implement schedule mode behind the same control contract. [Implementation plan and incremental tracker](docs/plans/t11-schedule-engine.md).
+- [ ] T12 — Enforce the four-profile build and regression matrix. [Implementation plan and incremental tracker](docs/plans/t12-profile-ci.md).
+- [ ] T13 — Add project identity, compatibility policy and release metadata. [Implementation plan and incremental tracker](docs/plans/t13-release-metadata.md).
+- [ ] T14 — Create minimal device examples and installation documentation. [Implementation plan and incremental tracker](docs/plans/t14-user-installation.md).
+- [ ] T15 — Validate hardware behaviour, resource headroom and upgrade compatibility. [Implementation plan and incremental tracker](docs/plans/t15-hardware-compatibility.md).
+- [ ] T16 — Publish the first verified modular release. [Implementation plan and incremental tracker](docs/plans/t16-verified-release.md).
+- [ ] T17 — Migrate the existing controller and provision a second controller. [Implementation plan and incremental tracker](docs/plans/t17-deployment-proof.md).
 
 **Gate B:** all four advertised profiles pass their defined checks, the existing installation has a verified upgrade/recovery path, and another controller can be configured without copying controller logic. Seasonal-only release is possible if schedule is deferred explicitly; do not label incomplete schedule profiles supported.
 
@@ -308,14 +310,16 @@ Do not commit private live-device YAML or raw backups merely to fit this layout.
 
 ### T10 — Specify configurable schedule behaviour and edge cases
 
+**Incremental delivery plan:** [T10 implementation and acceptance tasks](docs/plans/t10-schedule-specification.md).
+
 **Depends on:** T09.  
 **Intent:** define what schedule mode means before implementing a second engine.
 
-**Planning must settle:** the initial number of daily points/windows, whether each lamp has an independent schedule, step versus linear interpolation, ramp representation, and the intended configuration controls. A simple daily schedule is the initial scope; weekly calendars are deferred unless specifically selected here.
+**Planning must settle:** the initial number of daily points/windows, how contexts and output roles have independent or shared schedules, step versus linear interpolation, ramp representation, and the intended configuration controls. A simple daily schedule is the initial scope; weekly calendars are deferred unless specifically selected here.
 
 **Work:**
 
-- Write `docs/schedule-behaviour.md` with concrete example schedules and expected outputs before/at/between/after points, separately for JungleDawn and ProT5.
+- Write `docs/schedule-behaviour.md` with concrete example schedules and expected outputs before/at/between/after points for each context’s visible/UV roles, routed through explicit groups and fixtures. Product type and physical slot do not select a schedule.
 - Define midnight wrapping, the interval before the first and after the last point, duplicate/out-of-order points, disabled windows and invalid levels.
 - Choose local wall-clock versus fixed-time semantics. Define outcomes for daylight-saving skipped/repeated times, clock corrections and startup part-way through a schedule.
 - Choose validated runtime settings, persistence and how an edit becomes active. Prefer a complete valid schedule snapshot over acting on half-edited settings.
@@ -325,6 +329,8 @@ Do not commit private live-device YAML or raw backups merely to fit this layout.
 
 ### T11 — Implement schedule mode behind the same control contract
 
+**Incremental delivery plan:** [T11 implementation and acceptance tasks](docs/plans/t11-schedule-engine.md).
+
 **Depends on:** T10.  
 **Intent:** add schedule capability without modifying the seasonal implementation or embedding schedule knowledge in BLE.
 
@@ -332,7 +338,7 @@ Do not commit private live-device YAML or raw backups merely to fit this layout.
 
 **Work:**
 
-- Implement the schedule engine, runtime settings and validation from T10. Produce both lamp targets through the T03 contract.
+- Implement the schedule engine, runtime settings and validation from T10. Produce context/role fractions through the current generic topology contract, then reuse group arbitration, fixture conversion and dispatch. The historical T03 fixed-pair description is not the routing model.
 - Use the shared real/development evaluation-input boundary where practical. Add only schedule-specific development controls that cannot be expressed through it.
 - Create schedule production/development profiles and standalone build fixtures.
 - Recalculate from the current evaluation time so startup or a missed update does not depend on having observed every earlier time event.
@@ -341,6 +347,8 @@ Do not commit private live-device YAML or raw backups merely to fit this layout.
 **Done when:** both schedule profiles validate/compile and meet T10's examples; production schedule builds have no seasonal calculation entities/state or development test controls; BLE code remains mode-independent.
 
 ### T12 — Enforce the four-profile build and regression matrix
+
+**Incremental delivery plan:** [T12 implementation and acceptance tasks](docs/plans/t12-profile-ci.md).
 
 **Depends on:** T11.  
 **Intent:** prevent changes that work only in the developer's current profile.
@@ -361,6 +369,8 @@ Do not commit private live-device YAML or raw backups merely to fit this layout.
 
 ### T13 — Add project identity, compatibility policy and release metadata
 
+**Incremental delivery plan:** [T13 implementation and acceptance tasks](docs/plans/t13-release-metadata.md).
+
 **Depends on:** T12.  
 **Intent:** make a running controller and its source/configuration compatibility identifiable.
 
@@ -377,6 +387,8 @@ Do not commit private live-device YAML or raw backups merely to fit this layout.
 **Done when:** firmware identity, selected profile, source release and supported toolchain can be correlated; metadata is consistent across profiles; update behaviour preserves settings unless an explicit migration says otherwise.
 
 ### T14 — Create minimal device examples and installation documentation
+
+**Incremental delivery plan:** [T14 implementation and acceptance tasks](docs/plans/t14-user-installation.md).
 
 **Depends on:** T13.  
 **Intent:** make the modular project usable without knowledge of its internal file split.
@@ -395,6 +407,8 @@ Do not commit private live-device YAML or raw backups merely to fit this layout.
 **Done when:** a controller needs only installation data and one profile selection; the remote consumer build succeeds; the instructions contain no requirement to copy algorithm/dispatcher sections.
 
 ### T15 — Validate hardware behaviour, resource headroom and upgrade compatibility
+
+**Incremental delivery plan:** [T15 implementation and acceptance tasks](docs/plans/t15-hardware-compatibility.md).
 
 **Depends on:** T12–T14.  
 **Intent:** establish operational evidence before declaring a modular release stable.
@@ -415,6 +429,8 @@ Do not commit private live-device YAML or raw backups merely to fit this layout.
 
 ### T16 — Publish the first verified modular release
 
+**Incremental delivery plan:** [T16 implementation and acceptance tasks](docs/plans/t16-verified-release.md).
+
 **Depends on:** T15.  
 **Intent:** provide an immutable, reproducible source version for real deployments.
 
@@ -431,6 +447,8 @@ Do not commit private live-device YAML or raw backups merely to fit this layout.
 **Done when:** the stable release has traceable checks and a working pinned consumer example. A GitHub source update alone does not change any running controller; upgrades remain deliberate build/install operations.
 
 ### T17 — Migrate the existing controller and provision a second controller
+
+**Incremental delivery plan:** [T17 implementation and acceptance tasks](docs/plans/t17-deployment-proof.md).
 
 **Depends on:** T16.  
 **Intent:** prove the project works both as an upgrade and as a reusable installation.
