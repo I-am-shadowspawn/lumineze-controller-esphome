@@ -18,10 +18,13 @@ inline void accept_target(FixtureState &fixture, int target, Source source,
     fixture.consecutive_failures = 0;
     fixture.retry_delay_ms = 0;
     fixture.generation++;
+    fixture.readback_fresh = false;
+    fixture.readback_received = false;
   }
   fixture.target = target;
   fixture.source = source;
-  fixture.target_simulated = source == AUTOMATIC && simulated;
+  fixture.target_simulated =
+      (source == AUTOMATIC || source == TEMPORARY_FIXED) && simulated;
   fixture.decision_revision = decision_revision;
   fixture.pending = true;
   if (source == AUTOMATIC) {
@@ -32,8 +35,7 @@ inline void accept_target(FixtureState &fixture, int target, Source source,
 
 inline void revoke_pending(FixtureState &fixture) {
   if (fixture.pending) {
-    fixture.generation++;
-    fixture.pending = false;
+    revoke_authorization(fixture);
   }
 }
 
@@ -59,6 +61,17 @@ inline void begin_transaction(FixtureState &fixture, DispatchState &dispatcher,
   dispatcher.last_attempt_ms = now;
 }
 
+// Notifications carry no software token. Only the current transaction's
+// post-write readback window may qualify a report for confirmation.
+inline void record_readback(FixtureState &fixture,
+                            const DispatchState &dispatcher, int slot, int level) {
+  fixture.reported = level;
+  fixture.readback_fresh = false;
+  fixture.readback_received = dispatcher.active &&
+      dispatcher.active_slot == slot && dispatcher.write_completed &&
+      fixture.in_flight_generation == fixture.generation;
+}
+
 inline bool complete_transaction(FixtureState &fixture,
                                  DispatchState &dispatcher, int slot,
                                  uint32_t token) {
@@ -67,7 +80,8 @@ inline bool complete_transaction(FixtureState &fixture,
   fixture.completed_count++;
   fixture.consecutive_failures = 0;
   fixture.retry_delay_ms = 0;
-  fixture.readback_fresh = fixture.readback_received;
+  fixture.readback_fresh = fixture.readback_received &&
+      fixture.in_flight_generation == fixture.generation;
   if (fixture.in_flight_generation == fixture.generation) {
     fixture.pending = false;
     fixture.attempts = 0;

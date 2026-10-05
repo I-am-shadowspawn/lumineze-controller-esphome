@@ -155,6 +155,31 @@ the [controller guide](docs/topology-controller.md) for entity behavior,
 calibration identity, migration, diagnostics, and the software/hardware support
 boundary.
 
+### Temporary lighting controls
+
+Each fixture also has temporary controls in Home Assistant. **Today's Automatic
+Maximum** is an absolute lamp percentage for the current local day; edit its
+number and press **Apply Today's Maximum**. The seasonal curve and permanent
+calibration remain unchanged. The fixture follows the curve up to that level,
+holds there while the curve is higher, then resumes on the first sampled curve
+value at or below the maximum during the evening descent. The maximum expires
+at the next local date change.
+
+For a timed hold, set **Fixed Level** (0–100%) and **Fixed Duration**
+(15 minutes to 24 hours), then press **Start Fixed Level**. That fixture stays
+at the selected level, subject to its calibrated maximum, while the seasonal
+calculation continues in the background. At expiry, the controller reevaluates
+the current curve and resumes from its current level. Use **Cancel Temporary
+Lighting** to return early; this can immediately raise the lamp to the current
+curve level.
+
+Temporary actions require valid seasonal output and automatic control for the
+fixture's group. Manual override, group automatic-off, safe-off, invalid live
+time, or controller reboot clears the temporary mode. The temporary status and
+remaining-time entities show the controller's decision; use the existing
+requested, completed, reported, and readback entities to check what the lamp
+actually received.
+
 ## Repository map
 
 - [`example/topology-two-lamps.yaml`](example/topology-two-lamps.yaml): generic

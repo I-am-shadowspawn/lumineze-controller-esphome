@@ -1,8 +1,14 @@
 # Implementation plan: temporary lighting controls
 
-**Dependency:** complete T09 and Gate A first. Implement this as T23 on its
-own branch. It does not depend on T10–T22, and its first release covers only
-the supported generic seasonal production/development profiles. The
+**Implementation status:** the software work is on branch `t23-codex`.
+Deterministic policy tests, both seasonal profile builds, no-override parity,
+and generated-input isolation pass. The final ESP32-C3 lamp/readback bench
+acceptance remains outstanding.
+
+**Dependency/status:** T09 is merged. T23 software is implemented on its own
+branch while Gate A's physical evidence remains pending; keep T23 open until
+that evidence is recorded. It does not depend on T10–T22, and its first release
+covers only the supported generic seasonal production/development profiles. The
 [requirements](../temporary-lighting-requirements.md) are the behavior
 contract; resolve any T09 interface renames against that contract before
 changing firmware.
@@ -93,3 +99,28 @@ state in the seasonal formula or BLE transaction script.
 Mark T23 complete only when the requirements' acceptance cases and bench
 evidence are recorded. Keep this plan and requirement separate from T09's
 parity gate; the new behavior is an intentional post-T09 feature change.
+
+## Review hardening and bench handoff
+
+Duration validation checks finite 0.25–24-hour values on quarter-hour steps;
+the pure timer helper also rejects millisecond durations off that step. The
+historical exceedance flag alone triggers the first at/below-cap release,
+independent of diagnostic status. This explicit transition bypasses
+minimum-change, avoiding duplicate confirmed targets.
+
+Every accepted temporary transition invalidates prior authorization and
+readback freshness before policy reevaluation. Same-level restarts also receive
+a new generation. Completion of an obsolete transaction records physical
+history without clearing the newer queue or confirming its readback. Corrective
+cap requests retain bounded retry budgets across evaluations. An above-cap fresh
+report is retained as a correction reason across activation; completed writes
+without readback stay unconfirmed. Unsolicited reports cannot inherit an older
+freshness flag. Apply/Start
+refresh the seasonal snapshot and check valid calibration before activation.
+
+`tests/test_fixture_logic.cpp` exercises pure transition/transport cases;
+`scripts/check_temporary_policy.py` executes the production YAML policy lambda
+against controlled seasonal inputs and simulated BLE outcomes. CI runs both.
+The [bench session](t23-bench-validation.md) defines hardware setup, traces,
+full rise/hold/descent and fixed-duration sequences, interruptions, readback
+ordering and the evidence required to close T23. Physical evidence is pending.
