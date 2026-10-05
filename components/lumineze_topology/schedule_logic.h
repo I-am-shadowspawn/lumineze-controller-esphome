@@ -58,7 +58,8 @@ inline bool whole_number(float value, float maximum) {
 // Conversion succeeds atomically: the destination remains unchanged on error.
 // All fields, including disabled points, are validated before narrowing types.
 inline ScheduleError validate_schedule(const ScheduleInput &input, bool used,
-                                        ScheduleRole &destination) {
+                                        ScheduleRole &destination, int *error_point = nullptr) {
+  if (error_point) *error_point = -1;
   if (input.count < 0 || input.count > SCHEDULE_POINTS) return BAD_CAPACITY;
   if (input.mode != STEP && input.mode != LINEAR) return BAD_MODE;
   ScheduleRole candidate;
@@ -66,16 +67,24 @@ inline ScheduleError validate_schedule(const ScheduleInput &input, bool used,
   int enabled = 0;
   for (int index = 0; index < input.count; ++index) {
     const auto &point = input.points[index];
-    if (!whole_number(point.minute, 1439)) return BAD_MINUTE;
-    if (!whole_number(point.level, 100)) return BAD_LEVEL;
+    if (!whole_number(point.minute, 1439)) {
+      if (error_point) *error_point = index;
+      return BAD_MINUTE;
+    }
+    if (!whole_number(point.level, 100)) {
+      if (error_point) *error_point = index;
+      return BAD_LEVEL;
+    }
     candidate.points[index] = {point.enabled, static_cast<uint16_t>(point.minute),
                                static_cast<uint8_t>(point.level)};
     if (!point.enabled) continue;
     enabled++;
     for (int previous = 0; previous < index; ++previous)
       if (candidate.points[previous].enabled &&
-          candidate.points[previous].minute == candidate.points[index].minute)
+          candidate.points[previous].minute == candidate.points[index].minute) {
+        if (error_point) *error_point = index;
         return DUPLICATE_MINUTE;
+      }
   }
   if (used && enabled < 2) return TOO_FEW_POINTS;
   destination = used ? candidate : ScheduleRole{};

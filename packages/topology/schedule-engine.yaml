@@ -1,0 +1,39 @@
+# Schedule-owned state only; the common orchestrator supplies one snapshot.
+globals:
+  - id: topology_schedule_contexts
+    type: lumineze_topology::ScheduleContextState[2]
+    restore_value: false
+    initial_value: 'std::array<lumineze_topology::ScheduleContextState, 2>{}'
+  - id: topology_schedule_preferences
+    type: lumineze_topology::SchedulePreferences[2]
+    restore_value: false
+    initial_value: 'std::array<lumineze_topology::SchedulePreferences, 2>{}'
+
+script:
+  - id: evaluate_schedule_contexts
+    mode: restart
+    then:
+      - lambda: |-
+          using namespace lumineze_topology;
+          const auto &snapshot = id(topology_snapshot);
+          id(topology_snapshot_valid) = snapshot.valid;
+          const bool valid_time = snapshot.valid &&
+              snapshot.days_in_year >= 365 && snapshot.days_in_year <= 366 &&
+              snapshot.day_of_year >= 1 && snapshot.day_of_year <= snapshot.days_in_year;
+          for (int index = 0; index < context_count; ++index) {
+            auto &output = id(topology_contexts)[index];
+            const auto &state = id(topology_schedule_contexts)[index];
+            output.revision++;
+            output.valid = valid_time && state.configured;
+            output.simulated = snapshot.simulated;
+            output.simulated_output_enabled = snapshot.simulated_output_enabled;
+            for (int role = 0; role < 2; ++role) {
+              const bool used = schedule_masks[index] & (1 << role);
+              const auto result = evaluate_schedule(state.active.roles[role], used,
+                  snapshot.minutes, valid_time && state.configured);
+              output.desired[role] = result.valid ? result.percent / 100.0f : 0.0f;
+              output.peak[role] = 1.0f;
+              output.curve[role] = output.desired[role];
+              if (used && !result.valid) output.valid = false;
+            }
+          }

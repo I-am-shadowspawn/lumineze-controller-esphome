@@ -47,7 +47,7 @@ lighting is a separate contract change, not implicit T11 scope.
   Acceptance: every T10 vector passes, including exact points, midnight, disabled
   and sorted points, empty/invalid roles and DST/correction snapshots; no clock,
   preference, BLE or HA access inside the evaluator.
-- [ ] **T11.3 — Runtime editor and persistence.** Add context/role schedule
+- [x] **T11.3 — Runtime editor and persistence.** Add context/role schedule
   fragments, staged HA controls, atomic Apply/Cancel, active revision/status and
   versioned integrity validation. If the platform cannot atomically save the
   bounded record, use two records plus a validated commit selection and test
@@ -137,7 +137,7 @@ passes. Next: T11.3 editor, two-bank durable storage and fault-injection coverag
   context-atomic validation, Unchanged/Cancel, deferred activation and uncertain
   storage locking. `schedule_preferences.h` allocates each backend once and
   requires flush/readback before success. No restoring per-field editor values.
-- [ ] **T11.3b — HA editor and lifecycle composition.** Next: context/role/point
+- [x] **T11.3b — HA editor and lifecycle composition.** Next: context/role/point
   fragments, stable entity IDs, Apply/Cancel/status and boot publication. Validate
   and compile a schedule composition and prove UI rejection/restore behavior.
 
@@ -151,3 +151,17 @@ restore call; the ESP32-C3 firmware compiled successfully (log:
 `/tmp/t11-3-storage-adapter-build.log`). The temporary fixture was removed and
 never flashed. CI now runs the fault harness. No hardware persistence proof is
 claimed; that remains T15. T11.3 stays unchecked until editor integration passes.
+
+
+T11.3b complete: added the fixed eight-slot used-role editor, context Apply/Cancel,
+validity/dirty/revision/status and boot restoration/publication. Schedule fixtures
+validate in both providers; the production ESP32-C3 build passes (149,216 bytes
+static RAM, 1,261,714 bytes flash; `/tmp/t11-schedule-build.log`).
+`check_schedule_editor.py` executes the actual action lambdas: rejected and
+unchanged Apply never evaluates or writes, successful Apply evaluates once,
+Cancel publishes restored staging without evaluating. Error messages identify
+role/point. Numeric and persistence harnesses pass. Composition now rejects
+mixed engines, mismatched context/role editors and independently restoring
+staging; schedule preference keys are checked against generated calibration and
+restoring number/switch keys. Transport transition authorization and profile
+capability isolation remain T11.4/T11.5; this build is not a release/hardware proof.

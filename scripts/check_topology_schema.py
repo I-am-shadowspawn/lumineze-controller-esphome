@@ -119,7 +119,7 @@ def main():
         "unsupported engine family",
         two,
         "engine_family: seasonal",
-        "engine_family: schedule",
+        "engine_family: weekly",
         "engine_family",
     )
     run_case(

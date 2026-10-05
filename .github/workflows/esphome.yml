@@ -51,6 +51,7 @@ jobs:
           python scripts/check_temporary_policy.py
           python scripts/check_schedule_cases.py
           python scripts/check_schedule_storage.py
+          python scripts/check_schedule_editor.py
       - name: Check LuminEZE protocol trace
         run: python scripts/check_protocol_trace.py
       - name: Compare seasonal targets with v1

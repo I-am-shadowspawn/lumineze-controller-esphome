@@ -1,0 +1,8 @@
+substitutions:
+  topology_engine_evaluator: evaluate_schedule_contexts
+  topology_snapshot_provider: capture_topology_development_snapshot
+  logger_level: DEBUG
+packages:
+  schedule_engine: !include topology/schedule-engine.yaml
+  controller: !include topology/controller-core.yaml
+  input_provider: !include topology/input-development.yaml

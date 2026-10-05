@@ -23,6 +23,7 @@ struct ScheduleContextState {
   ScheduleApplyResult last_apply = UNCHANGED;
   ScheduleError error = SCHEDULE_OK;
   int error_role = -1;
+  int error_point = -1;
   int last_segment[2] = {-1, -1};
 };
 
@@ -124,6 +125,7 @@ inline void cancel_schedule_edits(ScheduleContextState &context) {
   }
   context.error = SCHEDULE_OK;
   context.error_role = -1;
+  context.error_point = -1;
   context.last_apply = context.storage_locked ? STORAGE_UNKNOWN : UNCHANGED;
 }
 inline bool schedule_dirty(const ScheduleContextState &context, uint8_t used_roles) {
@@ -180,7 +182,7 @@ ScheduleApplyResult apply_schedule(ScheduleContextState &context, Backend &backe
   if (!used_roles || used_roles > 3) return context.last_apply = INVALID_EDIT;
   for (int role = 0; role < 2; ++role) {
     const auto error = validate_schedule(context.staged[role], used_roles & (1 << role),
-                                         candidate.roles[role]);
+                                         candidate.roles[role], &context.error_point);
     if (error != SCHEDULE_OK) {
       context.error = error;
       context.error_role = role;
@@ -189,6 +191,7 @@ ScheduleApplyResult apply_schedule(ScheduleContextState &context, Backend &backe
   }
   context.error = SCHEDULE_OK;
   context.error_role = -1;
+  context.error_point = -1;
   if (context.configured && same_schedule(candidate, context.active))
     return context.last_apply = UNCHANGED;
   candidate.revision = context.active.revision + 1;

@@ -10,6 +10,7 @@ import hashlib
 import esphome.codegen as cg
 import esphome.config_validation as cv
 import esphome.final_validate as fv
+from esphome.helpers import fnv1_hash_object_id
 
 DEPENDENCIES = ["esp32_ble_tracker", "ble_client"]
 
@@ -50,6 +51,26 @@ _FIXTURE = cv.Schema(
         cv.Optional("location"): cv.string_strict,
     }
 )
+
+
+def _schedule_mask(config, identity):
+    mask = 0
+    for group in config["groups"]:
+        if group["context"] == identity:
+            mask |= 1 if group["output"] == "visible" else 2
+    return mask
+
+
+def _schedule_hash(text):
+    return int.from_bytes(hashlib.sha256(text.encode()).digest()[:4], "little") or 1
+
+
+def _schedule_fingerprint(config, identity):
+    return _schedule_hash(f"lumineze-schedule-v1|{identity}|{_schedule_mask(config, identity)}")
+
+
+def _schedule_key(config, identity, bank):
+    return _schedule_hash(f"lumineze-schedule-v1|{identity}|{_schedule_mask(config, identity)}|bank{bank}")
 
 
 def _unique_identifiers(items, kind):
@@ -139,7 +160,7 @@ CONFIG_SCHEMA = cv.All(
     cv.Schema(
         {
             cv.Required("topology_version"): cv.int_,
-            cv.Required("engine_family"): cv.one_of("seasonal", lower=True),
+            cv.Required("engine_family"): cv.one_of("seasonal", "schedule", lower=True),
             cv.Optional("input_provider", default="real"): cv.one_of(
                 "real", "development", lower=True
             ),
@@ -252,17 +273,69 @@ def _final_validate(config):
                     raise cv.Invalid(
                         f"lumineze_topology.input_provider.{entity}: simulation values must not restore"
                     )
+        selected = config["engine_family"]
+        engine_globals = {"seasonal": "topology_seasonal_settings", "schedule": "topology_schedule_contexts"}
+        engine_scripts = {"seasonal": "evaluate_seasonal_contexts", "schedule": "evaluate_schedule_contexts"}
+        if {name for name in engine_globals.values() if name in globals_ids} != {engine_globals[selected]} or {name for name in engine_scripts.values() if name in scripts} != {engine_scripts[selected]}:
+            raise cv.Invalid("lumineze_topology.engine_family: include exactly the selected engine")
+        if "evaluate_topology" not in scripts:
+            raise cv.Invalid("lumineze_topology: missing common orchestrator")
         for group in config["groups"]:
             for suffix in ("automatic", "manual"):
                 if f'{group["id"]}_{suffix}' not in switches:
                     raise cv.Invalid(
                         f'lumineze_topology.groups.{group["id"]}: missing {suffix} control'
                     )
-        for context in config["contexts"]:
-            if f'{context["id"]}_latitude' not in numbers:
-                raise cv.Invalid(
-                    f'lumineze_topology.contexts.{context["id"]}: missing seasonal context package'
-                )
+        if config["engine_family"] == "seasonal":
+            for context in config["contexts"]:
+                if f'{context["id"]}_latitude' not in numbers:
+                    raise cv.Invalid(
+                        f'lumineze_topology.contexts.{context["id"]}: missing seasonal context package'
+                    )
+        else:
+            buttons = {str(item["id"]) for item in full.get("button", [])}
+            selects = {str(item["id"]): item for item in full.get("select", [])}
+            for context in config["contexts"]:
+                identity = context["id"]
+                if f"{identity}_latitude" in numbers or not {f"{identity}_apply_schedule", f"{identity}_cancel_schedule_edits"} <= buttons:
+                    raise cv.Invalid(f"lumineze_topology.contexts.{identity}: expected schedule context package")
+                mask = _schedule_mask(config, identity)
+                for role_index, role in enumerate(("visible", "uv")):
+                    mode = f"{identity}_{role}_schedule_mode"
+                    used = bool(mask & (1 << role_index))
+                    if (mode in selects) != used:
+                        raise cv.Invalid(f"lumineze_topology.contexts.{identity}.{role}: include only used role editors")
+                    point_prefix = f"{identity}_{role}_point_"
+                    if not used:
+                        if any(item.startswith(point_prefix) for item in set(numbers) | switches):
+                            raise cv.Invalid("unused schedule roles must not expose point editors")
+                        continue
+                    if selects[mode]["restore_value"]:
+                        raise cv.Invalid("schedule staging must not restore independently")
+                    for entity in full.get("switch", []):
+                        if str(entity["id"]).startswith(point_prefix) and entity.get("restore_mode") != "ALWAYS_OFF":
+                            raise cv.Invalid("schedule staged point enables must reset off")
+                    for slot in range(1, 9):
+                        prefix = f"{identity}_{role}_point_{slot}"
+                        if f"{prefix}_enabled" not in switches or any(
+                            f"{prefix}_{field}" not in numbers for field in ("minute", "level")
+                        ):
+                            raise cv.Invalid(f"lumineze_topology.contexts.{identity}.{role}: incomplete point editor")
+                    for entity in full.get("number", []):
+                        if str(entity["id"]).startswith(f"{identity}_{role}_point_") and entity["restore_value"]:
+                            raise cv.Invalid("schedule staging must not restore independently")
+        if config["engine_family"] == "schedule":
+            schedule_keys = [_schedule_key(config, context["id"], bank)
+                             for context in config["contexts"] for bank in range(2)]
+            reserved = {_calibration_key(fixture) for fixture in enabled}
+            for entity in full.get("number", []):
+                if entity.get("restore_value"):
+                    reserved.add(fnv1_hash_object_id(entity["name"]))
+            for entity in full.get("switch", []):
+                if str(entity.get("restore_mode", "")).startswith("RESTORE"):
+                    reserved.add(fnv1_hash_object_id(entity["name"]))
+            if len(set(schedule_keys)) != len(schedule_keys) or set(schedule_keys) & reserved:
+                raise cv.Invalid("schedule preference keys collide with a generated assignment")
         for fixture in enabled:
             identity = fixture["id"]
             if f"{identity}_manual" not in switches:
@@ -310,6 +383,11 @@ async def to_code(config):
             cg.RawStatement('#include "esphome/components/lumineze_topology/seasonal_types.h"'),
             prepend=True,
         )
+    else:
+        cg.add_global(
+            cg.RawStatement('#include "esphome/components/lumineze_topology/schedule_preferences.h"'),
+            prepend=True,
+        )
     contexts = config["contexts"]
     groups = config["groups"]
     fixtures = [fixture for fixture in config["fixtures"] if fixture["enabled"]]
@@ -327,6 +405,24 @@ async def to_code(config):
         f'0x{_calibration_key(fixture):08X}U}}'
         for fixture in fixtures
     )
+    if config["engine_family"] == "schedule":
+        masks = ", ".join(str(_schedule_mask(config, item["id"])) for item in contexts)
+        fingerprints = ", ".join(f"0x{_schedule_fingerprint(config, item['id']):08X}U" for item in contexts)
+        keys = ", ".join("{" + ", ".join(f"0x{_schedule_key(config, item['id'], bank):08X}U" for bank in range(2)) + "}" for item in contexts)
+        all_keys = [_schedule_key(config, item["id"], bank) for item in contexts for bank in range(2)]
+        calibration_keys = {_calibration_key(item) for item in fixtures}
+        if len(set(all_keys)) != len(all_keys) or set(all_keys) & calibration_keys:
+            raise cv.Invalid("schedule preference keys collide with a generated assignment")
+        cg.add_global(cg.RawStatement(
+            "namespace lumineze_topology {\n" +
+            f"constexpr uint8_t schedule_masks[] = {{{masks}}};\n" +
+            f"constexpr uint32_t schedule_fingerprints[] = {{{fingerprints}}};\n" +
+            f"constexpr uint32_t schedule_keys[][2] = {{{keys}}};\n" +
+            "inline void (*schedule_publishers[2])() = {};\n"
+            "inline void publish_schedule_staging(int i) {\n"
+            "  if (i >= 0 && i < 2 && schedule_publishers[i]) schedule_publishers[i]();\n"
+            "}\n}\n"
+        ))
     cg.add_global(
         cg.RawStatement(
             """
@@ -453,3 +549,18 @@ inline void fixture_control_off(int slot) {
                     f"{identity}_manual->publish_state(false); }};"
                 )
             )
+
+    if config["engine_family"] == "schedule":
+        for index, context in enumerate(contexts):
+            identity = context["id"]
+            statements = [f"const auto &state = topology_schedule_contexts->value()[{index}];"]
+            mask = _schedule_mask(config, identity)
+            for role_index, role in enumerate(("visible", "uv")):
+                if not mask & (1 << role_index):
+                    continue
+                prefix = f"{identity}_{role}"
+                statements.append(f'{prefix}_schedule_mode->publish_state(state.staged[{role_index}].mode == lumineze_topology::LINEAR ? "linear" : "step");')
+                for slot in range(1, 9):
+                    for field in ("enabled", "minute", "level"):
+                        statements.append(f"{prefix}_point_{slot}_{field}->publish_state(state.staged[{role_index}].points[{slot - 1}].{field});")
+            cg.add(cg.RawStatement(f"lumineze_topology::schedule_publishers[{index}] = []() {{ " + " ".join(statements) + " };"))
