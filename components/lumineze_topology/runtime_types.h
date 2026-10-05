@@ -35,6 +35,7 @@ struct ContextState {
   bool simulated = false;
   bool simulated_output_enabled = false;
   uint32_t revision = 0;
+  uint32_t transition_revision[2] = {0, 0};
 };
 
 struct EvaluationSnapshot {
@@ -87,6 +88,7 @@ struct FixtureState {
   int consecutive_failures = 0;
   uint32_t completed_count = 0;
   uint32_t failure_count = 0;
+  uint32_t engine_transition_revision = 0;
   bool automatic_queued = false;
   int last_automatic = -1;
   bool invalid_output = false;

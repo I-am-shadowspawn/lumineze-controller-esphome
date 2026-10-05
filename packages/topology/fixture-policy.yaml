@@ -140,9 +140,18 @@ script:
               status(slot, "Invalid output or fixture maximum; held");
               continue;
             }
+            const bool engine_transition = source == AUTOMATIC &&
+                fixture.engine_transition_revision !=
+                    context.transition_revision[group_binding.role];
+            const bool revoked_engine_write = source == AUTOMATIC &&
+                consume_engine_transition(fixture,
+                    context.transition_revision[group_binding.role], in_flight);
             fixture.limit_applied = decision.limit_applied;
             int target = decision.target;
             bool submit = decision.submit;
+            if (engine_transition)
+              submit = revoked_engine_write || target != fixture.target ||
+                  fixture.source != source || recovery_due;
             if (fixture.temporary_force_reevaluation && source == AUTOMATIC) {
               submit = decision.target != fixture.target || recovery_due ||
                   fixture.source != source || (!fixture.readback_fresh &&

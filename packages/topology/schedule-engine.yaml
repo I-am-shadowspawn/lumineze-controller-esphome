@@ -22,7 +22,8 @@ script:
               snapshot.day_of_year >= 1 && snapshot.day_of_year <= snapshot.days_in_year;
           for (int index = 0; index < context_count; ++index) {
             auto &output = id(topology_contexts)[index];
-            const auto &state = id(topology_schedule_contexts)[index];
+            auto &state = id(topology_schedule_contexts)[index];
+            const bool changed_apply = state.active.revision != state.evaluated_revision;
             output.revision++;
             output.valid = valid_time && state.configured;
             output.simulated = snapshot.simulated;
@@ -35,5 +36,17 @@ script:
               output.peak[role] = 1.0f;
               output.curve[role] = output.desired[role];
               if (used && !result.valid) output.valid = false;
+              if (used && (changed_apply || (result.valid &&
+                  (!state.evaluated_valid ||
+                   (state.evaluated_simulated && !snapshot.simulated) ||
+                   (state.active.roles[role].mode == STEP &&
+                    state.last_segment[role] != result.segment))))) {
+                if (++output.transition_revision[role] == 0)
+                  ++output.transition_revision[role];
+              }
+              state.last_segment[role] = result.valid ? result.segment : -1;
             }
+            state.evaluated_revision = state.active.revision;
+            state.evaluated_valid = output.valid;
+            state.evaluated_simulated = snapshot.simulated;
           }

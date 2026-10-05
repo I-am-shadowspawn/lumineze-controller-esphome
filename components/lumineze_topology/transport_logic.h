@@ -39,6 +39,19 @@ inline void revoke_pending(FixtureState &fixture) {
   }
 }
 
+// Consume each engine transition once per fixture, even when its final target
+// is identical. Only automatic authorizations are revoked; manual is independent.
+inline bool consume_engine_transition(FixtureState &fixture, uint32_t revision,
+                                      bool in_flight) {
+  if (fixture.engine_transition_revision == revision) return false;
+  fixture.engine_transition_revision = revision;
+  const bool obsolete = (fixture.source == AUTOMATIC &&
+      (fixture.pending || (fixture.automatic_queued && !fixture.readback_fresh))) ||
+      (in_flight && fixture.in_flight_source == AUTOMATIC);
+  if (obsolete) revoke_authorization(fixture);
+  return obsolete;
+}
+
 inline void begin_transaction(FixtureState &fixture, DispatchState &dispatcher,
                               int slot, uint32_t now) {
   dispatcher.active = true;

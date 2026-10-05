@@ -54,7 +54,7 @@ lighting is a separate contract change, not implicit T11 scope.
   power-loss recovery. Acceptance: rejected/half-edited/corrupt snapshots never
   replace active output; reboot restores the last complete valid schedule;
   automatic/manual controls still start off and no implicit activation occurs.
-- [ ] **T11.4 — Generic composition and authorization.** Add schedule entry
+- [x] **T11.4 — Generic composition and authorization.** Add schedule entry
   points, `context-schedule.yaml` and real/development build fixtures. Extend
   schema to schedule family and enforce matching context fragments, role routing
   and single-engine ownership. Implement one-time transition authorization,
@@ -165,3 +165,20 @@ mixed engines, mismatched context/role editors and independently restoring
 staging; schedule preference keys are checked against generated calibration and
 restoring number/switch keys. Transport transition authorization and profile
 capability isolation remain T11.4/T11.5; this build is not a release/hardware proof.
+
+
+### T11.4 — complete
+
+Role transition revisions are emitted on changed Apply, step segment change,
+valid-clock recovery and simulation-to-live recovery. Each fixture consumes its
+role revision once, bypasses minimum-change for the new target and revokes obsolete
+automatic authorization before replacement. Identical confirmed targets do not
+write; interrupted or unconfirmed targets receive a fresh generation. Manual
+priority is preserved. Repeated evaluation retains retry state.
+`check_schedule_policy.py` executes both production lambdas and the group safe-off
+action against all 21 T10 control scenarios plus calibration reduction. It and
+T23 regressions pass. The schedule topology matrix covers the same sparse,
+repeated, reordered, shared/independent and experimental compositions as seasonal.
+Both schedule provider configurations validate; development ESP32-C3 build passes
+(149,976 bytes RAM, 1,274,620 bytes flash, `/tmp/t11-schedule-dev-build.log`).
+The 17 existing topology schema cases pass. Physical BLE behavior remains T15.

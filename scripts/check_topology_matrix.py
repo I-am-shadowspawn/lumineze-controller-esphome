@@ -19,15 +19,17 @@ CI = ROOT / "ci"
 
 
 def compose(name, contexts, groups, fixtures, *, experimental=False, reserved=(),
-            development=False):
+            development=False, engine="seasonal"):
     controller_package = (
         "../packages/lumineze-topology-development.yaml"
         if development else "../packages/lumineze-topology.yaml"
     )
+    if engine == "schedule":
+        controller_package = "../packages/schedule-" + ("development" if development else "production") + ".yaml"
     lines = [
         f"# Generated CI fixture: {name}",
         "substitutions:",
-        f"  device_name: topology-{name}",
+        f"  device_name: {'s-' + name.removeprefix('schedule-') if engine == 'schedule' else 'topology-' + name}",
         f"  ble_connection_slots: '{max(2, len(fixtures))}'",
         "packages:",
         f"  controller: !include {controller_package}",
@@ -36,10 +38,17 @@ def compose(name, contexts, groups, fixtures, *, experimental=False, reserved=()
         lines.extend(
             [
                 f"  context_{context}: !include",
-                "    file: ../packages/topology/context-seasonal.yaml",
+                f"    file: ../packages/topology/context-{engine}.yaml",
                 f"    vars: {{context_id: {context}, context_name: {context}}}",
             ]
         )
+    if engine == "schedule":
+        for context in contexts:
+            roles = sorted({role for _, owner, role in groups if owner == context})
+            for role in roles:
+                lines.extend([f"  editor_{context}_{role}: !include",
+                    "    file: ../packages/topology/context-schedule-role.yaml",
+                    f"    vars: {{context_id: {context}, schedule_role: {role}}}"])
     for group, _, _ in groups:
         lines.extend(
             [
@@ -68,7 +77,7 @@ def compose(name, contexts, groups, fixtures, *, experimental=False, reserved=()
             "    components: [lumineze_topology]",
             "lumineze_topology:",
             "  topology_version: 1",
-            "  engine_family: seasonal",
+            f"  engine_family: {engine}",
             f"  input_provider: {'development' if development else 'real'}",
             f"  allow_experimental_topology: {'true' if experimental else 'false'}",
             "  contexts:",
@@ -192,6 +201,9 @@ CASES = [
 
 def main():
     arguments = sys.argv[1:]
+    engine = "schedule" if "--schedule" in arguments else "seasonal"
+    if "--schedule" in arguments:
+        arguments.remove("--schedule")
     compile_firmware = "--compile" in arguments
     if compile_firmware:
         arguments.remove("--compile")
@@ -201,9 +213,11 @@ def main():
     for case in CASES:
         name, contexts, groups, fixtures, experimental, reserved = case[:6]
         development = case[6] if len(case) > 6 else False
+        if engine == "schedule":
+            name = "schedule-" + name
         source = compose(name, contexts, groups, fixtures,
                          experimental=experimental, reserved=reserved,
-                         development=development)
+                         development=development, engine=engine)
         with tempfile.NamedTemporaryFile(
             mode="w", suffix=".yaml", prefix="topology-matrix-", dir=CI
         ) as temporary:
@@ -226,13 +240,14 @@ def main():
                         raise AssertionError(
                             f"{name}: clients {client_ids} differ from {expected}"
                         )
-                if action == "compile" and name in ("visible-shared", "visible-reordered"):
-                    cpp = CI / ".esphome/build" / f"topology-{name}" / "src/main.cpp"
+                if action == "compile" and name.endswith("visible-shared") or action == "compile" and name.endswith("visible-reordered"):
+                    build_name = "s-" + name.removeprefix("schedule-") if engine == "schedule" else "topology-" + name
+                    cpp = CI / ".esphome/build" / build_name / "src/main.cpp"
                     rows = re.findall(
                         r'\{"([a-z_]+)", (\d+), (\d+), (0x[0-9A-F]+)U\}',
                         cpp.read_text(),
                     )
-                    assignment_maps[name] = {
+                    assignment_maps[name.removeprefix("schedule-")] = {
                         identity: (int(slot), key) for identity, slot, _group, key in rows
                     }
                 print(f"PASS {name} {action}")

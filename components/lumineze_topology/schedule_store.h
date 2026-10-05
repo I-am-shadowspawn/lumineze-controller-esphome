@@ -24,6 +24,9 @@ struct ScheduleContextState {
   ScheduleError error = SCHEDULE_OK;
   int error_role = -1;
   int error_point = -1;
+  uint32_t evaluated_revision = 0;
+  bool evaluated_valid = false;
+  bool evaluated_simulated = false;
   int last_segment[2] = {-1, -1};
 };
 
