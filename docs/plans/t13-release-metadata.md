@@ -29,7 +29,7 @@ consumers must not invent or automatically inherit a moving-branch version.
   presented as a generic profile. Acceptance: resolved configs and builds agree
   on version and namespace; runtime profile cannot be edited into another engine;
   existing preference/entity names remain intact unless migration is documented.
-- [ ] **T13.3 — Supported-toolchain policy.** Determine `min_version` from the
+- [x] **T13.3 — Supported-toolchain policy.** Determine `min_version` from the
   actual required features and builds; retain a separate recommended CI pin.
   Test the chosen minimum and current supported pin across advertised profiles
   or state that only the pin is initially supported. Acceptance: no guessed
@@ -107,3 +107,13 @@ build.log` and `/tmp/t13-legacy-{production,development}-build.log`.
 against each compiled job. Seasonal pre-T11 inventory is unchanged apart from
 four documented read-only metadata entities. Actual HA/device display and update
 retention remain T13.4/T15 physical evidence.
+
+
+### T13.3 — complete
+
+`min_version: 2026.9.0` is resolved from the shared project fragment in all six
+profiles, and `check_project_metadata.py` rejects divergence from the CI pin.
+All six builds pass on that pin; observed framework is ESP-IDF 5.5.5. The policy
+advertises only the pin initially and makes no claim about older/newer builders.
+`docs/build.md` records the dependency upgrade procedure and required hardware
+reruns. No dependency version was changed by this increment.

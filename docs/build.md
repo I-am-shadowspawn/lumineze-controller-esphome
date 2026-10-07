@@ -39,3 +39,20 @@ The full-build workflow also passed on GitHub for both the [branch push](https:/
 The archive contains no literal Wi-Fi password, API key or lamp MAC, but it does retain the old device identity, area and fallback AP SSID. Its `!secret` references need private values before it can build. `docs/baseline.md` records the sanitised source comparison and the unresolved hardware/recovery evidence. Do not treat the archive as an exact private backup or as verified deployed firmware.
 
 To recover a live device, use a privately saved known-good YAML/secrets/settings set and its verified Git ref, rebuild with the ESPHome version used for that build, then use the previously tested USB/serial or OTA path. The exact deployed ref, compiler version and working physical recovery route still need owner confirmation before migration.
+
+## T13 candidate toolchain policy (unreleased)
+
+The four generic profiles and both legacy compatibility builds now resolve
+`esphome.min_version: 2026.9.0` from the shared project fragment. The only
+qualified software toolchain is the CI pin `esphome==2026.9.0`; its ESP32-C3
+builds resolve ESP-IDF 5.5.5. The minimum rejects older Device Builders but does
+not certify newer ones. Static build estimates are recorded in
+`docs/evidence/t11-software.md` and the T13 plan. Actual runtime memory, OTA and
+migration still require T15 bench evidence.
+
+To propose an ESPHome or ESP-IDF upgrade, change the pin in a dedicated commit,
+run the four generic profile builds, both legacy compatibility builds, schema,
+policy, transport and seasonal parity gates, and the remote SHA consumer. Record
+framework/compiler versions and RAM/flash changes. Then repeat affected T15
+hardware and recovery cases before changing the advertised minimum or stable
+support policy. Keep the previous immutable ref available for rollback.
