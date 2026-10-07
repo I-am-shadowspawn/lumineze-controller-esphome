@@ -32,7 +32,7 @@ change MACs, routing or engine selection.
   generation of unique encryption/access credentials. Acceptance: examples
   contain only installation data/profile selection, never duplicated engine,
   policy or dispatcher code; secret values are excluded from commits/artifacts.
-- [ ] **T14.3 — End-user installation and commissioning.** Document validate,
+- [x] **T14.3 — End-user installation and commissioning.** Document validate,
   compile, USB installation, HA integration, fixture identification, initial
   automatic-off state, ProT5 zero default, calibration, manual low/off readback
   checks, then deliberate automatic enable. Include schedule Apply/edit rejection
@@ -73,5 +73,6 @@ actual package fragments and component schema. T14.2 added the four
 synthetic-secret `scripts/check_public_examples.py`. All four passed `esphome
 config` in separate empty directories at candidate source
 `e3bdc2b81c325379be456c0d1ac2acc8d0e16e8a` on ESPHome 2026.9.0.
-Clean remote compiles, installation instructions and all physical evidence are
-still open.
+T14.3 provides the end-user sequence and outcome distinctions in
+`docs/installation.md`. Clean remote compiles, upgrade/recovery instructions
+and all physical evidence are still open.
