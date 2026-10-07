@@ -1,9 +1,10 @@
 # T10 — Configurable daily schedule contract
 
-**Status:** specification complete; schedule firmware is not implemented.
+**Status:** specification complete; schedule firmware has software validation
+but awaits Gate A and T15 physical acceptance.
 Source audit: development `e786bee`, ESPHome CI pin `2026.9.0`, 5 October 2026.
-Gate A/T09 and T23 physical acceptance remain pending. The owner requested T10
-completion while those tests proceed; T11 firmware implementation still waits
+Gate A/T09 and T23 physical acceptance remain pending. The owner authorized
+T11–T14 software work while those tests proceed. Physical release still waits
 for Gate A. Relevant hardware findings require an explicit contract/vector
 revision before T11, not an implicit behavior change.
 

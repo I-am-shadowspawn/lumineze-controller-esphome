@@ -2,7 +2,8 @@
 
 This project provides reusable ESPHome firmware for controlling LuminEZE
 JungleDawn and ProT5 lights over Bluetooth Low Energy (BLE). It connects the
-lights to Home Assistant over Wi-Fi, where you can set seasonal schedules,
+lights to Home Assistant over Wi-Fi, where you can choose a seasonal curve or
+editable daily schedule,
 automatic and manual levels, fixture calibration, and diagnostics.
 
 The established hardware platform for this project is [The Pi Hut Bluetooth
@@ -71,21 +72,22 @@ result in the matching private secret. Do not use an example placeholder.
 
 ## Choose the configuration
 
-There are two package paths:
+Choose a package path:
 
 | Use this when… | Configuration |
 | --- | --- |
 | You already run the v1 two-product controller and want to keep its existing configuration and Home Assistant entity IDs | [`packages/lumineze-controller.yaml`](packages/lumineze-controller.yaml) |
-| You are creating a new controller with explicit fixture identities, slots and control groups | [`example/topology-two-lamps.yaml`](example/topology-two-lamps.yaml), using [`packages/seasonal-production.yaml`](packages/seasonal-production.yaml) |
+| You are creating a generic seasonal controller | [`example/seasonal-production.yaml`](example/seasonal-production.yaml) |
+| You are creating a generic daily schedule controller | [`example/schedule-production.yaml`](example/schedule-production.yaml) |
+| You are doing controlled bench simulation | [`example/seasonal-development.yaml`](example/seasonal-development.yaml) or [`example/schedule-development.yaml`](example/schedule-development.yaml) |
 
-The matching generic development profile is
-[`packages/seasonal-development.yaml`](packages/seasonal-development.yaml).
-Both use the same seasonal engine and policy path; only the input provider and
-optional development diagnostics differ. See
-[`docs/seasonal-profiles.md`](docs/seasonal-profiles.md).
+Production profiles use real time; development profiles include simulation and
+additional diagnostics. The selected engine is fixed at build time. See the
+[wrapper contract](docs/installation-contract.md) and
+[seasonal profile details](docs/seasonal-profiles.md).
 
 The generic topology is the recommended starting point for a new installation.
-Its example defines one seasonal context and two groups: `visible` for
+The examples define one context and two groups: `visible` for
 JungleDawn and `uv` for ProT5. Each fixture is named and assigned a slot
 explicitly, so the product type does not depend on lamp order. The example
 places ProT5 in slot 0 and JungleDawn in slot 1.
@@ -102,12 +104,10 @@ successful compile does not demonstrate reliable operation on hardware.
    board, first follow the Pi Hut [Bluetooth Proxy hardware guide](https://thepihut.com/blogs/raspberry-pi-tutorials/bt-proxy-user-guide)
    to confirm USB access and open ESPHome Device Builder. You will replace the
    generic proxy firmware with this project's controller firmware.
-2. **Copy the example into your ESPHome configuration.** Use
-   [`example/topology-two-lamps.yaml`](example/topology-two-lamps.yaml) as the
-   starting device YAML. Keep `controller_ref` the same for the remote package
-   and external component declarations in that file. `master` follows ongoing
-   changes; for a long-lived installation, pin it to a reviewed commit or
-   release tag.
+2. **Copy the chosen example into your ESPHome configuration.** The four
+   generic wrappers use one immutable candidate SHA for both the package and
+   external component. Keep both refs equal. A stable release ref awaits
+   physical qualification; see the [installation guide](docs/installation.md).
 3. **Add private secrets.** Add the required key names to your private
    ESPHome `secrets.yaml`. The generic two-lamp example uses the five
    secret names listed above. Set your Wi-Fi values, API encryption key, and
@@ -125,26 +125,26 @@ successful compile does not demonstrate reliable operation on hardware.
    it, then install over USB for first provisioning. Once online, ESPHome OTA
    can be used for later updates. Confirm that the device is online in
    Home Assistant before setting up light controls.
-7. **Commission each lamp.** Verify that each fixture's BLE status and
-   diagnostics refer to the intended physical lamp. Set each fixture's
-   calibrated maximum; a new ProT5 starts at 0% maximum, so it will not receive
-   nonzero UV output until you calibrate it. Group automatic and manual controls
-   start off after boot. Enable them deliberately after checking the settings.
+7. **Commission each lamp.** Verify its identity, low manual output and
+   physical off using fresh reported/readback diagnostics. A new ProT5 starts
+   at 0% maximum and requires deliberate calibration. Configure and Apply
+   schedule points if using schedule mode. Enable group Automatic Control only
+   after these checks. Follow the complete [commissioning sequence](docs/installation.md).
 
 For existing installations, do not switch a live v1 controller to the generic
 package expecting its old Home Assistant entities or saved settings to migrate
 automatically. Export or record the current settings, keep the known-good YAML
 and Git ref for recovery, and use the migration notes in the
-[topology controller guide](docs/topology-controller.md).
+[upgrade and recovery guide](docs/upgrade-recovery.md).
 
 ## How the controller is organized
 
 - A **fixture** is one physical LuminEZE lamp. It has its own BLE address,
   calibration, manual control, target, and connection/readback diagnostics.
-- A **group** chooses visible or UV output from a seasonal context and applies
+- A **group** chooses visible or UV output from its selected engine context and applies
   its automatic or group-manual demand to its member fixtures.
-- A **context** owns the location and seasonal settings used to calculate
-  visible and UV demand. One or two contexts can be configured.
+- A **context** owns seasonal settings or an editable daily schedule used to
+  calculate visible and UV demand. One or two contexts can be configured.
 - A **slot** is an explicit controller storage/dispatch position. It does not
   determine lamp type or behavior.
 
@@ -157,7 +157,7 @@ boundary.
 
 ### Temporary lighting controls
 
-Each fixture also has temporary controls in Home Assistant. **Today's Automatic
+In seasonal profiles, each fixture also has temporary controls in Home Assistant. **Today's Automatic
 Maximum** is an absolute lamp percentage for the current local day; edit its
 number and press **Apply Today's Maximum**. The seasonal curve and permanent
 calibration remain unchanged. The fixture follows the curve up to that level,
@@ -183,7 +183,12 @@ actually received.
 ## Repository map
 
 - [`example/topology-two-lamps.yaml`](example/topology-two-lamps.yaml): generic
-  two-lamp Device Builder configuration.
+  two-lamp seasonal compatibility example; use the four profile-named examples
+  for a new controller.
+- [`docs/installation.md`](docs/installation.md): installation and physical
+  commissioning sequence.
+- [`docs/upgrade-recovery.md`](docs/upgrade-recovery.md): migration, profile
+  switching and pinned rollback.
 - [`example/vivarium-example.yaml`](example/vivarium-example.yaml): legacy v1
   configuration example.
 - [`packages/`](packages/): reusable ESPHome configuration, including the
@@ -202,12 +207,11 @@ package path, and sanitized validation/log output. Remove Wi-Fi passwords,
 encryption keys, real MAC addresses, and private network details before
 sharing logs.
 
-## Planned daily schedule mode
+## Daily schedule candidate
 
 The [T10 daily schedule contract](docs/schedule-behaviour.md) defines independent
 visible/UV schedules per context, cyclic local-time step or linear interpolation,
-and staged Home Assistant settings with explicit Apply/Cancel. Schedule mode is
-specified but **not implemented or available to install**. Seasonal profiles
-remain the current software entry points; Gate A hardware evidence still gates
-schedule implementation. See the [delivery roadmap](docs/plans/t10-t17-delivery-index.md)
-for implementation, verification and release tasks.
+and staged Home Assistant settings with explicit Apply/Cancel. Schedule firmware
+and both schedule wrappers have passed software validation. Gate A and T15
+hardware tests are still pending, so this is an unreleased candidate for bench
+evaluation. See the [delivery roadmap](docs/plans/t10-t17-delivery-index.md).

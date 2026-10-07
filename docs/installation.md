@@ -97,4 +97,4 @@ MAC-to-lamp map, calibration, schedule/seasonal settings, entity IDs and any HA
 automations. Record physical observations separately from validation, upload
 and requested values. The [upgrade and recovery guide](upgrade-recovery.md)
 covers profile changes and rollback. Bench acceptance belongs to
-`docs/plans/t15-bench-acceptance.md`; this guide does not close that gate.
+`docs/plans/t15-hardware-compatibility.md`; this guide does not close that gate.

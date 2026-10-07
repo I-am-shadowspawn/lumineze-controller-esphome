@@ -38,7 +38,7 @@ change MACs, routing or engine selection.
   checks, then deliberate automatic enable. Include schedule Apply/edit rejection
   and seasonal T23 workflows with capability/support status. Acceptance: physical
   confirmation is distinct from a successful upload or requested off value.
-- [ ] **T14.4 — Upgrade, profile switch and recovery guides.** Provide a field
+- [x] **T14.4 — Upgrade, profile switch and recovery guides.** Provide a field
   mapping for v1→generic and seasonal↔schedule, capture/export of settings,
   incompatible preference handling, HA automation updates and pinned rollback.
   Document development→production removal of test state. Acceptance: no claim of
@@ -74,5 +74,6 @@ synthetic-secret `scripts/check_public_examples.py`. All four passed `esphome
 config` in separate empty directories at candidate source
 `e3bdc2b81c325379be456c0d1ac2acc8d0e16e8a` on ESPHome 2026.9.0.
 T14.3 provides the end-user sequence and outcome distinctions in
-`docs/installation.md`. Clean remote compiles, upgrade/recovery instructions
-and all physical evidence are still open.
+`docs/installation.md`. T14.4 records explicit mapping, profile switches and
+pinned rollback in `docs/upgrade-recovery.md`. Clean remote compiles and all
+physical evidence are still open.
