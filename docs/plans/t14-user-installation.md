@@ -26,7 +26,7 @@ change MACs, routing or engine selection.
   timezone, IDs, enabled/disabled descriptors, connection allocation and
   experimental topology. Acceptance: every field is explained; no missing-MAC
   convention, slot/product assumption or unsupported topology is recommended.
-- [ ] **T14.2 — Four minimal examples and private boundary.** Provide four
+- [x] **T14.2 — Four minimal examples and private boundary.** Provide four
   wrappers or one unambiguous template with fully validated alternatives. Use
   obvious explanatory placeholders and a valid dummy-secret CI copy; document
   generation of unique encryption/access credentials. Acceptance: examples
@@ -68,5 +68,10 @@ and acceptance criteria may not silently change. Do not mark implementation or
 hardware increments complete because this plan exists.
 
 **Progress:** T14.1 documented in `docs/installation-contract.md` from the
-actual package fragments and component schema. Remaining examples, clean remote
-rehearsal and all physical evidence are open.
+actual package fragments and component schema. T14.2 added the four
+`example/{seasonal,schedule}-{production,development}.yaml` wrappers and
+synthetic-secret `scripts/check_public_examples.py`. All four passed `esphome
+config` in separate empty directories at candidate source
+`e3bdc2b81c325379be456c0d1ac2acc8d0e16e8a` on ESPHome 2026.9.0.
+Clean remote compiles, installation instructions and all physical evidence are
+still open.

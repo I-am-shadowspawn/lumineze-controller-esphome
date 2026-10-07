@@ -14,20 +14,24 @@ packages:
     url: https://github.com/I-am-shadowspawn/lumineze-controller-esphome
     ref: ${controller_ref}
     files:
-      - packages/seasonal-production.yaml
-      - path: packages/topology/context-seasonal.yaml
+      - packages/schedule-production.yaml
+      - path: packages/topology/context-schedule.yaml
         vars: {context_id: vivarium, context_name: Vivarium}
+      - path: packages/topology/context-schedule-role.yaml
+        vars: {context_id: vivarium, schedule_role: visible}
+      - path: packages/topology/context-schedule-role.yaml
+        vars: {context_id: vivarium, schedule_role: uv}
       - path: packages/topology/group.yaml
         vars: {group_id: visible, group_name: Vivarium Visible}
       - path: packages/topology/group.yaml
         vars: {group_id: uv, group_name: Vivarium UV}
-      - path: packages/topology/fixture-luminize.yaml
+      - path: packages/topology/fixture-luminize-schedule.yaml
         vars:
           fixture_id: prot5
           fixture_name: ProT5
           fixture_mac: ${uv_mac}
           fixture_default_maximum: 0
-      - path: packages/topology/fixture-luminize.yaml
+      - path: packages/topology/fixture-luminize-schedule.yaml
         vars:
           fixture_id: jungle_dawn
           fixture_name: JungleDawn
@@ -43,7 +47,7 @@ external_components:
 
 lumineze_topology:
   topology_version: 1
-  engine_family: seasonal
+  engine_family: schedule
   input_provider: real
   contexts: [{id: vivarium}]
   groups:
