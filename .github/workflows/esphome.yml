@@ -49,6 +49,10 @@ jobs:
           python scripts/check_gate_faults.py
           python scripts/check_build_resilience.py
           python scripts/check_ci_change_scope.py
+      - name: Check release metadata consistency
+        run: |
+          python scripts/check_release_metadata.py
+          python scripts/check_release_metadata_faults.py
       - name: Validate static topology and failure cases
         run: |
           python scripts/check_topology_schema.py esphome
@@ -58,7 +62,9 @@ jobs:
           python scripts/check_topology_matrix.py esphome
           python scripts/check_topology_matrix.py --schedule esphome
       - name: Check project metadata across six profiles
-        run: python scripts/check_project_metadata.py
+        run: |
+          python scripts/check_project_metadata.py
+          python scripts/check_update_identity.py
       - name: Check seasonal entity and settings compatibility
         run: python scripts/check_seasonal_inventory.py esphome
       - name: Check real and development input isolation

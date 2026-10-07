@@ -41,7 +41,7 @@ consumers must not invent or automatically inherit a moving-branch version.
   on an update. Acceptance: metadata survives profile rebuilds with documented
   identity, and boot/update controls remain off as required. Software inventory
   can pass earlier; record HA display observations as pending until captured.
-- [ ] **T13.5 — Release documentation and consistency checks.** Add changelog,
+- [x] **T13.5 — Release documentation and consistency checks.** Add changelog,
   compatibility table and release checklist. CI rejects mismatched version/profile
   metadata; release manifests tie versions to SHAs and hardware evidence. Define
   major/minor/patch expectations, storage rollback limits and immutable-tag
@@ -117,3 +117,27 @@ All six builds pass on that pin; observed framework is ESP-IDF 5.5.5. The policy
 advertises only the pin initially and makes no claim about older/newer builders.
 `docs/build.md` records the dependency upgrade procedure and required hardware
 reruns. No dependency version was changed by this increment.
+
+
+### T13.4 — software ready, physical observation pending
+
+`check_update_identity.py` confirms all four resolved generic profiles have
+read-only metadata, no project update action, and automatic/group/fixture manual
+switches that reset off. Existing seasonal inventory remains stable. Six compiled
+profiles and exact build sizes are recorded in [T13 software evidence](../evidence/t13-software.md).
+A device/HA session must still confirm reported identity, retained calibration and
+schedule values, disabled controls, OTA/USB upgrade and rollback. This increment
+and T13 as a whole remain unchecked until T15 supplies that evidence. No
+automatic settings migration or update hook was added.
+
+
+### T13.5 — complete as software documentation
+
+`CHANGELOG.md`, `docs/compatibility.md`, `release/candidate.json` and
+`release/CHECKLIST.md` describe the unreleased identity, compatibility, migration,
+rollback, exact-SHA checks and physical gates. `check_release_metadata.py` runs in
+CI and rejects disagreement among project truth, changelog, release manifest and
+four advertised profiles. Fault injection confirms version mismatch, omitted
+schedule-development and premature stable support each fail. Candidate source/tag
+remain unset until T16 freezes a verified SHA. T13.4 and parent T13 remain open
+for actual HA/device and retained-state evidence.
