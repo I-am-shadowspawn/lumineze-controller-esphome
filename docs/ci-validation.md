@@ -27,7 +27,8 @@ Hardware Gate A/T23/T15 and release/deployment evidence remain separate approval
 
 ## Evidence and resilience
 
-New firmware commits supersede older heavy jobs on the same branch/PR. A
+Heavy jobs are allowed to finish even when newer commits arrive; canceling an
+older run can otherwise make a documentation-only baseline fail. A
 documentation-only update leaves preceding firmware jobs active and its required
 gate waits for the preceding commit’s successful Required validation check. Failed,
 missing or still-pending source checks cannot be hidden by a documentation edit.
