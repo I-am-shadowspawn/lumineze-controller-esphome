@@ -21,7 +21,7 @@ change MACs, routing or engine selection.
 
 ## Incremental deliveries
 
-- [ ] **T14.1 — Public wrapper contract.** Inventory required/optional variables
+- [x] **T14.1 — Public wrapper contract.** Inventory required/optional variables
   and fragments for each profile, plus legacy adapter compatibility. Document
   timezone, IDs, enabled/disabled descriptors, connection allocation and
   experimental topology. Acceptance: every field is explained; no missing-MAC
@@ -67,5 +67,6 @@ remaining work beside that increment. Proposed filenames may change; ownership
 and acceptance criteria may not silently change. Do not mark implementation or
 hardware increments complete because this plan exists.
 
-**Progress:** all increments planned; no implementation or hardware evidence
-is claimed by this document.
+**Progress:** T14.1 documented in `docs/installation-contract.md` from the
+actual package fragments and component schema. Remaining examples, clean remote
+rehearsal and all physical evidence are open.

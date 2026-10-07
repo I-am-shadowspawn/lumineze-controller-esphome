@@ -169,3 +169,12 @@ code jobs run, so docs do not cancel their baseline. Local tests reject failed,
 missing and pending baseline checks; the gate waits up to 30 minutes then remains
 failed/retryable if infrastructure has not completed. This closes the possibility
 of a doc edit hiding an unverified or failed firmware revision.
+
+
+7 October 2026 CI correction: job-level concurrency caused queued jobs from older
+runs to cancel newer candidates out of order. Removed cancellation so every pushed
+commit retains independent checks. GitHub run `37370474599` had successful validate,
+remote consumer and two profile jobs; two later profile jobs were cancelled,
+causing its required check to fail. Run `37370843854` was wholly cancelled.
+Those outcomes are not firmware validation failures and are not acceptance
+proof. Re-run complete checks on the next candidate SHA before merge.
