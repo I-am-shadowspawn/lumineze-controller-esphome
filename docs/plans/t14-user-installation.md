@@ -43,7 +43,7 @@ change MACs, routing or engine selection.
   incompatible preference handling, HA automation updates and pinned rollback.
   Document development→production removal of test state. Acceptance: no claim of
   automatic settings migration or preservation without T15 evidence.
-- [ ] **T14.5 — Clean remote consumer rehearsal.** Build from an empty consumer
+- [x] **T14.5 — Clean remote consumer rehearsal.** Build from an empty consumer
   directory outside the checkout with candidate SHA references and dummy secrets.
   Validate/compile all supported alternatives without local helper assets or
   generation scripts. Record exact files/commands and resolved references.
@@ -75,5 +75,7 @@ config` in separate empty directories at candidate source
 `e3bdc2b81c325379be456c0d1ac2acc8d0e16e8a` on ESPHome 2026.9.0.
 T14.3 provides the end-user sequence and outcome distinctions in
 `docs/installation.md`. T14.4 records explicit mapping, profile switches and
-pinned rollback in `docs/upgrade-recovery.md`. Clean remote compiles and all
-physical evidence are still open.
+pinned rollback in `docs/upgrade-recovery.md`. T14.5 compiled all four actual
+public wrappers from empty directories; exact command, revision and sizes are
+in `docs/evidence/t14-installation.md`. T14 software delivery is complete.
+Gate A, T13.4, T15 and stable release remain open.

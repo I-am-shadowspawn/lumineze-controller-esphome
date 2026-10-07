@@ -58,7 +58,10 @@ letters, digits or underscores, beginning with a letter. Fixture `type` is
 The MAC must be a unique, real six-byte address. The physical slot is an
 installation choice; slot 0 is not reserved for a product. One or two enabled
 fixtures are the ordinary software-validated range. Three or four require
-the experimental flag and are not a supported physical installation.
+the experimental flag **and** `ble_connection_slots` substitution set to the
+enabled fixture count. The default is `2`; ESPHome reserves one connection
+slot per declared BLE client even though dispatch is sequential. Three/four
+fixture layouts are not supported physical installations.
 
 To reserve a slot, declare only `{id, slot, enabled: false}` (optional
 `location` is allowed). A disabled descriptor has **no** `mac`, `group`, or

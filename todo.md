@@ -96,13 +96,13 @@ Work in the listed order by default. Dependencies identify prerequisites, not pe
 
 ### B — Add schedule mode and establish a stable release
 
-Implementation planning reviewed on 5 October 2026: see the [T10–T17 delivery index](docs/plans/t10-t17-delivery-index.md) for 42 canonical incremental tasks, readiness and evidence gates. Documentation/preparation can proceed during Gate A/T23 bench testing; schedule firmware changes still wait for Gate A.
+Implementation planning reviewed on 5 October 2026: see the [T10–T17 delivery index](docs/plans/t10-t17-delivery-index.md) for 42 canonical incremental tasks, readiness and evidence gates. The owner authorized isolated T11–T14 software work while Gate A/T23 bench testing proceeds; physical acceptance, release and deployment remain gated.
 
 - [x] T10 — Specify configurable schedule behaviour and edge cases. Completed specification and independent acceptance corpus: [schedule contract](docs/schedule-behaviour.md). Gate A hardware evidence remains open; isolated T11–T14 software work was explicitly authorized. [Implementation plan and incremental tracker](docs/plans/t10-schedule-specification.md).
 - [x] T11 — Implement schedule mode behind the same control contract. Software acceptance recorded; Gate A/T23/T15 physical gates remain open. [Implementation plan and incremental tracker](docs/plans/t11-schedule-engine.md).
 - [x] T12 — Enforce the four-profile build and regression matrix. Local matrix and gate-fault evidence pass; current GitHub checks remain required before merge. [Implementation plan and incremental tracker](docs/plans/t12-profile-ci.md).
 - [ ] T13 — Add project identity, compatibility policy and release metadata. [Implementation plan and incremental tracker](docs/plans/t13-release-metadata.md).
-- [ ] T14 — Create minimal device examples and installation documentation. [Implementation plan and incremental tracker](docs/plans/t14-user-installation.md).
+- [x] T14 — Create minimal device examples and installation documentation. All four pinned public wrappers validate and compile from empty consumer directories; physical commissioning remains T15. [Implementation plan and incremental tracker](docs/plans/t14-user-installation.md); [software evidence](docs/evidence/t14-installation.md).
 - [ ] T15 — Validate hardware behaviour, resource headroom and upgrade compatibility. [Implementation plan and incremental tracker](docs/plans/t15-hardware-compatibility.md).
 - [ ] T16 — Publish the first verified modular release. [Implementation plan and incremental tracker](docs/plans/t16-verified-release.md).
 - [ ] T17 — Migrate the existing controller and provision a second controller. [Implementation plan and incremental tracker](docs/plans/t17-deployment-proof.md).
