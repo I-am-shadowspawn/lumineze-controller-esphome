@@ -24,9 +24,6 @@ jobs:
       - id: scope
         run: python scripts/ci_change_scope.py
   validate:
-    concurrency:
-      group: ${{ github.workflow }}-validate-${{ github.ref }}
-      cancel-in-progress: true
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
@@ -60,6 +57,8 @@ jobs:
         run: |
           python scripts/check_topology_matrix.py esphome
           python scripts/check_topology_matrix.py --schedule esphome
+      - name: Check project metadata across six profiles
+        run: python scripts/check_project_metadata.py
       - name: Check seasonal entity and settings compatibility
         run: python scripts/check_seasonal_inventory.py esphome
       - name: Check real and development input isolation
@@ -115,11 +114,11 @@ jobs:
 
           python scripts/check_generated_input_isolation.py
           python scripts/check_diagnostic_profiles.py
+          for profile in legacy-seasonal-production legacy-seasonal-development seasonal-production seasonal-development; do
+            python scripts/check_project_metadata.py --profile "$profile" --compiled --require-clean
+          done
 
   profiles:
-    concurrency:
-      group: ${{ github.workflow }}-profile-${{ matrix.profile }}-${{ github.ref }}
-      cancel-in-progress: true
     needs: changes
     if: needs.changes.outputs.code == 'true'
     name: Profile / ${{ matrix.profile }}
@@ -157,6 +156,7 @@ jobs:
         run: |
           python scripts/check_profile_isolation.py "${{ matrix.profile }}"
           python scripts/check_build_gate_faults.py "${{ matrix.profile }}"
+          python scripts/check_project_metadata.py --profile "${{ matrix.profile }}" --compiled --require-clean
       - name: Check retained artifact boundary
         id: artifact_boundary
         if: always()
@@ -170,10 +170,6 @@ jobs:
           retention-days: 14
 
   remote-consumer:
-    concurrency:
-      group: ${{ github.workflow }}-consumer-${{ github.ref }}
-      cancel-in-progress: true
-    name: Immutable remote consumer
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest

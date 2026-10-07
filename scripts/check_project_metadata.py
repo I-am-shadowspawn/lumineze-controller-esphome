@@ -27,7 +27,7 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--esphome',default='esphome');parser.add_argument('--profile');parser.add_argument('--compiled',action='store_true');parser.add_argument('--require-clean',action='store_true');args=parser.parse_args()
     manifest=json.loads((ROOT/'ci/profile-matrix.json').read_text())
     profiles=dict(manifest['profiles'])
-    profiles.update({'legacy-seasonal-production':{'fixture':'ci/controller.yaml'},'legacy-seasonal-development':{'fixture':'ci/controller-development.yaml'}})
+    profiles.update({'legacy-seasonal-production':{'fixture':'ci/controller.yaml','build_directory':'lumineze-ci'},'legacy-seasonal-development':{'fixture':'ci/controller-development.yaml','build_directory':'lumineze-development-ci'}})
     truth=yaml.load((ROOT/'packages/core/project.yaml').read_text(),Loader=yaml.BaseLoader)['esphome']['project']
     for profile in [args.profile] if args.profile else profiles:
         result=subprocess.run([args.esphome,'config',profiles[profile]['fixture']],cwd=ROOT,capture_output=True,text=True,check=True)
@@ -39,9 +39,12 @@ if __name__=='__main__':
             for field,macro in [('name','ESPHOME_PROJECT_NAME'),('version','ESPHOME_PROJECT_VERSION')]:
                 assert f'#define {macro} "{truth[field]}"' in defines,'compiled project metadata mismatch'
             assert f'return {{"{profile}"}};' in source,'compiled profile mismatch'
-            revision=re.search(r'build_source_revision = "([^"]+)"',source)
-            assert revision and re.fullmatch('[0-9a-f]{40}(?:\\+dirty)?',revision[1]),'missing resolved source SHA'
-            if args.require_clean:
-                head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
-                assert revision[1]==head,'compiled source is not current clean candidate'
+            if profile.startswith('legacy'):
+                assert 'Unverified legacy reference' in source,'legacy source must be labelled unverified'
+            else:
+                revision=re.search(r'build_source_revision = "([^"]+)"',source)
+                assert revision and re.fullmatch('[0-9a-f]{40}(?:\\+dirty)?',revision[1]),'missing resolved source SHA'
+                if args.require_clean:
+                    head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
+                    assert revision[1]==head,'compiled source is not current clean candidate'
             print('PASS compiled identity '+profile)

@@ -23,7 +23,7 @@ consumers must not invent or automatically inherit a moving-branch version.
   behavior and public package paths. Acceptance: explicit legacy-to-generic and
   seasonal-to-schedule rules; a stable YAML ID alone is not treated as restored
   identity proof.
-- [ ] **T13.2 — Metadata composition.** Add shared project name/version and
+- [x] **T13.2 — Metadata composition.** Add shared project name/version and
   read-only built profile information to all four profiles without activating
   controls. Ensure a legacy compatibility build is labelled accurately, not
   presented as a generic profile. Acceptance: resolved configs and builds agree
@@ -92,6 +92,18 @@ No tags or installed devices changed. Next: metadata composition and checks.
   entries remain exact; only four explicitly checked diagnostics are added.
   Schedule production compiles and its generated project/profile/source identity
   passes (`/tmp/t13-schedule-build.log`, RAM 148,064 / flash 1,256,208 bytes).
-- [ ] **T13.2b — All-profile compiled identity proof.** Build all four from the
+- [x] **T13.2b — All-profile compiled identity proof.** Build all four from the
   clean committed source and compare namespace/version/profile/SHA; integrate
   metadata checks in CI. No live HA display proof is claimed.
+
+
+T13.2b complete: all four generic and both legacy compatibility builds compile
+with the shared namespace/version. The six generated builds were checked against
+resolved profile IDs and, for generic profiles, the exact clean source SHA
+`a14c958c63891fd8e06b75a9b1d287b7bc165fcf`; legacy reference text is
+explicitly unverified. Local build logs are `/tmp/t13-{seasonal,schedule}-*
+build.log` and `/tmp/t13-legacy-{production,development}-build.log`.
+`check_project_metadata.py` now runs in CI against all six configurations and
+against each compiled job. Seasonal pre-T11 inventory is unchanged apart from
+four documented read-only metadata entities. Actual HA/device display and update
+retention remain T13.4/T15 physical evidence.
