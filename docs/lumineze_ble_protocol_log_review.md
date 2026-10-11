@@ -201,8 +201,9 @@ again during a connection; they do not prove lamp clock accuracy or retention.
 All 30 original files have an inventory record and a reviewed case/context
 row. One named S0 case file is absent; related inherited packets were examined
 and a retest is recorded. Unavailable UI options remain operator reports.
-Other planned cases without logs are explicitly marked “No supplied capture”;
-their dates and results are not invented. Inserted retests immediately follow
+Planned cases without their own logs were initially marked “No supplied capture”.
+The coverage follow-up below identifies which questions existing evidence resolves;
+reused packet dates are explicitly distinguished from new test execution. Inserted retests immediately follow
 their parent case and give concrete steps for the unresolved question.
 
 Confirmed protocol observations are distinct from outstanding physical output,
@@ -221,3 +222,23 @@ unchanged. All nine inserted retests sit directly below their parent case;
 each contains executable app-driven steps and no invented capture date.
 CSV parsing, unique case IDs and documentation whitespace checks pass. Workflow
 checks were not monitored for this analysis task.
+
+## Follow-up: retire redundant planned runs
+
+On 11 October, the unexecuted case objectives were compared with the existing
+packet inventory. **11 cases** are marked `Unnecessary — covered by existing
+evidence`: B50, P1, P2, T1800, ORDER, both DUP cases, CLOCK normal reconnect,
+LIFE reconnect, and PROTO write-ack/query-counts. Their CSV results identify
+exact source frames, scope and deviations; original planned actions are retained.
+No new capture or execution is claimed. In particular ORDER closes app-side
+ordering, not whether the lamp would sort an unsorted write, and PROTO counts
+closes observed counts 0–3, not a capacity limit.
+
+Two conditional cases (B50 app-restart repeat and brightness-threshold follow-up)
+are unnecessary for current findings because their discrepancy trigger is absent.
+They must be reactivated if remaining exact-value trials expose a transition.
+B100 remains open: default 100% traffic does not replace a controlled endpoint
+trial. Missing exact values, force-stop/power-loss persistence, second-DUT trials,
+manual levels, controlled mode changes, fresh-app/restart lifecycle, recorded
+phone-zone baseline/zone shift and physical scheduling remain open. None of the
+nine targeted retests is retired.

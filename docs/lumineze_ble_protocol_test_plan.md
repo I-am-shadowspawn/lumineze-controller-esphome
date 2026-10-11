@@ -65,6 +65,57 @@ ambiguous. If no write/readback appears in the extracted snoop, repeat the
 case after confirming HCI snoop logging is enabled and the app actually
 connected.
 
+## Starting a fresh capture window
+
+Generating a bugreport copies diagnostic data; it does not reset the Bluetooth
+snoop. Android documents restarting Bluetooth after changing HCI logging. The
+current AOSP logger opens a new active file on startup, rotates the previous
+file to `.last`, and removes full/filtered snoop files when initialized with
+logging disabled. This describes AOSP behavior, **not a verified guarantee on
+the Motorola Edge 40 / Android 15 build** used here.
+
+For a new independent case:
+
+1. Save the previous report and close the lamp app.
+2. Disable Bluetooth HCI snoop logging in Developer options. Restart Bluetooth
+   (off, then on) so the disabled setting takes effect; reboot if the phone
+   requires it.
+3. Enable full HCI snoop logging, then restart Bluetooth again. Record this
+   capture-start time, date and phone time zone before opening the app.
+4. Connect only to the DUT, execute the case, record action/readback/end times,
+   and generate one uniquely named bugreport. Wait for completion.
+5. Inspect the extracted active `btsnoop_hci.log`: its first packet must be
+   consistent with the new capture start, and it must contain the connection
+   setup and full DUT values. Keep any `.last` file separate; it may contain
+   the previous session. If old packets remain, use the fallback below.
+
+Do this between independent cases, **not between a case's write and its
+reconnect/force-stop/power-cycle observation**. Restarting phone Bluetooth is
+an extra lifecycle intervention: include it in the case notes. For fresh-app
+comparisons, follow the case's required app state separately.
+
+### Reliable fallback when the phone retains history
+
+Keep the original report and extracted snoop unchanged. In Wireshark, select
+a time window from just before the target connection setup through final
+readback, using the recorded start/end timestamps, then export the displayed
+packets to a separate derived capture. Preserve connection establishment,
+service discovery and MTU traffic needed to decode the full session; filter
+the peer/session only after that context is available. Record the source
+filename/hash, original frame range, time zone and export filter. Exported
+frame numbers will differ from the source.
+
+This creates a clean **analysis window** even when the original bugreport
+remains cumulative. Verify it contains every fragmented/reassembled command
+and notification before treating it as the case artifact. Taking another
+report, closing the app, or clearing `logcat` alone does not establish a fresh
+HCI log. Other bugreport sections can retain history even with a fresh snoop.
+
+Sources checked 11 October 2026:
+[AOSP Bluetooth capture instructions](https://source.android.com/docs/core/connect/bluetooth/verifying_debugging),
+[AOSP snoop logger implementation](https://android.googlesource.com/platform/packages/modules/Bluetooth/+/refs/heads/main/system/gd/hal/snoop_logger.cc),
+[Android bugreport documentation](https://developer.android.com/studio/debug/bug-report).
+
 ## Case record template
 
 For every report, record:
@@ -118,7 +169,10 @@ summarizes what the actual experiments establish:
 
 Each required follow-up is inserted immediately below its parent case in the
 CSV with concrete steps. “Reviewed” means the evidence was analyzed, not that
-an experiment passed. Cases without supplied captures remain explicitly
+an experiment passed. The coverage follow-up marks 11 redundant runs unnecessary
+and two discrepancy-triggered runs unnecessary for current findings; their CSV
+results reference reused packets rather than claiming new execution. Other
+cases without supplied captures remain explicitly
 unreviewed; dates or results are not inferred from planned instructions.
 Original historical findings are retained in a separate historical document.
 
