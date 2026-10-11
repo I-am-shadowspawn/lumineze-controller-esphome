@@ -349,3 +349,33 @@ transition timing/interpolation, duplicate-time behavior and empty-bank
 fallback remain separate questions. Other cases retain any distinct
 requirements for exact selector readback or physical observations, rather
 than repeating the now-resolved general precedence question.
+
+## Stepped transitions and Manual/Auto investigation
+
+On 11 October the operator confirmed that scheduled changes such as
+**100% -> 50% -> 0% are sharp steps, with no gradual fading**. This resolves
+I4's step-versus-interpolation question by physical observation. Its retest
+is marked unnecessary; original timing-trace steps remain available if precise
+latency is later needed. No new timed capture is claimed.
+
+The operator also confirmed that the app has **no per-point enable/disable
+control**. Selecting a schedule makes that schedule current. N1 already covers
+the one-point 08:00/50% baseline, so the combined T0800 baseline/point-toggle
+retest is retired. This UI clarification does not decode record bit `0x80`.
+
+A new `MODE-manual-auto-schedule-bit` case investigates whether that bit
+changes with global Manual/Auto mode. Hold the same custom bank, times,
+levels and count fixed; capture Auto -> Manual -> Auto state writes,
+independent state reads and any schedule traffic. Compare state mode, bank
+selector, count, record hour bytes and trailer as separate fields. This
+complements the existing Manual-to-Auto-Cycle-1 state test without changing
+mode and bank together.
+
+Schedule reads are valid Manual comparisons only if the app permits them
+without switching back to Auto: capture state before and after the query.
+Existing app custom-page access sends a state write, so an unchanged `0x80`
+after that intervention cannot prove that the bit is unchanged in Manual.
+If the app cannot expose a passive Manual read, record that limitation. A
+repeatable change isolated to mode would support mode dependence; an
+unchanged bit across verified modes would argue against a mode-enable
+interpretation on this DUT. Neither result alone proves universal semantics.

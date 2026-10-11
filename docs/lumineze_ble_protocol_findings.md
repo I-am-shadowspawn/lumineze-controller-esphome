@@ -271,3 +271,16 @@ Evidence attribution: this operating model is operator-confirmed; the I1
 packets establish selection and storage retention, while the reported output
 change supplies physical observation. The dedicated I1 precedence follow-up
 is closed without claiming an additional timed capture.
+
+## Operator-confirmed custom transitions and point controls
+
+Custom brightness transitions are **sharp steps, without gradual fading**,
+confirmed by the operator for changes such as 100% -> 50% -> 0%. I4's
+behavioral retest is closed; exact transition latency has not been measured.
+
+The official app has no individual point enable/disable control. Schedule
+selection determines the active schedule. The redundant T0800 baseline and
+unavailable point-toggle test are retired. The always-set record high bit
+`0x80` remains undecoded; it must not be labeled an enable flag. A planned
+Manual/Auto comparison will test for mode dependence while preserving the
+same custom bank and checking that schedule queries do not re-enable Auto.

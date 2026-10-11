@@ -320,7 +320,8 @@ whether a `03 F0` response echoes the write. The historical `22:08 -> 96 09` ass
 and T2208 captures use `96 08`. The current sampled formula predicts all
 nine values, including midnight and 23:59, with independent readback. The
 actual series retained three points and reordered them; use the inserted
-single-point/flag follow-up for the remaining setup and high-bit questions.
+Manual/Auto follow-up for high-bit investigation. The one-point baseline
+is already covered by N1, and the operator confirms no per-point toggle exists.
 
 ### 6. Resolve brightness encoding and the 50% discrepancy
 
@@ -482,8 +483,9 @@ unconfirmed.
   output through the apparent 0%/100% cycle and return to requested level,
   plus before/after state and bank reads. Individual command roles remain
   unknown. Use P4 separately for actual physical power-loss persistence.
-- Keep hour/minute changes separate from point enablement if the app exposes
-  that option. Always-set `80` is not sufficient to identify an enable flag.
+- The operator confirms no point enable/disable control exists. Always-set
+  `80` is not sufficient to identify an enable flag; investigate Manual/Auto
+  mode dependence using the same unchanged custom bank as described below.
 - Preserve full 152-byte custom writes and 150-byte responses. Compare the
   trailer at offsets 148 onward separately for time and brightness edits;
   do not guess checksum or record-capacity meanings from padding.
@@ -517,3 +519,18 @@ unnecessary for establishing that operating model. Keep its original steps
 as an optional trace protocol. Detailed custom interpolation/transition
 timing, exact state readbacks and empty-bank fallback retain their separate
 case objectives; no new hardware trace is implied by this confirmation.
+
+## Revised follow-ups after operator clarification (11 October)
+
+- **I4:** sharp scheduled steps and no gradual fading are operator-confirmed.
+  No further experiment is required to distinguish step from interpolation;
+  the original protocol is optional for precise timing evidence.
+- **T0800:** N1 covers the one-point baseline, and no point toggle exists.
+  Retire that retest; retain bit `0x80` as unknown.
+- **MODE-manual-auto-schedule-bit:** hold Cycle 4/bank 05 and its contents
+  fixed, switch Auto -> Manual -> Auto, and capture full state and schedule
+  traffic. Confirm state before/after any schedule query; if the query switches
+  back to Auto, it cannot establish Manual-mode record bytes. Compare mode
+  byte, selector, count, hour high bits and trailers separately. The full
+  executable protocol is in the case records. Do not assume the high bit is
+  an enable flag or send custom packets to force a comparison.
