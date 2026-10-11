@@ -2,6 +2,14 @@
 
 ## Scope
 
+**Latest review:** 11 October 2026. The case-level review is in
+[manual log review](lumineze_ble_protocol_log_review.md), with full ATT values
+in `lumineze_ble_protocol_packet_evidence.csv` and original-file hashes/timing
+in `lumineze_ble_protocol_capture_inventory.csv`. The case CSV distinguishes
+analysis completion from experimental success. Historical sections below
+retain their original capture context; newer findings supersede claims of a
+constant schedule marker or a universal cycle mapping where stated.
+
 This document summarises the current reverse-engineering state of the
 LuminEZE BLE protocol based on captures from the official phone
 application and comparison with the existing ESPHome implementation.
@@ -17,6 +25,34 @@ The goal is to separate:
 ------------------------------------------------------------------------
 
 # Proven Observations
+
+## 11 October review: repeated cycle and empty-bank evidence
+
+All 30 supplied files are exact cumulative prefixes of the latest snoop
+capture. Only newly appended packets count as new evidence. Peer-address
+filtering separates the documented JungleDawn 39W from another lamp visited
+in early snapshots. The recorded app is V1.1.4; lamp firmware is unspecified.
+
+Cycle 1 = selector `00` is supported by actual write frame 127870 and later
+readback 128749, then repeated by write 138105 and readback 138541 in the next
+snapshot. Cycle 2 = `01` is supported by write 129312/readback 130088 and
+repeat writes 138602/138724 followed by readback 139212 in the next snapshot.
+These are same-DUT observations. They do not establish a universal mapping or
+erase the historical `01`/`02` observation from a different capture context.
+
+Schedule query `03 0F 06` returns `03 F0 06 00` repeatedly, while query bank
+`02` returns `03 F0 02 01 8B 0A 00`. The field at byte 2 is therefore not a
+constant `02` marker. It is associated with the queried schedule bank/selector;
+custom Cycle 5 in the notes corresponds to `06` in this session. The count
+at byte 3 is zero for bank 06 and one for bank 02. Empty-bank evidence is
+bank-specific, not proof that the lamp stores no custom points anywhere.
+
+The power-reset capture shows a retained operating selector after the
+operator-reported resets, but lacks recorded power boundaries and custom-bank
+readback. The app syncs clock before querying state, so onboard clock retention
+is unresolved. The named S0 cycle-repeat file is missing; related actions are
+present in the later cumulative C1 snapshot but cannot complete the intended
+read-only comparison. Both gaps have explicit retest rows in the case CSV.
 
 ## Additional Capture: Built-In Cycles and Empty Custom Schedule
 
