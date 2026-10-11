@@ -344,3 +344,13 @@ bank reads do not force Auto; and schedule contents/high bits remain present
 while Manual is selected. Exact high-bit meaning remains a protocol unknown,
 not an outstanding Auto/Manual behavioral test. ESP reconciliation after
 app-origin changes is a separate controller issue requiring ESP-side evidence.
+
+## Timezone-change attempt
+
+A BST -> Perth -> BST connection sequence was reported by the operator,
+but its supplied snoop contains only a16-byte header and no packets. Thus
+controlled timezone-shift behavior remains unverified. Recover the populated
+active/`.last` file before repeating the test. The earlier confirmed BST
+uploads remain valid; this attempt neither confirms nor contradicts a
+phone-local-time rule across zones. See the
+[attempt review](lumineze_ble_protocol_log_review.md#timezone-change-attempt-header-only-capture).

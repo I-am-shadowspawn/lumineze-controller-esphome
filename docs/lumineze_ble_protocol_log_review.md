@@ -526,3 +526,25 @@ The high-bit meaning remains explicitly undecoded; complete matched Auto/
 Manual bank data could support future research but is not a blocker to this
 behavioral review. The ESP retaining83% after the app sets22% remains a
 separate state-reconciliation issue, not evidence of a lamp mode failure.
+
+## Timezone-change attempt: header-only capture
+
+Source: `/srv/dev/data_projects/luminEze_bt_logs/protocol-test-timezone_changes-2026-10-11-124923.log`.
+SHA256: `d84508918b119f344867a68dcb1f7b3db941fff741b345adcbdac28971760116`.
+The file is exactly **16 bytes**: valid btsnoop magic, version1 and H4 link
+type1002, with **zero packet records**. There are no capture timestamps,
+connections, clock uploads or state replies. Its filename identifies report
+request initiation12:49:23 after the operator's described BST restoration.
+
+Operator protocol: connect/select DUT in BST; close app; change phone zone
+to Perth Australia; reopen/select same DUT without further actions; close
+app; restore BST; reopen/select DUT and close. This is appropriate for
+comparing clock uploads while changing only timezone. It is recorded as
+attempted test metadata, not packet-confirmed evidence.
+
+The file cannot establish whether payload time follows local wall time or
+UTC. It also does not prove no sync was sent: absent records indicate missing
+capture evidence. Check the original ZIP's active and `.last` snoops first;
+no cause for the empty file is established. If no populated file covers the
+actions, the combined retest records local time/UTC at each stage and keeps
+logging active through all three connections and report collection.
