@@ -564,3 +564,12 @@ These conclusions combine captured evidence with explicit operator
 confirmation; they do not claim a complete timed trace for every condition.
 High-bit semantics remain unknown for future protocol research. The ESP
 stale-state observation requires separate ESP investigation if pursued.
+
+### Timezone retry complete (Cyprus)
+
+BST -> Cyprus -> BST clockuploads confirm phone-local walltime, notUTC.
+Thetimezonebaseline/shift objectives arecovered; retain theemptyPerth
+attempt as historicalevidence and markthecombinedretest reviewed.
+Noadditionalzonechange isneeded to establish thissampled rule.
+The samebank isnowread inManual andAuto with unchangedhighbit80,
+completing thatcomparison without decodingthebit'sunderlyingmeaning.

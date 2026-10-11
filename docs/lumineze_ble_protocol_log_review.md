@@ -548,3 +548,47 @@ capture evidence. Check the original ZIP's active and `.last` snoops first;
 no cause for the empty file is established. If no populated file covers the
 actions, the combined retest records local time/UTC at each stage and keeps
 logging active through all three connections and report collection.
+
+## Cyprus timezone retry
+
+Source: `/srv/dev/data_projects/luminEze_bt_logs/protocol-test-timezone_changes3-2026-10-11-130022.log`.
+SHA256: `b7d1b5041250d2bb6b05e132d1d43a7afd801879e3ac3c5e284370d3a2390d68`.
+Fresh3,545-frame capture spans **12:58:06.535703–13:02:28.208229 BST**;
+report request initiation **13:00:22 BST**. All29DUT application values
+are preserved in the [timezone evidence CSV](lumineze_ble_protocol_timezone_evidence.csv).
+The operator retried the preceding timezone sequence using Cyprus instead
+ofPerth. Payload decoding and epoch comparison identify BST -> Cyprus -> BST.
+
+| Stage | Clock frame | Packet time BST | Packet time UTC | Encoded phone-local time |
+| --- | --- | --- | --- | --- |
+| BST baseline | 2093 | 12:58:26.556 | 11:58:26.556 | 12:58:26 |
+| Cyprus | 2834 | 12:59:32.817 | 11:59:32.817 | 14:59:32 |
+| Restored BST | 3114 | 13:00:08.990 | 12:00:08.990 | 13:00:08 |
+
+Sevenuploads (2093/2116/2159,2834/2849,3114/3140) match their stage's
+phone-local time to within1second. `zoneinfo` Europe/London and Asia/Nicosia
+on11October2026 give UTC+01 and UTC+03 respectively. The payload year,
+month/day and Sundaybyte00 remain2026/10/11. Raw representative prefixes:
+
+- BST: `01 0F EA 07 00 0A 0B 0C 3A 1A` (12:58:26).
+- Cyprus: `01 0F EA 07 00 0A 0B 0E 3B 20` (14:59:32).
+- RestoredBST: `01 0F EA 07 00 0A 0B 0D 00 08` (13:00:08).
+
+This confirms that uploaded clock fields follow phone-local wall time,
+**not UTC**, on this DUT/app, with restoration following the originalzone.
+No explicit timezoneoffset or identifier is decoded in the payload. State
+reply timestamps2103/2838/3124 reflect the just-uploaded local values.
+This does not establish daylight-saving behavior, date rollover underzone
+change, physical scheduled-output timing or clock retention afterpowerloss.
+These distinct questions are not reasons to repeat this successfultimezone
+comparison. The originalPerthattempt remains recorded as header-only; its
+packet objectives are covered by thisCyprusretry.
+
+Incidental mode evidence: initial state2103 isManual/22%/bank02; bank2115
+returns `03 F0 02 01 8B 0A 00`. An explicitManual->Auto write2160 follows.
+Later state2838/3124 isAuto/22%/bank02; bank2848/3139 returns the identical
+record. This supplies the previously missing **same-bankManual/Auto
+comparison**: recordhighbit80 remains set inboth modes. Itdoesnot indicate
+currentglobalAuto activation; exactunderlyingmeaning remainsunknown.
+Thebaseline modechange is anextraaction, recorded as adeviation; both
+subsequenttimezone sessions remainAuto with unchangedbank andlevel.
