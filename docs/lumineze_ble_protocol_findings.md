@@ -298,3 +298,15 @@ bit `0x80` therefore remains unknown; it has not been shown to encode
 global mode. The [full review](lumineze_ble_protocol_log_review.md#11-october-automanual-comparison)
 and [15 preserved packets](lumineze_ble_protocol_mode_evidence.csv) distinguish
 observed mode writes from the missing Manual-bank comparison.
+
+### Manual slider and external ESP control
+
+Operator reports the app opens in retained Manual mode, displays an 81%
+Manual slider before adjustment, and the external ESP test controller
+requires Manual mode to affect output. This is consistent with the prior
+lamp-reported retained Manual setpoint `51`; it is not proof of app-only
+caching or measured current brightness. Phone HCI logs cannot observe
+direct ESP-to-lamp writes. The second mode capture contains only reset/setup/
+scanning and no ACL/ATT traffic, so it does not independently validate those
+actions or provide Manual-mode bank bytes. See the
+[capture review](lumineze_ble_protocol_log_review.md#second-manualauto-capture-missing-application-traffic).

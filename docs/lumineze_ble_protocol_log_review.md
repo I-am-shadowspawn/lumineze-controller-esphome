@@ -423,3 +423,39 @@ The remaining Manual-bank follow-up first checks whether a passive read is
 possible in the official app. If not, mark the app-driven bit comparison
 unavailable rather than demand more mode-toggle captures. No correlation
 with the hour high bit can be inferred from an Auto-only schedule response.
+
+## Second Manual/Auto capture: missing application traffic
+
+Source: `/srv/dev/data_projects/luminEze_bt_logs/protocol-test-cycle_auto_manual_auto2-2026-10-11-122725.log`.
+SHA256: `e8b93e96ff764c8cea079d1647349c43cdb15b4680be3ce68b742a775c9c9ce6`.
+The fresh 214-frame capture spans **12:27:14.374778–12:29:19.622480 BST**
+on 11 October; report request initiation is **12:27:25 BST**.
+
+Raw H4 packet types and tshark agree: **71 HCI commands, 143 HCI events,
+zero ACL packets, zero ATT packets**. It starts with HCI Reset and records
+controller setup and scanning, with no lamp connection or application
+transaction. Consequently the file does not contain the described Manual
+launch, schedule selections, Auto/Manual toggle or slider reduction. It
+cannot compare schedule records across modes. No DUT packet evidence file
+is created for absent traffic.
+
+Operator observations: opened in Manual, selected different schedules,
+switched Auto then Manual, and saw slider 81% before reducing it. The lamp
+is also controlled by an ESP test device; operator reports ESP changes
+require Manual mode. These observations are recorded separately from the
+missing packet evidence. The reduced percentage is unspecified.
+
+The retained 81% slider interpretation is consistent with prior `02 F0`
+responses containing `51` while observed automatic outputs differed. Those
+responses originate at the lamp, so the evidence supports a retained Manual
+setpoint but does not prove that the number is cached exclusively in the
+app, identify when the app refreshes it, or reveal actual current physical
+output. External ESP-to-lamp writes are not visible in phone HCI logs.
+
+A logging reset before the captured actions, rotation to `.last`, or a
+different report could explain the missing session; the file alone does
+not establish which occurred. The retest establishes logging before opening
+the app, captures connection and action/readback timestamps, and verifies
+ACL/ATT traffic before submission. Keep source and any `.last` capture
+separate. Do not repeat toggles to decode the high bit unless the app can
+actually query bank records while retaining Manual.
