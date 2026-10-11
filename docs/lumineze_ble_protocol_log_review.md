@@ -293,3 +293,41 @@ a 150-byte notification value beginning `03 F0 06 00`; the evidence CSV
 records that full value. Sunday's clock uploads use weekday `00` versus
 Saturday's `06`, both with confirmed BST wall time. This supports the sampled
 Saturday/Sunday convention; a complete weekday mapping remains unverified.
+
+## 11 October I1 output retest
+
+Source: `/srv/dev/data_projects/luminEze_bt_logs/protocol-test-I1-cycle-1-with-custom-RETEST-OUTPUT-2026-10-11-115212.log`.
+SHA256: `b0e8319c3e306458474b8dab06d5885040fb795af0594bd0fe4f9163bfd80890`.
+This 14,300-frame capture spans **11:35:27.771210–11:54:19.431207 BST**.
+Its first 124,769 bytes hash to the preceding S0 retest's recorded SHA256,
+confirming an exact cumulative prefix. Only appended frames **2679–14300**
+are new evidence. The filename records report request initiation **11:52:12**.
+The [I1 retest evidence CSV](lumineze_ble_protocol_i1_retest_evidence.csv)
+preserves 42 new DUT values; inherited S0 values are not duplicated.
+
+| Event | Frame(s) | Time BST | Evidence |
+| --- | --- | --- | --- |
+| Setup visits custom banks | 8331/8356/8368/8380 | 11:47:54–11:48:03 | Selectors 05/04/03/05; banks 04 and 03 reply count 0 |
+| Setup edits then deletes 08:00 point | 8439/8452 | 11:48:10.615 / 11:48:15.285 | First writes 08:00/85%; then count 2 containing `8C 22 09 / 96 08 00` |
+| Verify Cycle 4 / two points | 10576/10586 | 11:49:06.399 / .501 | State selector 05; bank 05 independently reads 12:34/9%, 22:08/0% |
+| Select Cycle 1 | 10757 | 11:49:45.290 | `02 F1 01 51 00`; operator reports light turns to 100% |
+| Return to Cycle 4 | 10762/10763 | 11:50:01.432 / .436 | Query bank 05 and write selector 05; operator reports reduced light |
+| Verify retained contents | 10771 | 11:50:01.539 | Reassembled `03 F0 05 02 8C 22 09 96 08 00`; no schedule rewrite between selections |
+
+The observations support an immediate physical effect of mode selection and
+retention of custom storage. Reported 100% and subsequent reduction are
+operator evidence, not brightness measurements from BLE. The reduced value
+is unspecified. State byte `51` remains unchanged and cannot represent those
+automatic outputs. No independent selector-00 readback occurs.
+
+Both custom points are still in the future, but the controller remains in
+Cycle 1 for only about 16 seconds and returns to Cycle 4 before either point.
+This does not establish which schedule governs physical output across custom
+point times while Cycle 1 stays selected. A narrowed follow-up tracks that
+remaining requirement. It also avoids inferring step/interpolation behavior
+from the immediate reduction before the first point.
+
+Frame 10771's reassembled ACL is `99 00 04 00 1B 0E 00 03 F0 05 02
+8C 22 09 96 08 00 ... 30`; default tshark fields omit its first three value
+bytes through repeated ATT decoding. Full 150-byte value is recovered from
+the reassembled payload in the evidence CSV.

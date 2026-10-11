@@ -246,3 +246,16 @@ Bank 06 is empty before and after; no schedule write occurs. The intended
 passive comparison while retaining built-in mode remains untested. See the
 [bank retest review](lumineze_ble_protocol_log_review.md#11-october-bank-retest-fresh-capture-and-requested-sequence)
 and [packet evidence](lumineze_ble_protocol_bank_retest_evidence.csv).
+
+## 11 October I1 immediate output observation
+
+Cycle 4's bank 05 contains **12:34/9% and 22:08/0%**, independently
+read before and after Cycle 1 selection. Operator reports output changes to
+100% in Cycle 1 and reduces on return to Cycle 4; no schedule rewrite occurs.
+This strengthens the immediate mode-selection and storage-retention evidence.
+Reduced output percentage is unspecified; BLE state byte 51 is not a measured
+automatic output. The run returns to custom mode before either future point,
+so physical precedence through point times remains open. The capture is
+cumulative with the S0 retest; only new frames are counted. See the
+[I1 retest review](lumineze_ble_protocol_log_review.md#11-october-i1-output-retest)
+and [full new packet evidence](lumineze_ble_protocol_i1_retest_evidence.csv).
