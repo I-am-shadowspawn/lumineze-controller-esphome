@@ -379,3 +379,47 @@ If the app cannot expose a passive Manual read, record that limitation. A
 repeatable change isolated to mode would support mode dependence; an
 unchanged bit across verified modes would argue against a mode-enable
 interpretation on this DUT. Neither result alone proves universal semantics.
+
+## 11 October Auto/Manual comparison
+
+Source: `/home/simon/dev/data_projects/luminEze_bt_logs/protocol-test-cycle_auto_manual_auto-2026-10-11-122033.log`.
+SHA256: `0647505eb5c2c512c735c0fece50f10cfd567a4672a4ebae657c0d47f9e3447c`.
+Fresh 2,415-frame capture: **12:18:45.403106–12:19:47.212969 BST**.
+Report request initiation is **12:20:33 BST**, after the final packet.
+This file does not contain the earlier session history.
+The [mode evidence CSV](lumineze_ble_protocol_mode_evidence.csv) preserves
+all 15 DUT application values, with file-local frame numbers.
+
+Initial connection at frame 1507 (12:19:00.945) is followed by initialization,
+clock upload and state query. Independent reply **1639 at 12:19:02.067**
+is `02 F0 01 51 05 ...`: Auto, retained 81% Manual setpoint and bank 05.
+Only afterward does app echo 1640 write `02 F1 01 51 05 ...`. Schedule
+reply 1649 reads `03 F0 05 02 8C 22 09 96 08 00 ...`, the unchanged
+12:34/9% and 22:08/0% records.
+
+| Operator-associated mode | Frame | BST | Write prefix |
+| --- | --- | --- | --- |
+| Manual | 2032 | 12:19:11.785 | `02 F1 00 51 05` |
+| Auto | 2035 | 12:19:15.842 | `02 F1 01 51 05` |
+| Manual | 2097 | 12:19:21.924 | `02 F1 00 51 05` |
+| Auto | 2151 | 12:19:23.816 | `02 F1 01 51 05` |
+
+Full 16-byte writes differ only at **byte 2 (zero-based)**, associating
+`00` with Manual and `01` with Auto while level, bank and trailer remain
+fixed. No `03 F1` schedule write occurs. There is no independent state
+read after the toggles and **no bank read while Manual is active**. Thus
+this experiment isolates the global mode control but does not compare
+schedule record bit `0x80` between modes. The bit remains unknown.
+
+Operator confirms that opening the app and connecting retains the previous
+Auto/Manual state unless explicitly changed. Initial Auto read-before-echo
+supports that behavior on this connection. Retention of Manual on reopening
+is operator-confirmed, not demonstrated by a Manual reconnect in this file.
+An echo of the read mode must not be classified as an automatic reset.
+This observation is distinct from changing the selected cycle/custom page,
+which can issue an explicit state write.
+
+The remaining Manual-bank follow-up first checks whether a passive read is
+possible in the official app. If not, mark the app-driven bit comparison
+unavailable rather than demand more mode-toggle captures. No correlation
+with the hour high bit can be inferred from an Auto-only schedule response.

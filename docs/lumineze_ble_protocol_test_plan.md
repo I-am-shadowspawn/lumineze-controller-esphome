@@ -534,3 +534,14 @@ case objectives; no new hardware trace is implied by this confirmation.
   byte, selector, count, hour high bits and trailers separately. The full
   executable protocol is in the case records. Do not assume the high bit is
   an enable flag or send custom packets to force a comparison.
+
+### Manual/Auto comparison result
+
+The new mode capture isolates `02 F1` byte 2 as Manual `00` / Auto `01`
+without changing bank or level. Connecting preserves the prior mode by
+operator confirmation; the captured initial Auto read precedes its matching
+echo. This does not imply that viewing/selecting another cycle is passive.
+No bank read occurs in Manual, so high-bit semantics remain open. The
+narrowed `MODE-manual-bank-read-follow-up` checks for a passive UI read;
+if the app cannot provide it, record the comparison as unavailable rather
+than repeat the already successful mode toggles.

@@ -71,7 +71,7 @@ Using zero-based full-command byte offsets:
 | Field | Current observation | Confidence / limit |
 | --- | --- | --- |
 | Bytes 0–1 | `02 0F` query, `02 F0` response, `02 F1` write | Confirmed families |
-| Byte 2 | `00` Manual, `01` Automatic | Supported by mode changes and prior capture context |
+| Byte 2 | `00` Manual, `01` Automatic | Isolated by four same-bank mode writes on 11 October; independent initial Auto readback |
 | Byte 3 | Retained Manual setpoint, direct percentage in observed states | **Not** measured automatic output: remains `51` while operator reports other levels |
 | Byte 4 | Selected built-in cycle/custom bank | Same-DUT write and readback support |
 | Remaining state-response bytes | Some resemble date/time; an irregular response also occurs | Preserve raw values; not fully decoded |
@@ -284,3 +284,17 @@ unavailable point-toggle test are retired. The always-set record high bit
 `0x80` remains undecoded; it must not be labeled an enable flag. A planned
 Manual/Auto comparison will test for mode dependence while preserving the
 same custom bank and checking that schedule queries do not re-enable Auto.
+
+## Auto/Manual mode and connection retention
+
+The 11 October mode capture isolates **state-command byte 2: Manual `00`,
+Auto `01`**, with retained level `51` and bank `05` unchanged. The operator
+confirms opening the app/connecting preserves either prior mode until an
+explicit change. Initial Auto state is read before the app sends a matching
+echo, supporting retained Auto; this capture has no Manual reconnect.
+
+No schedule write occurs and the only bank read is in Auto. The record high
+bit `0x80` therefore remains unknown; it has not been shown to encode
+global mode. The [full review](lumineze_ble_protocol_log_review.md#11-october-automanual-comparison)
+and [15 preserved packets](lumineze_ble_protocol_mode_evidence.csv) distinguish
+observed mode writes from the missing Manual-bank comparison.
