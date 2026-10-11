@@ -87,6 +87,95 @@ The capture does not prove whether every lamp firmware version uses these
 same selector values, what selector `00` means in automatic mode, or whether
 the custom schedule is applied while a built-in cycle is selected.
 
+## Additional Manual Test Captures: Empty Schedule and Cycle 1/2
+
+The four `manual_test_resources/protocol-test-*_2026-10-10_btsnoop_hci.log`
+files are cumulative snapshots of the same HCI snoop history, not isolated
+per-case traces. They all begin on 2026-10-08; their latest packet times are
+14:50:27 (`pre_test`), 14:57:01 (`s0-empty-baseline`), 15:03:53
+(`C1-cycle1`), and 15:11:58 (`C2-cycle2`) on 2026-10-10. Attribute a packet
+to a test using its timestamp and the operator's action notes, not merely the
+filename. The snapshots contain earlier, unrelated device activity too.
+
+### Empty custom schedule
+
+In the `s0-empty-baseline` time window, the app read and rewrote operating
+state, then queried the schedule:
+
+| Frame / time | Value | Observation |
+| --- | --- | --- |
+| 127663 / 14:54:08.062 | notification `02 F0 01 51 06 ...` | State response |
+| 127664 / 14:54:08.072 | write `02 F1 01 51 06 ...` | State write |
+| 127665 / 14:54:08.081 | write `03 0F 06 ...` | Schedule query |
+| 127673 / 14:54:08.163 | notification `03 F0 06 00 ...` | Zero records reported after the `06` field |
+
+This supports the user-reported empty custom schedule: the response's record
+count is `00`. However, the preceding field is `06`, not the `02` seen in
+earlier captures, so the earlier claim that this field is a constant marker
+is not universal. Its meaning remains unknown. The response confirms a
+zero-record readback for this session; it does not decode the `06` field.
+
+An earlier packet in the same cumulative history (frame 125947 at 14:51:41)
+is `03 F0 02 01 8B 0A ...`. It may represent a one-record response, but it
+precedes the explicitly described empty-schedule action and is not isolated
+to a controlled one-entry test.
+
+### Built-in Cycle 1 and Cycle 2
+
+On the test device identified in the notes as `2B:80:04:04:B2:34`, the
+operator reported Cycle 1 selected and visible after switching devices,
+returning, and reopening the app:
+
+| Frame / time | Value | Observation |
+| --- | --- | --- |
+| 128749 / 15:01:03.024 | notification `02 F0 01 51 00 ...` | Auto state response |
+| 128750 / 15:01:03.031 | write `02 F1 01 51 00 ...` | State write |
+
+For Cycle 2, the capture first shows the existing Cycle 1 value, then a
+selector change, followed by a readback after reopening/rescanning:
+
+| Frame / time | Value | Observation |
+| --- | --- | --- |
+| 129267 / 15:05:09.992 | notification `02 F0 01 51 00 ...` | Existing state response |
+| 129268 / 15:05:10.000 | write `02 F1 01 51 00 ...` | Repeated existing state |
+| 129312 / 15:05:15.179 | write `02 F1 01 51 01 ...` | Third payload byte changes from `00` to `01` |
+| 130088 / 15:09:07.309 | notification `02 F0 01 51 01 ...` | Readback retains the changed value |
+| 130089 / 15:09:07.321 | write `02 F1 01 51 01 ...` | App repeats the read state |
+
+The user reports the app still displayed 81%, Auto, and Cycle 2 after
+reopening. `0x51` is consistent with 81 decimal in the second payload byte;
+the third payload byte is associated with the selected cycle in these
+controlled actions. In this capture, Cycle 1 is associated with `00` and
+Cycle 2 with `01`. This conflicts with the separate capture summarized above
+(Cycle 1 = `01`, Cycle 2 = `02`), so the selector mapping must not be treated
+as universal until device/firmware and exact UI transitions are compared in
+a clean, controlled repeat.
+
+The operator also noted apparent time/brightness points for each built-in
+cycle. None of the four supplied logs contains a `03 F1` schedule write, so
+those notes do not establish custom schedule contents or encoded records.
+The traces show state and schedule query/readback traffic, not proof that
+built-in cycle curves are transmitted as custom records or that custom
+records affect output during a built-in cycle.
+
+### Evidence limits and follow-up
+
+- The pre-test snapshot ends before the described test actions and does not
+  establish a protocol baseline.
+- The empty-schedule count is evidenced by frame 127673, but the preceding
+  `06` field needs comparison with controlled schedule reads on the same
+  device.
+- Cycle 1 and Cycle 2 selection/readback are supported on the test device,
+  but their values conflict with the earlier capture. Record model,
+  firmware, app version, and the exact selected label in a fresh repeat.
+- Cycle 3, a separate automatic default/unspecified option, the interaction
+  with a non-empty custom schedule, and physical output behavior remain
+  untested. Selector `00` is associated with Cycle 1 in this test, not proven
+  to be a default selector.
+- To avoid ambiguity from cumulative snoop history, record action timestamps
+  and extract only the interval for each case. Preserve the original
+  artifacts and verify a post-action `02 F0` readback.
+
 ## Additional Capture: Third Custom LED Window at 22:08, 0%
 
 In the LED-device capture, the user added a third timepoint to the custom
@@ -185,6 +274,10 @@ Evidence:
 Status:
 
 -   Clock upload from phone to lamp is confirmed.
+-   The timezone basis (local wall time versus UTC), sync trigger conditions,
+    and clock persistence through disconnects or power cycles are not yet
+    established. The observed field sequence needs repeat comparison across
+    connection lifecycles and a controlled phone-time-zone change.
 
 ------------------------------------------------------------------------
 
@@ -551,21 +644,26 @@ Determine whether:
                 manual brightness
 
             byte4:
-                01 = Cycle 1 (observed)
-                02 = Cycle 2 (observed)
-                00 = meaning in automatic mode unknown
+                Conflicting observations:
+                    one capture: 01 = Cycle 1, 02 = Cycle 2
+                    2026-10-10 test device:
+                        00 = Cycle 1, 01 = Cycle 2
+                Resolve against device/firmware and controlled readback
 
     03 0F
         Read schedule
 
     03 F0
         Schedule response
-            byte2: observed constant marker 02
-            byte3: record count (observed 00, 02, 03)
+            byte2: observed 02 and 06; meaning unresolved
+            byte3: candidate record count (observed 00, 02, 03 in
+                   controlled examples; 01 occurs in an earlier,
+                   uncontrolled response)
 
     03 F1
         Write custom schedule
-            byte2: observed constant marker 02
+            byte2: observed constant marker 02 in earlier captures;
+                   not yet compared across modes/devices
             byte3: record count
 
 ------------------------------------------------------------------------
@@ -580,7 +678,7 @@ Determine whether:
   Manual/auto mode byte      High confidence
   Schedule command family    Confirmed
   Schedule record count      High confidence (capture shows 0, 2 and 3)
-  Built-in cycle selector    High confidence (Cycle 1 = 01, Cycle 2 = 02)
+  Built-in cycle selector    High confidence as a field; value mapping conflicts
   Schedule entry size        Medium confidence
   Time encoding              Unknown
   Brightness encoding        Unknown

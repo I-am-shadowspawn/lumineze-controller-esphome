@@ -95,6 +95,26 @@ The archive path varies by Android version; search its file listing for
 
 ## Phase 1: Resolve current open questions
 
+### Evidence review: 2026-10-10 manual captures
+
+The four logs in `manual_test_resources/` are cumulative snoop snapshots with
+overlapping history, not isolated traces. Use packet timestamps together with
+the action notes to identify each event. The findings document records the
+frame-level analysis.
+
+| Case | Evidence and outcome | Status |
+| --- | --- | --- |
+| `S0-empty-baseline` | Frame 127673: `03 F0 06 00 ...`; zero records read back. The preceding `06` field differs from the `02` in earlier captures. | Empty count evidenced; field meaning open |
+| `C1-cycle-1` | Frames 128749-128750: `02 F0/F1 01 51 00 ...`; the app was reported to show Cycle 1 after reopening. | Selector value evidenced on this device |
+| `C2-cycle-2` | Frame 129312 writes `... 01 51 01 ...`; frames 130088-130089 read/rewrite `... 01 51 01 ...` after reopening. The app was reported to show Cycle 2. | Selector value evidenced on this device |
+
+The October capture associates Cycle 1 with selector `00` and Cycle 2 with
+`01`, conflicting with the earlier `01` / `02` association. Preserve both
+observations; do not use either mapping as universal until repeated on a
+device with its model and firmware recorded. None of these four logs contains
+a `03 F1` custom-schedule write. The noted time/brightness values are
+operator-reported observations, not evidence of encoded custom points.
+
 ### 1. Establish an empty-schedule baseline
 
 **Question:** Does an empty custom schedule reliably read back with a zero
@@ -112,11 +132,19 @@ record count, and what operating-state selector is present alongside it?
 **Expected evidence:** `03 0F` followed by a `03 F0` readback with zero
 records; capture the associated `02 F0` state response if present.
 
+**Current result:** Frame 127673 in
+`protocol-test-s0-empty-baseline-2026-10-10_btsnoop_hci.log` reports
+`03 F0 06 00 ...`, consistent with zero records. This closes the zero-count
+observation for that session, but not the meaning of `06` (earlier captures
+show `02` in that position). To resolve it, on the same device capture
+controlled reads of the empty schedule in custom mode and after selecting a
+built-in cycle; record the displayed mode, selected device address, and
+`03 0F`/`03 F0` payloads for both reads.
+
 ### 2. Map built-in cycle selectors
 
-**Question:** Are selector values `01` and `02` stable mappings for Cycle 1
-and Cycle 2, what value represents Cycle 3, and what is selector `00` in
-automatic mode?
+**Question:** What selector values map to Cycle 1, Cycle 2, and Cycle 3 on
+each device/firmware, and what is selector `00` in automatic mode?
 
 Run one report per selected state. Before each case, reconnect and read the
 current mode/cycle; then change only the cycle selection, wait for completion,
@@ -132,6 +160,17 @@ refresh the state, and generate the report.
 Do not treat the app's display label alone as proof of the stored selector;
 prefer matching write and readback. If there is no default/unspecified Auto
 option, mark that case unavailable rather than substituting another setting.
+
+**Current result:** The 2026-10-10 capture supports `00` for Cycle 1 and `01`
+for Cycle 2 on the device in the operator notes. This conflicts with the
+earlier `01` / `02` capture. Resolve before closing the mapping: record the
+lamp address/model/firmware and app version; connect only to that lamp; capture
+Cycle 1 readback, change only to Cycle 2 and capture write plus `02 F0`
+readback, then change back to Cycle 1 and capture a second readback. Include
+Cycle 3 if exposed. Do not switch to the second lamp during this series. If
+the two selector values still differ from the earlier capture, report
+device-specific mappings rather than selecting one as universal. Selector
+`00` as an automatic default remains untested.
 
 ### 3. Test built-in cycle versus custom-schedule interaction
 
@@ -153,10 +192,20 @@ the lamp's observed output follows the built-in cycle or custom points. Keep
 the schedule identical across cases. Do not infer output behavior from
 commands alone when physical lamp behavior can be observed.
 
+**Current result:** The reported built-in-cycle brightness/time observations
+are not tied to a confirmed custom schedule write; the supplied logs contain
+no `03 F1`. To evidence this interaction, first write and read back a
+recognizable two-point custom schedule (`03 F1` followed by matching `03 F0`),
+then select each built-in cycle without editing the custom points. Query and
+record schedule contents after every selection, and separately record actual
+lamp output at the scheduled times. Finish by selecting the custom mode and
+confirming its output. Keep the same device and schedule throughout.
+
 ### 4. Confirm custom schedule record-count byte
 
-**Question:** Is the byte after the observed `02` marker the record count for
-all supported counts, including one record?
+**Question:** Which response/write byte is the record count, and does it
+track all supported counts, including one record, when the preceding field
+varies?
 
 Create separate schedule states with exactly 0, 1, 2, and 3 timepoints.
 For each count, refresh/read back the schedule and generate one report:
@@ -170,10 +219,11 @@ For each count, refresh/read back the schedule and generate one report:
 
 Use distinct but simple values and record the UI values. Capture the
 `03 F1` write (if any) and the subsequent `03 F0` response. Verify that the
-count byte changes as `00`, `01`, `02`, `03`; do not assume the constant
-preceding `02` is understood. If the app sends no write for a count because
-that is already the stored state, first move to a different count, then make
-the target change and capture it.
+count byte changes as `00`, `01`, `02`, `03`; do not assume the preceding
+field is a constant marker (`06` preceded the zero count in the 2026-10-10
+empty-schedule response, while earlier captures show `02`). If the app sends
+no write for a count because that is already the stored state, first move to
+a different count, then make the target change and capture it.
 
 ### 5. Decode time fields independently
 
@@ -311,6 +361,41 @@ After schedule and operating-state fields are understood:
 4. Keep any unexplained trailing bytes as unknown fields. Build a byte
    inventory across captures before assigning checksum, flags, or padding
    meanings.
+
+### 12. Characterize onboard clock synchronization
+
+**Question:** Which phone time basis is encoded by `01 0F`, when does the app
+send it, and does the lamp keep schedule time through reconnects and power
+cycles?
+
+1. Record the phone's local date/time, UTC time, time zone, and Android
+   automatic date/time setting. On a fresh app-to-lamp connection, capture the
+   complete `01 0F` command and compare its year, weekday, month, day, hour,
+   minute, and second fields with both local time and UTC.
+2. Without changing the phone clock, schedule, or operating mode, capture
+   separate reports after a normal disconnect/reconnect and after app
+   restart. Record whether `01 0F` is sent, when it is sent relative to
+   initialization/state reads, and whether its payload tracks the phone.
+3. Capture a baseline with the phone in its current time zone. Change only
+   the phone time zone while automatic date/time remains enabled, reconnect,
+   and capture a second report. Compare local and UTC values to determine
+   whether the command carries local wall time or UTC. Restore the original
+   time zone after capturing the changed-zone report; do not manually change
+   the phone date/time.
+4. After all BLE writes have completed, safely power-cycle the lamp, reconnect,
+   and capture whether the app resends `01 0F`. Do not interrupt an in-flight
+   write.
+5. To confirm that the onboard clock drives schedules, use a one-point
+   schedule at a near-future time and observe the physical lamp transition.
+   Record phone time/time zone, scheduled time, whether clock sync occurred,
+   and observed output. Protocol packets alone do not prove clock accuracy.
+6. Compare `01 0F` captures on different natural dates or weekdays to verify
+   date/weekday field positions without manually altering the phone clock.
+
+Record full command bytes, frame/timestamp, ATT handle/opcode, local and UTC
+times, and the lamp model/firmware. Keep any timezone, weekday, persistence,
+or sync-trigger behavior that is not directly shown by repeated captures
+unconfirmed.
 
 ## Reporting conclusions
 
