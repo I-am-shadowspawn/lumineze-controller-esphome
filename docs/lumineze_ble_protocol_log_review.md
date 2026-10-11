@@ -322,12 +322,30 @@ automatic outputs. No independent selector-00 readback occurs.
 
 Both custom points are still in the future, but the controller remains in
 Cycle 1 for only about 16 seconds and returns to Cycle 4 before either point.
-This does not establish which schedule governs physical output across custom
-point times while Cycle 1 stays selected. A narrowed follow-up tracks that
-remaining requirement. It also avoids inferring step/interpolation behavior
+The capture alone does not establish behavior across custom point times
+while Cycle 1 stays selected. Subsequent operator confirmation resolves the
+active-cycle precedence question, and the narrowed follow-up is now closed
+(see clarification below). It also avoids inferring step/interpolation behavior
 from the immediate reduction before the first point.
 
 Frame 10771's reassembled ACL is `99 00 04 00 1B 0E 00 03 F0 05 02
 8C 22 09 96 08 00 ... 30`; default tshark fields omit its first three value
 bytes through repeated ATT decoding. Full 150-byte value is recovered from
 the reassembled payload in the evidence CSV.
+
+### Active-cycle precedence clarification
+
+The operator confirmed on 11 October: **the cycle shown as selected in the
+app is the cycle used by the lamp to adjust brightness**. This answers the
+I1 question: selecting Cycle 1 makes it govern output while the bespoke bank
+remains stored; selecting Cycle 4 makes that custom cycle govern output.
+The I1 future-transition precedence follow-up is marked unnecessary, based
+on this operator confirmation. The I1 packet evidence independently shows
+selection writes and unchanged custom-bank readback; it does not supply a
+timed physical trace across future points. No such trace is claimed.
+
+This establishes the operating model by operator evidence; detailed custom
+transition timing/interpolation, duplicate-time behavior and empty-bank
+fallback remain separate questions. Other cases retain any distinct
+requirements for exact selector readback or physical observations, rather
+than repeating the now-resolved general precedence question.

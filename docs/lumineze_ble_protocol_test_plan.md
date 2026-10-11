@@ -508,3 +508,12 @@ changes consistently, and readback or repeat testing supports the mapping.
 Use **high confidence** for a repeatable association without complete
 encoding/firmware coverage. Keep findings labeled **hypothesis** when only
 one packet or a user-interface label supports the interpretation.
+
+## Operator-confirmed active-cycle precedence (11 October)
+
+The operator confirms that the cycle selected in the app governs lamp
+brightness. The I1 future-transition precedence follow-up is therefore
+unnecessary for establishing that operating model. Keep its original steps
+as an optional trace protocol. Detailed custom interpolation/transition
+timing, exact state readbacks and empty-bank fallback retain their separate
+case objectives; no new hardware trace is implied by this confirmation.

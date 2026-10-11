@@ -255,7 +255,19 @@ read before and after Cycle 1 selection. Operator reports output changes to
 This strengthens the immediate mode-selection and storage-retention evidence.
 Reduced output percentage is unspecified; BLE state byte 51 is not a measured
 automatic output. The run returns to custom mode before either future point,
-so physical precedence through point times remains open. The capture is
+so this capture alone does not trace precedence through point times.
+Subsequent operator confirmation establishes that the app-selected cycle
+governs lamp brightness; the I1 precedence follow-up is now unnecessary. The capture is
 cumulative with the S0 retest; only new frames are counted. See the
 [I1 retest review](lumineze_ble_protocol_log_review.md#11-october-i1-output-retest)
 and [full new packet evidence](lumineze_ble_protocol_i1_retest_evidence.csv).
+
+### Confirmed active-cycle operating model
+
+Operator confirmation on 11 October: **the app-selected cycle governs lamp
+brightness**. A stored bespoke schedule does not override a selected built-in
+cycle. Returning to the custom cycle reactivates its brightness behavior.
+Evidence attribution: this operating model is operator-confirmed; the I1
+packets establish selection and storage retention, while the reported output
+change supplies physical observation. The dedicated I1 precedence follow-up
+is closed without claiming an additional timed capture.
