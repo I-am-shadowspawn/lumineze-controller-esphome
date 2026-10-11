@@ -95,25 +95,39 @@ The archive path varies by Android version; search its file listing for
 
 ## Phase 1: Resolve current open questions
 
-### Evidence review: 2026-10-10 manual captures
+### Evidence review: updated 11 October 2026
 
-The four logs in `manual_test_resources/` are cumulative snoop snapshots with
-overlapping history, not isolated traces. Use packet timestamps together with
-the action notes to identify each event. The findings document records the
-frame-level analysis.
+All 30 supplied files have been reviewed against the case script. They are an
+exact cumulative byte-prefix chain, not isolated per-case captures. The
+[case-level review](lumineze_ble_protocol_log_review.md),
+[case CSV](lumineze_ble_protocol_case_records.csv), packet evidence and hashed
+capture inventory preserve the frame-level results and progress. This table
+summarizes what the actual experiments establish:
 
-| Case | Evidence and outcome | Status |
+| Planned question | Current evidence | Remaining work |
 | --- | --- | --- |
-| `S0-empty-baseline` | Frame 127673: `03 F0 06 00 ...`; zero records read back. The preceding `06` field differs from the `02` in earlier captures. | Empty count evidenced; field meaning open |
-| `C1-cycle-1` | Frames 128749-128750: `02 F0/F1 01 51 00 ...`; the app was reported to show Cycle 1 after reopening. | Selector value evidenced on this device |
-| `C2-cycle-2` | Frame 129312 writes `... 01 51 01 ...`; frames 130088-130089 read/rewrite `... 01 51 01 ...` after reopening. The app was reported to show Cycle 2. | Selector value evidenced on this device |
+| Empty custom bank | Bank 06 repeatedly reads zero; bank 05 zero-count deletion reads back in N1 | Read-only comparison across built-in/custom selection; one named S0 file missing |
+| Cycle selectors | Same-DUT Cycle 1=`00`, Cycle 2=`01`, with repeat independent readback | Firmware/version scope and historical different mapping; Cycle 3/default UI options reported unavailable |
+| Built-in/custom interaction | Bank-05 points survive both selector changes; immediate output changes reported | Timed physical observations while staying in each mode; custom page queries also reselect mode |
+| Count field | Bank-05 counts 0,1,2,3 have matching later readback | Capacity, duplicates' output precedence, cross-device differences |
+| Time bytes | All nine T-series values match `80+hour`, binary minute | High-bit semantics; strict single-point repeat (actual series retained three points) |
+| Brightness | Controlled final 0,1,21,50 match decimal bytes | Wider B-series and historical 50% attribution; B10 has no log and achieved 9% |
+| Persistence | Custom contents retained across ordinary reconnects | Actual power-loss, force-stop and immediate commit timing |
+| Reset/other commands | Two `04 F0`/`04 0F` pairs in reset-labeled capture | Exact UI action and command effect; no response/post-action readback |
+| Clock and transport | Repeated local-BST-compatible clock uploads, 152-byte writes/150-byte responses, ATT Write Command | Controlled timezone/weekday/power tests; trailer semantics |
 
-The October capture associates Cycle 1 with selector `00` and Cycle 2 with
-`01`, conflicting with the earlier `01` / `02` association. Preserve both
-observations; do not use either mapping as universal until repeated on a
-device with its model and firmware recorded. None of these four logs contains
-a `03 F1` custom-schedule write. The noted time/brightness values are
-operator-reported observations, not evidence of encoded custom points.
+Each required follow-up is inserted immediately below its parent case in the
+CSV with concrete steps. “Reviewed” means the evidence was analyzed, not that
+an experiment passed. Cases without supplied captures remain explicitly
+unreviewed; dates or results are not inferred from planned instructions.
+Original historical findings are retained in a separate historical document.
+
+Capture action times from packets and preserve filename/report times separately.
+The N3 report filename says 18:41:08, but its write occurs at 17:58:38.448 BST.
+Record the **actual achieved UI value**, not only the target: the B10 note says
+9%, and B1 contains fourteen actual interim writes before final 1%. Newly added
+points can send a default 100% before the requested adjustment. Record all
+intermediate traffic and conduct tests on the isolated setup in the plan.
 
 ### 1. Establish an empty-schedule baseline
 
@@ -132,14 +146,14 @@ record count, and what operating-state selector is present alongside it?
 **Expected evidence:** `03 0F` followed by a `03 F0` readback with zero
 records; capture the associated `02 F0` state response if present.
 
-**Current result:** Frame 127673 in
-`protocol-test-s0-empty-baseline-2026-10-10_btsnoop_hci.log` reports
-`03 F0 06 00 ...`, consistent with zero records. This closes the zero-count
-observation for that session, but not the meaning of `06` (earlier captures
-show `02` in that position). To resolve it, on the same device capture
-controlled reads of the empty schedule in custom mode and after selecting a
-built-in cycle; record the displayed mode, selected device address, and
-`03 0F`/`03 F0` payloads for both reads.
+**Current result:** Bank 06 count zero is independently read at frames
+127673 and 136879; bank 05 count zero after deletion is read at 145912. The
+byte preceding count follows the queried bank rather than being constant.
+The named S0-empty-cycle-repeat capture is absent; related 17:13 actions appear
+in the later cumulative C1 log, but do not provide the intended passive bank
+comparison. Follow its inserted retest and record when opening a custom page
+also writes the operating selector. Do not treat bank 06 being empty as proof
+that bank 05 or all custom banks are empty.
 
 ### 2. Map built-in cycle selectors
 
@@ -161,16 +175,13 @@ Do not treat the app's display label alone as proof of the stored selector;
 prefer matching write and readback. If there is no default/unspecified Auto
 option, mark that case unavailable rather than substituting another setting.
 
-**Current result:** The 2026-10-10 capture supports `00` for Cycle 1 and `01`
-for Cycle 2 on the device in the operator notes. This conflicts with the
-earlier `01` / `02` capture. Resolve before closing the mapping: record the
-lamp address/model/firmware and app version; connect only to that lamp; capture
-Cycle 1 readback, change only to Cycle 2 and capture write plus `02 F0`
-readback, then change back to Cycle 1 and capture a second readback. Include
-Cycle 3 if exposed. Do not switch to the second lamp during this series. If
-the two selector values still differ from the earlier capture, report
-device-specific mappings rather than selecting one as universal. Selector
-`00` as an automatic default remains untested.
+**Current result:** Same-DUT controlled repeats support Cycle 1 selector
+`00` and Cycle 2 `01`, with independent state reads in adjacent captures.
+Own-file absence of post-write state is filled by later readback and explicitly
+referenced in the CSV. Preserve the historical `01`/`02` association as a
+separate unresolved device/firmware comparison. Record firmware and exact UI
+labels before repeating on another DUT. Cycle 3 and unspecified Auto were
+reported unavailable; no mapping is inferred for them.
 
 ### 3. Test built-in cycle versus custom-schedule interaction
 
@@ -192,14 +203,13 @@ the lamp's observed output follows the built-in cycle or custom points. Keep
 the schedule identical across cases. Do not infer output behavior from
 commands alone when physical lamp behavior can be observed.
 
-**Current result:** The reported built-in-cycle brightness/time observations
-are not tied to a confirmed custom schedule write; the supplied logs contain
-no `03 F1`. To evidence this interaction, first write and read back a
-recognizable two-point custom schedule (`03 F1` followed by matching `03 F0`),
-then select each built-in cycle without editing the custom points. Query and
-record schedule contents after every selection, and separately record actual
-lamp output at the scheduled times. Finish by selecting the custom mode and
-confirming its output. Keep the same device and schedule throughout.
+**Current result:** I0 writes 17:31/21% and 17:36/0% to bank 05, read
+back in I1. Contents are retained after both built-in selections. The
+operator reports immediate 0%↔100% changes for Cycle 1/custom reselection,
+but the actions do not observe both future scheduled transitions. I2 has no
+recorded physical result. I4 occurs after both point times. The inserted
+I1/I2/I4 retests use future points and separate physical observations from
+stored contents; keep a built-in mode selected throughout each observation.
 
 ### 4. Confirm custom schedule record-count byte
 
@@ -243,15 +253,16 @@ generate a new report immediately after readback:
 | `T0900` | 09:00 | Hour increment |
 | `T1000` | 10:00 | Second hour increment |
 | `T1200` | 12:00 | Midday / high bit boundary |
-| `T2208` | 22:08 | Compare with observed `96 09` |
+| `T2208` | 22:08 | Current `96 08` versus disputed historical `96 09` |
 | `T2359` | 23:59 | End-of-day boundary |
 | `T0000` | 00:00 | Midnight / day wrap |
 
 For each time report, compare the same record's first two bytes and check
-whether a `03 F0` response echoes the write. The known `22:08 -> 96 09`
-association is a reference point, not proof of byte order or encoding. Only
-claim a decoded formula after it predicts all sampled values, including
-midnight and 23:59.
+whether a `03 F0` response echoes the write. The historical `22:08 -> 96 09` association is disputed: the reviewed N3
+and T2208 captures use `96 08`. The current sampled formula predicts all
+nine values, including midnight and 23:59, with independent readback. The
+actual series retained three points and reordered them; use the inserted
+single-point/flag follow-up for the remaining setup and high-bit questions.
 
 ### 6. Resolve brightness encoding and the 50% discrepancy
 
@@ -282,6 +293,14 @@ field. The existing `0% -> 00` and `100% -> 64` observations should be
 reproduced in this same series. If the `50%` result is still `2E`, repeat
 `B50` after restarting the app and reconnecting without changing firmware or
 other settings.
+
+**Current result:** B0 and B1 independently confirm final 0% and 1%.
+N1 and all time cases confirm 50% as `32`; I0 confirms 21% as `15`.
+The historical 50%/`2E` discrepancy is not reproduced and must not be assumed
+a nonlinear rule. B10 has an operator-only 9% result and no capture; its
+inserted retest records the actual selected value. B25 onward remain planned
+without supplied logs. Do not associate unrecorded UI values with B1's interim
+slider packets.
 
 ### 7. Determine whether writes persist and when they commit
 
@@ -396,6 +415,22 @@ Record full command bytes, frame/timestamp, ATT handle/opcode, local and UTC
 times, and the lamp model/firmware. Keep any timezone, weekday, persistence,
 or sync-trigger behavior that is not directly shown by repeated captures
 unconfirmed.
+
+## Review-driven additional test guidance
+
+- Identify whether “full power reset” is an app button or a physical power
+  operation. Family `04 F0`/`04 0F` appears twice after state readback on one
+  session; the inserted reset retest requires the exact UI label, before/after
+  state and custom-bank reads, and an independent physical power-cycle case.
+- Keep hour/minute changes separate from point enablement if the app exposes
+  that option. Always-set `80` is not sufficient to identify an enable flag.
+- Preserve full 152-byte custom writes and 150-byte responses. Compare the
+  trailer at offsets 148 onward separately for time and brightness edits;
+  do not guess checksum or record-capacity meanings from padding.
+- Preserve record identity through UI sorting. Since the current app sends
+  sorted records already, readback alone does not demonstrate lamp-side sorting.
+- Schedule query/open actions can also select that bank through `02 F1`.
+  Record the state before and after, especially when testing built-in precedence.
 
 ## Reporting conclusions
 

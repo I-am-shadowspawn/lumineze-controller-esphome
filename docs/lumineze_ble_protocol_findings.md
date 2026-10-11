@@ -191,8 +191,10 @@ The same session sends two pairs:
 ```
 
 They occur after the state readback and correlate with the operator's
-“full power reset twice” description. There is no family-04 response or
-post-action state read. Whether this was an app reset action, its exact effect,
+“full power reset twice” description. There is no family-04 response or same-report post-action state read. The
+next setup session reads the same `01/51/01` fields at 135989 before any
+selector change, which does not establish the action's other effects. Whether
+this was an app reset action, its exact effect,
 or an actual physical power cycle is unresolved. The retest distinguishes
 these actions and requires before/after state and schedule reads.
 

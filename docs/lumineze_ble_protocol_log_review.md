@@ -169,7 +169,9 @@ finds additional family-04 writes in the reset-labeled case:
 
 These four writes are on the same HCI session and follow the state readback.
 There is no observed family-04 notification or post-action state query in that
-case. They correlate temporally with the operator's twice-reported “full power
+case. The next setup session reads unchanged `01/51/01` fields at 135989
+(17:05:07.950), before selecting a different bank. This does not identify the
+reset action's other effects. The commands correlate temporally with the operator's twice-reported “full power
 reset”, but its exact UI meaning and effect are unknown. Do not infer physical
 power cycling from that label. The retest explicitly distinguishes an app
 action from an unplug/replug and captures before/after state and custom-bank
@@ -207,3 +209,15 @@ Confirmed protocol observations are distinct from outstanding physical output,
 power-loss persistence, commit timing, lamp firmware differences, timezone
 shift, weekday mapping, high-bit/trailer meaning, and count-limit tests. None
 of this app-driven discovery substitutes for ESPHome Gate A/T23/T15 acceptance.
+
+
+### Documentation audit
+
+After analysis, all 30 filenames are represented by reviewed case/context rows.
+All 363 unique DUT application ATT values in the exhaustive latest-capture
+extraction match the evidence CSV byte-for-byte, with matching frame number,
+opcode, handle, timestamp and value length. Original log SHA256 hashes are
+unchanged. All nine inserted retests sit directly below their parent case;
+each contains executable app-driven steps and no invented capture date.
+CSV parsing, unique case IDs and documentation whitespace checks pass. Workflow
+checks were not monitored for this analysis task.
