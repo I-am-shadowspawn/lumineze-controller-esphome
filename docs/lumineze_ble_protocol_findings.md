@@ -56,6 +56,38 @@ read-only comparison. Both gaps have explicit retest rows in the case CSV.
 
 ## Additional Capture: Built-In Cycles and Empty Custom Schedule
 
+### 11 October update: bank identity, counts and reconnect retention
+
+The new controlled count series uses custom bank `05` (operator label Custom
+Cycle 4), while the empty-repeat series uses `06` (Custom Cycle 5). Queries,
+responses and writes carry the bank at zero-based byte 2. Operating-state
+commands/responses carry the selected bank/cycle at byte 4. Their correlation
+supports a bank identifier, superseding the historical “constant marker”
+hypothesis. Universal numbering across devices/firmware remains unverified.
+
+On bank 05, final count writes `00`, `01`, `02`, `03` are independently read
+in later app sessions before further edits. Relevant write/readback pairs:
+145617/145912; 146127/146524; 146824/147161; 147362/150020. Records begin at
+byte 4 with three-byte stride. N3 was actually written at 17:58:38.448 BST,
+despite its report filename containing 18:41:08. The later response retains
+08:00/50%, 18:00/50%, 22:08/0%.
+
+I0 writes bank 05's 17:31/21% and 17:36/0% points at 139270; I1 independently
+reads them at 139708. Both records are still read at 140220 and 145008 after
+selecting built-in cycles 1 and 2. Storage is retained across selector changes
+and normal reconnections. Power-loss persistence and immediate commit timing
+remain untested. Opening a custom bank also writes its operating selector,
+so the available reads do not establish behavior while remaining in built-in
+mode. Operator-reported immediate output changes support mode effects but
+do not prove precedence throughout scheduled transitions; retests are listed.
+
+The `02 F0` brightness field stays `51` while the operator observes other
+automatic levels. Treat it as a retained Manual setpoint, not physical output
+telemetry. Deleting all custom points was reported to restore 81% output;
+this needs a controlled physical repeat and must not be interpreted as off.
+
+### Historical capture context
+
 The `btsnoop_hci.log` capture records the user-described controlled sequence:
 default Cycle 2, Cycle 1, Cycle 2, a custom schedule with no timepoints, then
 Cycle 1.
