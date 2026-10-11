@@ -567,9 +567,9 @@ stale-state observation requires separate ESP investigation if pursued.
 
 ### Timezone retry complete (Cyprus)
 
-BST -> Cyprus -> BST clockuploads confirm phone-local walltime, notUTC.
-Thetimezonebaseline/shift objectives arecovered; retain theemptyPerth
-attempt as historicalevidence and markthecombinedretest reviewed.
-Noadditionalzonechange isneeded to establish thissampled rule.
-The samebank isnowread inManual andAuto with unchangedhighbit80,
-completing thatcomparison without decodingthebit'sunderlyingmeaning.
+BST -> Cyprus -> BST clock uploads confirm phone-local wall time, not UTC.
+The timezone baseline/shift objectives are covered; retain the empty Perth
+attempt as historical evidence and mark the combined retest reviewed.
+No additional zone change is needed to establish this sampled rule.
+The same bank is now read inManual andAuto with unchanged high bit 80,
+completing that comparison without decoding the bit'sunderlying meaning.

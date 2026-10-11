@@ -357,16 +357,16 @@ phone-local-time rule across zones. See the
 
 ## Confirmed timezone-upload rule: BST -> Cyprus -> BST
 
-The successfulCyprusretry sends12:58:26 inBST,14:59:32 inCyprus, then
-13:00:08 afterBSTrestoration, while packetepoch time advances normally.
-Allsevenuploads match phone-local time within1second. Thus the app uploads
-**local wall time, notUTC**, for thisDUT/app. OriginalPerthattempt remains
-empty; no further timezonecomparison retest isneeded for thisconclusion.
-Decodedclockfields contain no explicitzoneidentifier oroffset. DSTchange,
-date rollover andphysicalschedule timing are separateunverified behavior.
+The successful Cyprus retry sends 12:58:26 in BST,14:59:32 in Cyprus, then
+13:00:08 after BST restoration, while packetepoch time advances normally.
+All seven uploads match phone-local time within 1 second. Thus the app uploads
+**local wall time, not UTC**, for this DUT/app. Original Perth attempt remains
+empty; no further timezone comparison retest is needed for this conclusion.
+Decoded clock fields contain no explicit zone identifier or offset. DST change,
+date rollover and physical schedule timing are separate unverified behavior.
 
-The samecapture also readsbank02 inManual andAuto with identical
-`8B 0A 00` recordbytes: `0x80` doesnot track globalmode. Thiscompletes
-the matchedcomparison; itsactualmeaning remainsundecoded. See the
-[Cyprusretry review](lumineze_ble_protocol_log_review.md#cyprus-timezone-retry)
+The same capture also reads bank 02 inManual andAuto with identical
+`8B 0A 00` record bytes: `0x80` does not track global mode. This completes
+the matched comparison; its actual meaning remains undecoded. See the
+[Cyprus retry review](lumineze_ble_protocol_log_review.md#cyprus-timezone-retry)
 and [29 preserved packets](lumineze_ble_protocol_timezone_evidence.csv).
