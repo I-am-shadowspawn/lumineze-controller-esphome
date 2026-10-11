@@ -47,7 +47,7 @@ trailing bytes.
 | `C1-cycle1` | 127870 at 14:58:07.197: `02 F1 01 51 00`; 128749 at 15:01:03.024: `02 F0 01 51 00` | Actual selector change and later readback support Cycle 1 = `00` on this DUT. 128750 is an app echo after readback. |
 | `C2-cycle2` | 129312 at 15:05:15.178: `02 F1 01 51 01`; 130088 at 15:09:07.309: `02 F0 01 51 01` | Cycle 2 = `01` retained after reconnect. The visit to another lamp must not be mixed into this mapping. |
 | `baseline_pretesting` | New frames 130171–135115, no relevant DUT commands | Snapshot does not establish a fresh operating baseline; earlier C2 packets are inherited. |
-| `full-power-reste` | 135375 at 17:01:46.418: `02 F0 01 51 01`; 135377 queries bank 01 without schedule reply | State after operator-reported resets matches prior selector. Only one app session is visible; power boundaries, custom persistence and clock retention are inconclusive. Clock upload precedes readback. Retest added. |
+| `full-power-reste` | 135375 at 17:01:46.418: `02 F0 01 51 01`; 135382/135384 and 135388/135390: `04 F0` / `04 0F` command pairs | State is read **before** the reset-labeled actions. Only one app session is visible; actual action type, effect, power boundaries, persistence and clock retention are inconclusive. Retest added; family 04 details below. |
 | `s0-empty-custom-repeat-setup` | 136116/136117: query bank 06 / write selector 06; 136125: `03 F0 06 00` | Selecting reported custom Cycle 5 correlates with `06`; setup changes selector, not only reads. |
 | `S0-empty-custom-repeat` | 136869: state selector 06; 136871 query; 136879 at 17:08:43.478: `03 F0 06 00` | Repeated independent empty-bank read, no custom write. |
 | Missing `S0-empty-cycle-repeat` | C1-repeat snapshot inherits 137428–137486 at 17:13:03–17:13:53: selector 06→00→06, two bank-06 empty replies | Likely matching operator sequence, but named 17:17 file absent. No bank-00 schedule reply or intermediate state read; add a timestamped controlled retest. |
@@ -131,3 +131,79 @@ by its time/level tuple rather than a fixed position after an order change.
 The historical `22:08 -> 96 09` note is not reproduced: both N3 and T2208
 encode minute 8 as `08`. Preserve the historical discrepancy as an attribution
 uncertainty; under the new sampled formula `96 09` would denote 22:09.
+
+## Fourth batch: brightness and incidental protocol traffic
+
+| Case | Evidence | Result |
+| --- | --- | --- |
+| B0 | 157162 at 19:13:07.486 sets 12:34/50%; 157168 at 19:13:10.442 changes only level to `00`; 157781 at 19:13:26.399 reads `8C 22 00` | Final 0% write/readback confirmed. Setting up the new time in this case is a deviation; compare the final two writes. Three points remain. |
+| B1 | 157948–158011 at 19:16:02.601–19:16:24.921; 158587 at 19:16:38.960 reads `8C 22 01` | Final 1% write/readback confirmed after 14 slider writes. Operator saw no discernible illumination; this does not establish a minimum physical level. |
+| B10 (no supplied file) | Operator note says 9% was achieved, with visible output | No attributable packet or timestamp. B1's interim `09` writes are not evidence of this later B10 action. An exact-value retest is inserted directly below B10. |
+
+B1's transmitted slider levels are **5, 4, 9, 0, 5, 12, 7, 9, 11, 8, 6,
+8, 7, 1**. The app emits actual commands during adjustment; these are not
+unsent drafts. Only the final 1% UI value is independently associated and
+read back in this case. Together with I0's 21% (`15`) and N1/time-series 50%
+(`32`), the controlled evidence supports direct percent encoding at 0, 1,
+21 and 50. Default 100% (`64`) appears when adding points; a controlled B100
+case is still not supplied. The earlier 50%/`2E` discrepancy is not reproduced.
+
+In this series, schedule writes have **152-byte ATT values**, ending in bytes
+148–151 `0F xx 00 30`; notifications have **150-byte values**, ending with
+byte 149 `30`. Bytes between the declared records and the trailer are zero
+in these snapshots. Brightness edits correlate `xx` with record index 0/1/2,
+but time edits keep `xx=00` even when editing/reordering another record.
+This is an observation, not a decoded universal index or checksum. A focused
+trailer retest is inserted below B1. Padding does not prove maximum point
+capacity; count-limit tests remain open.
+
+An exhaustive pass over **all** DUT ATT packets in the latest cumulative log
+finds additional family-04 writes in the reset-labeled case:
+
+| Frame | Time BST | Full ATT value |
+| --- | --- | --- |
+| 135382 | 17:01:50.755 | `04 F0 00 00 00 00 00 00 00 00 00 00 00 00 00 40` |
+| 135384 | 17:01:50.844 | `04 0F 00 00 00 00 00 00 00 00 00 00 00 00 00 40` |
+| 135388 | 17:01:54.565 | `04 F0 00 00 00 00 00 00 00 00 00 00 00 00 00 40` |
+| 135390 | 17:01:54.999 | `04 0F 00 00 00 00 00 00 00 00 00 00 00 00 00 40` |
+
+These four writes are on the same HCI session and follow the state readback.
+There is no observed family-04 notification or post-action state query in that
+case. They correlate temporally with the operator's twice-reported “full power
+reset”, but its exact UI meaning and effect are unknown. Do not infer physical
+power cycling from that label. The retest explicitly distinguishes an app
+action from an unplug/replug and captures before/after state and custom-bank
+readback. This corrects the initial preliminary interpretation of the row.
+
+The exhaustive ATT pass finds all DUT value-bearing application command
+families `01`, `02`, `03`, `04`, `05`; GATT service-discovery values are not
+treated as application messages. Writes are `0x52`, so there is no ATT Write
+Response expected for them. No immediate application acknowledgment of any
+of the 38 custom writes is observed; later query notifications establish
+readback, not a direct write acknowledgment. Example MTU exchange at
+157626/157634 is client 247/server 517, sufficient for these full values.
+This refines the old description of universally 16-byte protocol frames.
+
+All **79** captured DUT clock uploads encode little-endian year 2026, weekday
+byte `06`, month/day `0A/0A`, and a time within one second of the packet's
+Europe/London wall time. For example, 158566 at 19:16:38.674 BST sends
+`01 0F EA 07 06 0A 0A 13 10 26 00 00 00 00 00 10`. The encoded 19:16:38
+differs by +1 hour from UTC at that instant. This is consistent with local
+BST time; the phone's configured timezone was not recorded and no timezone
+change trial exists. Saturday `06` is observed, but the weekday convention
+needs another weekday. Uploads occur after initialization and sometimes
+again during a connection; they do not prove lamp clock accuracy or retention.
+
+## Review completion and remaining tests
+
+All 30 original files have an inventory record and a reviewed case/context
+row. One named S0 case file is absent; related inherited packets were examined
+and a retest is recorded. Unavailable UI options remain operator reports.
+Other planned cases without logs are explicitly marked “No supplied capture”;
+their dates and results are not invented. Inserted retests immediately follow
+their parent case and give concrete steps for the unresolved question.
+
+Confirmed protocol observations are distinct from outstanding physical output,
+power-loss persistence, commit timing, lamp firmware differences, timezone
+shift, weekday mapping, high-bit/trailer meaning, and count-limit tests. None
+of this app-driven discovery substitutes for ESPHome Gate A/T23/T15 acceptance.
