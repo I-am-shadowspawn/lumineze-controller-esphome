@@ -459,3 +459,59 @@ the app, captures connection and action/readback timestamps, and verifies
 ACL/ATT traffic before submission. Keep source and any `.last` capture
 separate. Do not repeat toggles to decode the high bit unless the app can
 actually query bank records while retaining Manual.
+
+## Third mode capture and external-control reconciliation
+
+Source: `/srv/dev/data_projects/luminEze_bt_logs/protocol-test-cycle_auto_manual_auto3-2026-10-11-123817.log`.
+SHA256: `3afd10a8ddda149ac637e20ef107d16d766a57e3737916a753cfd182cd409295`.
+8,337 frames span **12:27:14.374778–12:40:25.797547 BST**; request
+initiation is **12:38:17 BST**. The first 214 frames hash to the previous
+setup-only capture, confirming cumulative history. Appended frames 215–8337
+contain the new interaction; none of the inherited frames contain DUT values.
+[Full evidence](lumineze_ble_protocol_mode3_evidence.csv) preserves 36 DUT values.
+
+| Event | Frame / BST | Evidence |
+| --- | --- | --- |
+| Initial Manual read | 3555 / 12:32:05.901 | `02 F0 00 27 02 ...`: Manual, 39%, bank 02; followed by matching Manual echo |
+| Schedule read in Manual | 3565 / 12:32:05.953 | `03 F0 02 01 8B 0A 00 ...`: one point 11:10/0%, hour high bit set |
+| Auto then Manual | 3573/3576 / 12:32:09.669 / 12:32:12.641 | Same level/bank, mode01 then00; no schedule edit |
+| Next connection state notification | 4101 / 12:36:12.265 | `02 F0 00 53 02 ...`: Manual83%, immediately after connection and before initialization/query |
+| Explicit state read | 4222 / 12:36:13.433 | Manual83% again, before matching echo4223 |
+| Schedule read in Manual | 4232 / 12:36:13.534 | Unchanged `8B 0A 00`, high bit still set |
+| App level reduction | 4282/4284 / 12:36:25.380 / .487 | `02 F1 00 16 02 ...`: Manual22%, twice |
+| Auto then Manual | 4287/4290 / 12:36:27.838 / 12:36:30.524 | Mode changes retain22% and bank02 |
+| Later independent state read | 8281 / 12:37:55.469 | `02 F0 00 16 02 ...`: retained Manual22% |
+| Later Manual schedule read | 8291 / 12:37:55.570 | Same single record, no forced Auto or schedule edit |
+
+Operator correction: the app reads the lamp's current Manual setting, rather
+than simply remembering an old app-only value. An ESP-set83% appeared on the
+next app read. The83% lamp responses before app echo support that correction.
+The prior app-cache hypothesis is superseded. This still does not make the
+Manual setpoint a measured automatic-output telemetry field.
+
+Operator reports an app setting of21% before the ESP update and a reduction
+back to21% afterward, while the ESP continued to believe83%. The supplied
+phone packets instead show initial39%, later83%, reduction writes22% and
+final22% readback. There is no15hex(21%) command in this DUT capture. Record
+that mismatch rather than labeling16hex as21% or inferring a nonlinear
+encoding. The initial21% action and ESP-origin write are not visible here.
+The ESP's stale83% is operator evidence of an external-change reconciliation
+problem; these packets cannot establish whether the cause is missed
+notification, polling, connection ownership or internal state handling. An
+ESP trace would be needed to diagnose that issue.
+
+Manual-mode schedule reads are now established: state00 is independently
+read, echo remains00, then the same bank's record is returned with high bit
+set. This rules out the simple interpretation “record bit80 means this
+schedule is currently active in Auto”. It does not establish the actual
+bit meaning or exclude a stored per-point flag independent of global mode.
+No bank02 read occurs while Auto is active, so a complete matched comparison
+is absent. There is no need to repeat the UI-capability/capture test; the
+remaining bit semantics are explicitly unknown.
+
+Frame4101 fields output loses the first three value bytes through repeated
+ATT decoding. Raw H4 ACL bytes contain `... 1B 0E 00 02 F0 00 53 02
+00 00 00 00 00 00 00 00 00 00 00 20`, confirming the full16-byte
+notification preserved in the CSV. Unlike the query-associated responses,
+this particular notification arrives immediately after connection before
+any captured app query; do not assume all state notifications require a query.

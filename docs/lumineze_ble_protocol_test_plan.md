@@ -545,3 +545,13 @@ No bank read occurs in Manual, so high-bit semantics remain open. The
 narrowed `MODE-manual-bank-read-follow-up` checks for a passive UI read;
 if the app cannot provide it, record the comparison as unavailable rather
 than repeat the already successful mode toggles.
+
+### Third mode capture outcome
+
+Manual-mode schedule reading is now demonstrated; no repeat is needed to
+check UI capability. Record hour high bit remains set while mode is Manual,
+ruling out a direct current-Auto indicator. Exact bit semantics remain unknown,
+and matched Auto bank02 data is not supplied. Lamp-origin83% and22% reads
+confirm app refresh of current Manual state; the operator's21% description
+differs from wire22%. Investigate ESP external-change reconciliation with
+ESP evidence if requested; do not infer its internal behavior from phone logs.

@@ -303,10 +303,33 @@ observed mode writes from the missing Manual-bank comparison.
 
 Operator reports the app opens in retained Manual mode, displays an 81%
 Manual slider before adjustment, and the external ESP test controller
-requires Manual mode to affect output. This is consistent with the prior
-lamp-reported retained Manual setpoint `51`; it is not proof of app-only
-caching or measured current brightness. Phone HCI logs cannot observe
+requires Manual mode to affect output. This earlier cache interpretation is superseded by the subsequent
+operator correction and mode3 readbacks: the app refreshes the lamp-reported
+current Manual setting. That setting is still not measured automatic output. Phone HCI logs cannot observe
 direct ESP-to-lamp writes. The second mode capture contains only reset/setup/
 scanning and no ACL/ATT traffic, so it does not independently validate those
 actions or provide Manual-mode bank bytes. See the
 [capture review](lumineze_ble_protocol_log_review.md#second-manualauto-capture-missing-application-traffic).
+
+## Current Manual-setting readback and external changes
+
+The operator corrected the earlier hypothesis: **the app reads the lamp's
+current Manual setting**. The new trace confirms lamp-origin83% readback
+before app echo; subsequent app reduction is written and later independently
+read as **22% (`16` hex)**. Operator describes21%, but no21% command occurs
+in this capture; preserve that discrepancy without inventing a conversion.
+
+The operator reports the ESP still believed83% after the app reduced output.
+This indicates a state-reconciliation issue to investigate in the ESP
+controller; its cause is not established by the phone trace. Phone HCI logs
+do not capture direct ESP writes or ESP internal state.
+
+Schedule queries can occur while Manual remains selected: bank02's
+11:10/0% record is read three times with hour byte`8B` and mode`00`. The
+high bit is therefore **not a direct indicator of current Auto activation**.
+Its underlying meaning remains unknown; no same-bank Auto read is captured.
+A state notification carrying83% also arrives immediately after connection,
+before initialization/query, showing that state responses are not exclusively
+query-triggered in all observed sessions. See the
+[mode3 review](lumineze_ble_protocol_log_review.md#third-mode-capture-and-external-control-reconciliation)
+and [packet evidence](lumineze_ble_protocol_mode3_evidence.csv).
