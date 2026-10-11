@@ -43,7 +43,9 @@ other settings in the same test.
        adb bugreport protocol-test-C1-cycle-1-2026-09-30.zip
 
    Use a unique file name for every report, substituting the case ID and
-   current date. If ADB is unavailable, use the Android bugreport function and
+   current date. For these supplied logs, the operator confirms filename times
+   record bugreport request initiation in BST. Record request initiation and
+   completion separately from action and last-packet times. If ADB is unavailable, use the Android bugreport function and
    retain the original archive unchanged.
 7. If a test compares a baseline and a changed state, capture a baseline
    report first, then make only the planned change and generate a second
@@ -177,7 +179,9 @@ unreviewed; dates or results are not inferred from planned instructions.
 Original historical findings are retained in a separate historical document.
 
 Capture action times from packets and preserve filename/report times separately.
-The N3 report filename says 18:41:08, but its write occurs at 17:58:38.448 BST.
+The N3 filename records bugreport request initiation at 18:41:08 BST; its
+write occurs earlier at 17:58:38.448 BST. The gap is a delayed report, not an
+incorrect filename timestamp.
 Record the **actual achieved UI value**, not only the target: the B10 note says
 9%, and B1 contains fourteen actual interim writes before final 1%. Newly added
 points can send a default 100% before the requested adjustment. Record all

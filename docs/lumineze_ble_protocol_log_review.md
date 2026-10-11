@@ -18,8 +18,14 @@ for later readback; never count overlapping copies as independent repeats.
 `lumineze_ble_protocol_capture_inventory.csv` records original names, SHA256,
 frame counts, absolute first/last packet times and newly appended frame ranges.
 HCI snoop timestamps are converted to Europe/London (BST, UTC+01:00 on 10 October).
-Filename times identify report labels, while packet times identify BLE actions.
-Several captures continue about two minutes after their filename time.
+The operator confirmed on 11 October that filename timestamps identify
+**bugreport request initiation**, in BST. Packet timestamps identify BLE
+actions; the last packet identifies capture end, not necessarily report
+completion. Several captures continue about two minutes after request
+initiation, consistent with collection continuing during report generation.
+The inventory now records initiation separately where filenames include time;
+date-only filenames leave that field blank. N3 was requested at 18:41:08
+after its 17:58:38.448 write; the difference is not a filename error.
 
 `lumineze_ble_protocol_packet_evidence.csv` preserves full relevant ATT values,
 frame numbers, millisecond timestamps, opcode, ATT handle, connection handle,
@@ -50,7 +56,7 @@ trailing bytes.
 | `full-power-reste` | 135375 at 17:01:46.418: `02 F0 01 51 01`; 135382/135384 and 135388/135390: `04 F0` / `04 0F` command pairs | State is read **before** two app Test control > Full power test activations (operator clarification). Apparent 0%/100% cycling and return to requested output require timed verification. No physical power-cycle evidence; narrowed retest below. |
 | `s0-empty-custom-repeat-setup` | 136116/136117: query bank 06 / write selector 06; 136125: `03 F0 06 00` | Selecting reported custom Cycle 5 correlates with `06`; setup changes selector, not only reads. |
 | `S0-empty-custom-repeat` | 136869: state selector 06; 136871 query; 136879 at 17:08:43.478: `03 F0 06 00` | Repeated independent empty-bank read, no custom write. |
-| Missing `S0-empty-cycle-repeat` | C1-repeat snapshot inherits 137428–137486 at 17:13:03–17:13:53: selector 06→00→06, two bank-06 empty replies | Likely matching operator sequence, but named 17:17 file absent. No bank-00 schedule reply or intermediate state read; add a timestamped controlled retest. |
+| Missing `S0-empty-cycle-repeat` | C1-repeat snapshot inherits 137428–137486 at 17:13:03–17:13:53: selector 06→00→06, two bank-06 empty replies | Likely matching operator sequence; 17:17 denotes later report request, but its source file is absent. No bank-00 schedule reply or intermediate state read; add a timestamped controlled retest. |
 | `C1-cycle-1-isolated-repeat` | 138105 at 17:21:48.949 writes selector 00; next C2 file 138541 at 17:26:59.468 reads 00 | Same-DUT repeat confirms Cycle 1 using later independent readback. Own report stops before the readback. |
 | `C2-cycle-2-isolated-repeat` | 138602/138724 write selector 01; next I0 file 139212 at 17:31:01.853 reads 01 | Same-DUT repeat confirms Cycle 2. Unknown state-response tail is preserved, not interpreted as clock. |
 
@@ -72,7 +78,7 @@ claim. Custom bank 06 being empty does not imply other custom banks are empty.
 | N0 | 145612 count `01`, 145617 at 17:49:21.787 count `00`; N1 145912 reads `03 F0 05 00` | Zero-count write/readback confirmed. Operator reports deletion returns output to the retained 81% Manual value when empty; this fallback needs a controlled physical repeat. |
 | N1 | 146127 at 17:52:39.546: `03 F1 05 01 88 00 32`; N2 146524 reads same record | One record: 08:00/50%. Addition first transmits 100%, then 50%. |
 | N2 | 146824 at 17:55:35.708: `03 F1 05 02 88 00 32 92 00 32`; N3 147161 reads both | Two records: 08:00/50%, 18:00/50%. Source filename says N1-two-record; mapped to N2 case. |
-| N3 | 147362 at **17:58:38.448**: `03 F1 05 03 88 00 32 92 00 32 96 08 00`; T0800 150020 at 18:44:12.266 reads all three | Adds 22:08/0%. File label 18:41:08 is not action time. Intermediate third-point levels 100% and 9% are also sent. |
+| N3 | 147362 at **17:58:38.448**: `03 F1 05 03 88 00 32 92 00 32 96 08 00`; T0800 150020 at 18:44:12.266 reads all three | Adds 22:08/0%. Bugreport request initiated 18:41:08, after the earlier action. Intermediate third-point levels 100% and 9% are also sent. |
 
 Counts `00`–`03` are verified on the **same** custom bank by controlled edits
 and independent later query responses. HCI LE connection-complete events

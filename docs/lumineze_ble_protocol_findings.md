@@ -9,7 +9,9 @@ The operator identifies a Motorola Edge 40 / Android 15, app V1.1.4 and a
 JungleDawn 39W; the lamp firmware version is unspecified. Peer-address filtering
 separates that DUT from another lamp visited during early captures. All 30
 files are exact cumulative prefixes, so copied history is counted once.
-Filename times label reports; packet times determine the actual actions.
+The operator confirmed that filename timestamps identify **bugreport request
+initiation** in BST, not BLE action times or report completion. Packet times
+determine the actual actions; capture end is the final recorded packet.
 
 The [case-level log review](lumineze_ble_protocol_log_review.md) records frame
 pairs, deviations and interpretation. The [packet evidence CSV](lumineze_ble_protocol_packet_evidence.csv)
@@ -109,7 +111,8 @@ readback before more edits:
 | 2 | 146824 | 147161 | 08:00/50%, 18:00/50% |
 | 3 | 147362 | 150020 | 08:00/50%, 18:00/50%, 22:08/0% |
 
-N3's write is at **17:58:38.448 BST**, not the 18:41 time in its report name.
+N3's write is at **17:58:38.448 BST**; its filename records bugreport request
+initiation at **18:41:08 BST**. This is a delayed report, not a filename error.
 Its later readback is at 18:44:12.266. New LE connections precede the subsequent
 reads, supporting ordinary reconnect retention. Immediate commit timing,
 force-stop persistence and power-loss persistence remain unresolved.
