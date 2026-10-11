@@ -47,7 +47,7 @@ trailing bytes.
 | `C1-cycle1` | 127870 at 14:58:07.197: `02 F1 01 51 00`; 128749 at 15:01:03.024: `02 F0 01 51 00` | Actual selector change and later readback support Cycle 1 = `00` on this DUT. 128750 is an app echo after readback. |
 | `C2-cycle2` | 129312 at 15:05:15.178: `02 F1 01 51 01`; 130088 at 15:09:07.309: `02 F0 01 51 01` | Cycle 2 = `01` retained after reconnect. The visit to another lamp must not be mixed into this mapping. |
 | `baseline_pretesting` | New frames 130171–135115, no relevant DUT commands | Snapshot does not establish a fresh operating baseline; earlier C2 packets are inherited. |
-| `full-power-reste` | 135375 at 17:01:46.418: `02 F0 01 51 01`; 135382/135384 and 135388/135390: `04 F0` / `04 0F` command pairs | State is read **before** the reset-labeled actions. Only one app session is visible; actual action type, effect, power boundaries, persistence and clock retention are inconclusive. Retest added; family 04 details below. |
+| `full-power-reste` | 135375 at 17:01:46.418: `02 F0 01 51 01`; 135382/135384 and 135388/135390: `04 F0` / `04 0F` command pairs | State is read **before** two app Test control > Full power test activations (operator clarification). Apparent 0%/100% cycling and return to requested output require timed verification. No physical power-cycle evidence; narrowed retest below. |
 | `s0-empty-custom-repeat-setup` | 136116/136117: query bank 06 / write selector 06; 136125: `03 F0 06 00` | Selecting reported custom Cycle 5 correlates with `06`; setup changes selector, not only reads. |
 | `S0-empty-custom-repeat` | 136869: state selector 06; 136871 query; 136879 at 17:08:43.478: `03 F0 06 00` | Repeated independent empty-bank read, no custom write. |
 | Missing `S0-empty-cycle-repeat` | C1-repeat snapshot inherits 137428–137486 at 17:13:03–17:13:53: selector 06→00→06, two bank-06 empty replies | Likely matching operator sequence, but named 17:17 file absent. No bank-00 schedule reply or intermediate state read; add a timestamped controlled retest. |
@@ -171,11 +171,16 @@ These four writes are on the same HCI session and follow the state readback.
 There is no observed family-04 notification or post-action state query in that
 case. The next setup session reads unchanged `01/51/01` fields at 135989
 (17:05:07.950), before selecting a different bank. This does not identify the
-reset action's other effects. The commands correlate temporally with the operator's twice-reported “full power
-reset”, but its exact UI meaning and effect are unknown. Do not infer physical
-power cycling from that label. The retest explicitly distinguishes an app
-action from an unplug/replug and captures before/after state and custom-bank
-readback. This corrects the initial preliminary interpretation of the row.
+Full power test action's other effects. On 11 October the operator confirmed
+that this was the app **Test control > Full power test** button, activated
+twice. Output appears to cycle between 0% and 100% before returning to the
+requested level; this is tentative operator evidence. The two family-04 pairs
+are associated with those activations, but individual command roles, timing,
+physical endpoints and restoration are unverified. The retest is narrowed to
+one button press with timed output observations and before/after state and
+bank reads. It no longer asks to identify the UI action or mix in an unplug/
+replug test; physical power loss remains separately covered by P4. Original
+case IDs and filenames are preserved.
 
 The exhaustive ATT pass finds all DUT value-bearing application command
 families `01`, `02`, `03`, `04`, `05`; GATT service-discovery values are not

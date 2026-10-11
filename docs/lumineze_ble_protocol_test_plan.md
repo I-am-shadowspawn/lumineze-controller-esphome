@@ -164,7 +164,7 @@ summarizes what the actual experiments establish:
 | Time bytes | All nine T-series values match `80+hour`, binary minute | High-bit semantics; strict single-point repeat (actual series retained three points) |
 | Brightness | Controlled final 0,1,21,50 match decimal bytes | Wider B-series and historical 50% attribution; B10 has no log and achieved 9% |
 | Persistence | Custom contents retained across ordinary reconnects | Actual power-loss, force-stop and immediate commit timing |
-| Reset/other commands | Two `04 F0`/`04 0F` pairs in reset-labeled capture | Exact UI action and command effect; no response/post-action readback |
+| App Full power test | Two `04 F0`/`04 0F` pairs; Test control button identified by operator | Timed 0%/100% cycle, return to requested output, command roles and state/bank preservation |
 | Clock and transport | Repeated local-BST-compatible clock uploads, 152-byte writes/150-byte responses, ATT Write Command | Controlled timezone/weekday/power tests; trailer semantics |
 
 Each required follow-up is inserted immediately below its parent case in the
@@ -472,10 +472,12 @@ unconfirmed.
 
 ## Review-driven additional test guidance
 
-- Identify whether “full power reset” is an app button or a physical power
-  operation. Family `04 F0`/`04 0F` appears twice after state readback on one
-  session; the inserted reset retest requires the exact UI label, before/after
-  state and custom-bank reads, and an independent physical power-cycle case.
+- The original “full power reset” case is confirmed as app **Test control >
+  Full power test**, pressed twice. Family `04 F0`/`04 0F` appears twice on
+  one session. The narrowed retest records one button press, timed physical
+  output through the apparent 0%/100% cycle and return to requested level,
+  plus before/after state and bank reads. Individual command roles remain
+  unknown. Use P4 separately for actual physical power-loss persistence.
 - Keep hour/minute changes separate from point enablement if the app exposes
   that option. Always-set `80` is not sufficient to identify an enable flag.
 - Preserve full 152-byte custom writes and 150-byte responses. Compare the

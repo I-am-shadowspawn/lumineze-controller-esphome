@@ -180,7 +180,7 @@ reordered. The trailer's purpose is unresolved. Neither the zero-filled region
 nor total payload length establishes maximum count, checksum, or enable flags.
 A separate trailer retest is recorded, and planned capacity tests remain open.
 
-## Family 04 in the reset-labeled action
+## Family 04: app Full power test
 
 The same session sends two pairs:
 
@@ -191,13 +191,20 @@ The same session sends two pairs:
 135390 / 17:01:54.999: 04 0F 00 00 00 00 00 00 00 00 00 00 00 00 00 40
 ```
 
-They occur after the state readback and correlate with the operator's
-“full power reset twice” description. There is no family-04 response or same-report post-action state read. The
-next setup session reads the same `01/51/01` fields at 135989 before any
-selector change, which does not establish the action's other effects. Whether
-this was an app reset action, its exact effect,
-or an actual physical power cycle is unresolved. The retest distinguishes
-these actions and requires before/after state and schedule reads.
+The operator clarified on 11 October that the original “full power reset”
+case means **Test control > Full power test** in the app, pressed twice. The
+two command pairs are associated with those activations, not physical power
+cycling. The lamp appears to cycle between 0% and 100% before returning to
+the requested level; this is a tentative operator observation, not a timed
+confirmation of sequence, endpoints or restoration. Individual roles of
+`04 F0` and `04 0F` remain unknown.
+
+There is no family-04 response or same-report post-action state read. The
+next setup reads unchanged `01/51/01` at 135989 before any selector change;
+this alone does not confirm physical output restoration or schedule retention.
+The retest now focuses on one button press, timed physical observations and
+before/after state and bank reads. Physical power-loss persistence remains a
+separate P4 test. Legacy case IDs and filenames are retained for traceability.
 
 ## Storage and physical behavior boundaries
 
