@@ -489,12 +489,12 @@ next app read. The83% lamp responses before app echo support that correction.
 The prior app-cache hypothesis is superseded. This still does not make the
 Manual setpoint a measured automatic-output telemetry field.
 
-Operator reports an app setting of21% before the ESP update and a reduction
-back to21% afterward, while the ESP continued to believe83%. The supplied
-phone packets instead show initial39%, later83%, reduction writes22% and
-final22% readback. There is no15hex(21%) command in this DUT capture. Record
-that mismatch rather than labeling16hex as21% or inferring a nonlinear
-encoding. The initial21% action and ESP-origin write are not visible here.
+The operator initially reported a final21% level, then corrected that
+statement to **22%**, agreeing with the captured writes and readback.
+The trace shows initial39%, later83%, reduction writes22% and final22%
+readback. No final-value discrepancy or nonlinear encoding is indicated.
+The earlier separately reported21% action and direct ESP write are not
+visible in this phone trace.
 The ESP's stale83% is operator evidence of an external-change reconciliation
 problem; these packets cannot establish whether the cause is missed
 notification, polling, connection ownership or internal state handling. An
@@ -515,3 +515,14 @@ ATT decoding. Raw H4 ACL bytes contain `... 1B 0E 00 02 F0 00 53 02
 notification preserved in the CSV. Unlike the query-associated responses,
 this particular notification arrives immediately after connection before
 any captured app query; do not assume all state notifications require a query.
+
+### Mode review closure
+
+With the operator's final-level correction, mode controls, retained mode on
+connection, lamp-derived current Manual-level refresh and mode-preserving
+Manual bank queries are covered by the combined packet/operator evidence.
+No additional mode-behavior experiment is required for these conclusions.
+The high-bit meaning remains explicitly undecoded; complete matched Auto/
+Manual bank data could support future research but is not a blocker to this
+behavioral review. The ESP retaining83% after the app sets22% remains a
+separate state-reconciliation issue, not evidence of a lamp mode failure.

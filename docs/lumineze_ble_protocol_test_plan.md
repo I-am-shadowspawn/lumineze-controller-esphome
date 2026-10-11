@@ -552,6 +552,15 @@ Manual-mode schedule reading is now demonstrated; no repeat is needed to
 check UI capability. Record hour high bit remains set while mode is Manual,
 ruling out a direct current-Auto indicator. Exact bit semantics remain unknown,
 and matched Auto bank02 data is not supplied. Lamp-origin83% and22% reads
-confirm app refresh of current Manual state; the operator's21% description
-differs from wire22%. Investigate ESP external-change reconciliation with
+confirm app refresh of current Manual state; the operator corrected the
+final value to22%, matching the wire/readback. Investigate ESP external-change reconciliation with
 ESP evidence if requested; do not infer its internal behavior from phone logs.
+
+### Auto/Manual behavioral scope complete
+
+No further retest is required for mode-byte control, retained mode on
+connection, current Manual-level refresh or Manual-mode schedule reading.
+These conclusions combine captured evidence with explicit operator
+confirmation; they do not claim a complete timed trace for every condition.
+High-bit semantics remain unknown for future protocol research. The ESP
+stale-state observation requires separate ESP investigation if pursued.

@@ -316,8 +316,8 @@ actions or provide Manual-mode bank bytes. See the
 The operator corrected the earlier hypothesis: **the app reads the lamp's
 current Manual setting**. The new trace confirms lamp-origin83% readback
 before app echo; subsequent app reduction is written and later independently
-read as **22% (`16` hex)**. Operator describes21%, but no21% command occurs
-in this capture; preserve that discrepancy without inventing a conversion.
+read as **22% (`16` hex)**. The operator subsequently confirmed the final value was22%, correcting
+the earlier21% statement; UI value, command and readback now agree.
 
 The operator reports the ESP still believed83% after the app reduced output.
 This indicates a state-reconciliation issue to investigate in the ESP
@@ -333,3 +333,14 @@ before initialization/query, showing that state responses are not exclusively
 query-triggered in all observed sessions. See the
 [mode3 review](lumineze_ble_protocol_log_review.md#third-mode-capture-and-external-control-reconciliation)
 and [packet evidence](lumineze_ble_protocol_mode3_evidence.csv).
+
+### Auto/Manual behavior review status
+
+The final22% value is operator-confirmed and agrees with wire/readback data.
+No further retest is required for the reviewed mode-control behavior:
+mode byte00/01 is isolated; current Manual level is read from the lamp;
+connection retains mode (Manual and Auto by operator confirmation); Manual
+bank reads do not force Auto; and schedule contents/high bits remain present
+while Manual is selected. Exact high-bit meaning remains a protocol unknown,
+not an outstanding Auto/Manual behavioral test. ESP reconciliation after
+app-origin changes is a separate controller issue requiring ESP-side evidence.
