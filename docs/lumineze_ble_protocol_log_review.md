@@ -94,3 +94,40 @@ The state brightness byte stays `51` (81 decimal) through operator-reported
 session, not reliable measured automatic output. Full automatic output cannot
 be inferred from that byte. The empty-bank fallback observation is recorded
 as operator evidence and is not a safe-off guarantee.
+
+## Third batch: time encoding and ordering
+
+Each edited time has a corresponding transmitted three-byte point and an
+independent lamp readback. On this DUT the first byte is `0x80 + hour`, the
+second is binary minute, and the third is the level. This predicts all nine
+sampled values including midnight and 23:59. The high bit is always set;
+whether it is an enable flag is **unproven**. No BCD, minute reversal, or
+minutes-since-midnight hypothesis is needed for these records.
+
+| UI time | Edited record | Write frame / time BST | Readback frame / time BST | Record position |
+| --- | --- | --- | --- | ---: |
+| 08:00 | `88 00 32` | 150286 / 18:44:29.736 | 150853 / 18:47:26.518 (next file) | 2 |
+| 08:01 | `88 01 32` | 151085 / 18:47:38.418 | 151431 / 18:47:48.715 | 2 |
+| 08:30 | `88 1E 32` | 151908 / 18:50:38.651 | 152524 / 18:51:17.219 | 2 |
+| 09:00 | `89 00 32` | 152680 / 18:53:41.108 | 153342 / 18:54:00.486 | 2 |
+| 10:00 | `8A 00 32` | 153472 / 18:56:52.438 | 154105 / 18:57:15.572 | 2 |
+| 12:00 | `8C 00 32` | 154259 / 19:00:02.498 | 154850 / 19:00:27.268 | 2 |
+| 22:08 | `96 08 32` | 155015 / 19:03:13.689 | 155340 / 19:03:25.013 | 2 |
+| 23:59 | `97 3B 32` | 155688 / 19:06:16.784 | 156023 / 19:06:46.255 | 3 |
+| 00:00 | `80 00 32` | 156461 / 19:10:14.402 | 156791 / 19:10:26.996 | 1 |
+
+The operator did **not** reduce the bank to one point as planned. The series
+retains three points: fixed 08:00/50% and 22:08/0%, plus the edited 50% point.
+At T0800 two exact 08:00/50% duplicates are transmitted and retained; T2208
+retains two 22:08 points with different levels. This demonstrates stored
+duplicates through the normal app path, not duplicate-time output precedence.
+An additional controlled single-point/flag retest is inserted after T0800.
+
+At T2359 and T0000 the app reorders the edited record in the **outgoing**
+`03 F1` payload, matching the operator's UI notes. Readback has the same order.
+Thus sorting already occurs before the lamp receives it; these logs cannot
+test whether the lamp also sorts an unsorted payload. Track the edited point
+by its time/level tuple rather than a fixed position after an order change.
+The historical `22:08 -> 96 09` note is not reproduced: both N3 and T2208
+encode minute 8 as `08`. Preserve the historical discrepancy as an attribution
+uncertainty; under the new sampled formula `96 09` would denote 22:09.

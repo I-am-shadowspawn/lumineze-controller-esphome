@@ -26,6 +26,35 @@ The goal is to separate:
 
 # Proven Observations
 
+## 11 October review: sampled point encoding
+
+The T0800–T0000 series independently reads back every changed point on the
+same DUT. Records are three bytes starting at full-frame byte 4:
+
+```text
+record[0] = 0x80 + hour  (observed hours 0, 8, 9, 10, 12, 22, 23)
+record[1] = minute       (observed 0, 1, 8, 30, 31, 36, 59)
+record[2] = level        (50% -> 0x32 throughout the time series)
+```
+
+The formula predicts all nine requested times including `00:00 -> 80 00`
+and `23:59 -> 97 3B`. Frame pairs and full values are in the log review.
+The meaning of bit `0x80` beyond its always-set state is untested; do not yet
+call it an enable bit. Firmware coverage remains limited to the documented
+JungleDawn with unspecified firmware.
+
+The time series retained three records rather than the planned one-record
+baseline. T0800 stores exact duplicate 08:00/50% records, and T2208 stores two
+22:08 records at different levels. The app sends reordered records before
+transmission when the edited time crosses the others (T2359/T0000); lamp-side
+sorting and duplicate-time output precedence remain unresolved. These
+deviations do not hide the byte-by-byte time mapping, but need separate tests
+for validation/ordering semantics.
+
+The new 22:08 write/readback uses `96 08`, not historical `96 09`. The
+historical association is retained below as an unresolved operator/packet
+attribution discrepancy, not an alternative established time encoding.
+
 ## 11 October review: repeated cycle and empty-bank evidence
 
 All 30 supplied files are exact cumulative prefixes of the latest snoop
