@@ -236,3 +236,13 @@ unreviewed. The case CSV contains concrete retest steps immediately below each
 inconclusive logged case and separate planned cases for broader coverage.
 No malformed packets were sent, and no firmware implementation or runtime
 hardware acceptance claim is introduced by this documentation review.
+
+## 11 October fresh bank retest
+
+A new capture (separate from the 30 cumulative snapshots) confirms selector
+writes `06 -> 00 -> 06` for Cycle 5 -> Cycle 1 -> Cycle 5, then independent
+selector-06 state readback before the app echo after disconnect/reconnect.
+Bank 06 is empty before and after; no schedule write occurs. The intended
+passive comparison while retaining built-in mode remains untested. See the
+[bank retest review](lumineze_ble_protocol_log_review.md#11-october-bank-retest-fresh-capture-and-requested-sequence)
+and [packet evidence](lumineze_ble_protocol_bank_retest_evidence.csv).

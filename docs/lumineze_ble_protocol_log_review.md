@@ -254,3 +254,42 @@ trial. Missing exact values, force-stop/power-loss persistence, second-DUT trial
 manual levels, controlled mode changes, fresh-app/restart lifecycle, recorded
 phone-zone baseline/zone shift and physical scheduling remain open. None of the
 nine targeted retests is retired.
+
+## 11 October bank retest: fresh capture and requested sequence
+
+Source: `/srv/dev/data_projects/luminEze_bt_logs/protocol-test-S0-empty-cycle-repeat-RETEST-BANK-2026-10-11-113832.log`.
+SHA256: `68e9e4d55123c5dd0f59232482bb3d77f22d2d63fc3a7558024ab08fc4df9f0e`.
+The binary contains 2,678 frames from **11:35:27.771210 to 11:40:40.223792 BST
+on 11 October**, with report request initiation **11:38:32 BST**. It has no
+8–10 October history: this is a fresh session capture, unlike the original
+30 cumulative snapshots. Background traffic from other devices remains.
+
+The [separate retest evidence CSV](lumineze_ble_protocol_bank_retest_evidence.csv)
+preserves 27 full DUT application values, using this file's local frame numbers.
+The original 363-packet evidence set remains unchanged.
+
+| Event | Frame(s) | Time BST | Evidence |
+| --- | --- | --- | --- |
+| Initial app session | 1483–1507 | 11:36:43–44 | Initialization, clock upload, state selector 05; bank 05 contains 08:00/50%, 12:34/9%, 22:08/0% |
+| Select empty Cycle 5 | 2062/2063/2071 | 11:37:15.404–.527 | Query 06, write selector 06, reply `03 F0 06 00` |
+| Select Cycle 1 | 2186 | 11:37:25.969 | `02 F1 01 51 00`; no later selector-00 read before return |
+| Return to Cycle 5 | 2194/2195/2203 | 11:37:43.572–.656 | Query/write 06; empty bank reply in reassembled ACL |
+| Close/reopen (operator); transport reconnect | 2206/2324 | 11:37:48.626 / 11:37:51.740 | Disconnect and new connection to same DUT; handle 0202 reused |
+| Reopened state check | 2430/2434/2435 | 11:37:52.726–.817 | Query, independent `02 F0 01 51 06`, then app echo of 06 |
+| Reopened empty bank check | 2436/2448 | 11:37:52.819–.962 | Query 06, independent `03 F0 06 00` |
+
+No schedule write (`03 F1`) occurs. The requested sequence and Cycle 5
+retention after reconnect are confirmed. Closing/reopening the app is operator
+metadata; HCI directly establishes disconnect/reconnect and initialization.
+The original retest's additional passive bank-comparison goal remains open:
+no built-in bank-00 query/reply or intermediate selector-00 read occurs, and
+selecting the custom page also writes selector 06. A narrowed follow-up row
+tracks that remaining question.
+
+Frame 2203's default tshark fields contain repeated ATT decode fields and
+omit the first three application bytes. Inspecting its complete reassembled
+157-byte ACL payload (`99 00 04 00 1B 0E 00 03 F0 06 00 ... 30`) confirms
+a 150-byte notification value beginning `03 F0 06 00`; the evidence CSV
+records that full value. Sunday's clock uploads use weekday `00` versus
+Saturday's `06`, both with confirmed BST wall time. This supports the sampled
+Saturday/Sunday convention; a complete weekday mapping remains unverified.
