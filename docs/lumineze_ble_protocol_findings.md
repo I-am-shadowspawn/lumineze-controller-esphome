@@ -56,7 +56,8 @@ one second. A representative frame 158566 at 19:16:38.674 BST is:
 `EA 07` is little-endian 2026, month/day are 10/10, hour/minute/second are
 19/16/38, and weekday is `06` on this Saturday. This encoded hour is +1 from
 UTC, consistent with BST/local wall time in this capture. The phone timezone
-was not recorded, and no controlled timezone change was captured; the general
+was not recorded contemporaneously. Operator confirmed on 11 October 2026 that the phone timezone is currently BST (UTC+01:00). This supports the local-time interpretation; it does not explicitly confirm the setting during the 10 October captures or replace a controlled timezone-shift test.
+No controlled timezone change was captured; the general
 timezone rule and weekday numbering require the planned follow-ups. Clock
 uploads follow initialization and sometimes repeat later in a session. Upload
 traffic does not prove lamp clock accuracy or survival through power loss.

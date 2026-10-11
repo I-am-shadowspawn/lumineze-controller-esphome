@@ -191,8 +191,9 @@ byte `06`, month/day `0A/0A`, and a time within one second of the packet's
 Europe/London wall time. For example, 158566 at 19:16:38.674 BST sends
 `01 0F EA 07 06 0A 0A 13 10 26 00 00 00 00 00 10`. The encoded 19:16:38
 differs by +1 hour from UTC at that instant. This is consistent with local
-BST time; the phone's configured timezone was not recorded and no timezone
-change trial exists. Saturday `06` is observed, but the weekday convention
+BST time; the phone's configured timezone was not recorded contemporaneously.
+Operator confirmed on 11 October 2026 that the phone timezone is currently BST (UTC+01:00). This supports the local-time interpretation; it does not explicitly confirm the setting during the 10 October captures or replace a controlled timezone-shift test.
+No timezone change trial exists. Saturday `06` is observed, but the weekday convention
 needs another weekday. Uploads occur after initialization and sometimes
 again during a connection; they do not prove lamp clock accuracy or retention.
 
