@@ -85,5 +85,8 @@ remaining work beside that increment. Proposed filenames may change; ownership
 and acceptance criteria may not silently change. Do not mark implementation or
 hardware increments complete because this plan exists.
 
-**Progress:** all increments planned; no implementation or hardware evidence
-is claimed by this document.
+**Progress:** `docs/hardware-validation.md` is a T15.1 protocol draft with
+test IDs, proposed static/response limits, observation windows and stop rules.
+Numeric runtime free-heap/largest-block floors require baseline measurements,
+so T15.1 and every hardware acceptance checkbox remain open. No physical
+evidence is claimed.

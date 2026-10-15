@@ -1,0 +1,3 @@
+# Schedule fixture: common controls/transport; T23 is a seasonal-only capability.
+packages:
+  common: !include fixture-luminize-common.yaml

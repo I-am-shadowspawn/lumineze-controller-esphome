@@ -1,0 +1,51 @@
+# Staging never restores or dispatches. Apply validates the complete context.
+switch:
+  - platform: template
+    id: ${context_id}_${schedule_role}_point_${point_slot}_enabled
+    name: ${context_id.replace('_', ' ').title()} ${schedule_role.title()} Point ${point_slot} Enabled
+    entity_category: config
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - lambda: |-
+          const int context = lumineze_topology::context_index("${context_id}");
+          const int role = lumineze_topology::schedule_role("${schedule_role}");
+          id(topology_schedule_contexts)[context].staged[role].points[${point_slot} - 1].enabled = true;
+    on_turn_off:
+      - lambda: |-
+          const int context = lumineze_topology::context_index("${context_id}");
+          const int role = lumineze_topology::schedule_role("${schedule_role}");
+          id(topology_schedule_contexts)[context].staged[role].points[${point_slot} - 1].enabled = false;
+number:
+  - platform: template
+    id: ${context_id}_${schedule_role}_point_${point_slot}_minute
+    name: ${context_id.replace('_', ' ').title()} ${schedule_role.title()} Point ${point_slot} Minute
+    entity_category: config
+    unit_of_measurement: 'min after midnight'
+    optimistic: true
+    restore_value: false
+    initial_value: 0
+    min_value: 0
+    max_value: 1439
+    step: 1
+    on_value:
+      - lambda: |-
+          const int context = lumineze_topology::context_index("${context_id}");
+          const int role = lumineze_topology::schedule_role("${schedule_role}");
+          id(topology_schedule_contexts)[context].staged[role].points[${point_slot} - 1].minute = x;
+  - platform: template
+    id: ${context_id}_${schedule_role}_point_${point_slot}_level
+    name: ${context_id.replace('_', ' ').title()} ${schedule_role.title()} Point ${point_slot} Level
+    entity_category: config
+    unit_of_measurement: '% of fixture maximum'
+    optimistic: true
+    restore_value: false
+    initial_value: 0
+    min_value: 0
+    max_value: 100
+    step: 1
+    on_value:
+      - lambda: |-
+          const int context = lumineze_topology::context_index("${context_id}");
+          const int role = lumineze_topology::schedule_role("${schedule_role}");
+          id(topology_schedule_contexts)[context].staged[role].points[${point_slot} - 1].level = x;

@@ -7,7 +7,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 LINES = (ROOT / "packages/topology/seasonal-engine.yaml").read_text().splitlines()
-start = next(index for index, line in enumerate(LINES) if line.strip() == "- id: evaluate_topology")
+start = next(index for index, line in enumerate(LINES) if line.strip() == "- id: evaluate_seasonal_contexts")
 start = next(index for index in range(start, len(LINES)) if LINES[index].strip() == "- lambda: |-")
 indent = len(LINES[start]) - len(LINES[start].lstrip())
 body = []
@@ -24,6 +24,7 @@ source = r"""
 #include <cstdint>
 #include <utility>
 #include "components/lumineze_topology/fixture_logic.h"
+#include "components/lumineze_topology/seasonal_types.h"
 
 namespace lumineze_topology { constexpr int context_count = 2; }
 struct ClockValue {
@@ -42,6 +43,7 @@ struct State {
   bool topology_snapshot_valid = false;
   Snapshot topology_snapshot;
   lumineze_topology::ContextState topology_contexts[2];
+  lumineze_topology::SeasonalSettings topology_seasonal_settings[2];
 } state;
 #define id(name) state.name
 void evaluate() {
@@ -49,7 +51,7 @@ __PRODUCTION__
 }
 
 std::pair<int, int> legacy_targets(const ClockValue &clock,
-                                   const lumineze_topology::ContextState &settings,
+                                   const lumineze_topology::SeasonalSettings &settings,
                                    float visible_cap, float uv_cap) {
   constexpr float pi = 3.14159265358979323846f;
   constexpr float deg_to_rad = pi / 180.0f;
@@ -119,7 +121,7 @@ std::pair<int, int> legacy_targets(const ClockValue &clock,
 }
 
 int main() {
-  auto &other = state.topology_contexts[1];
+  auto &other = state.topology_seasonal_settings[1];
   other.latitude = 12.0f;
   other.phase_days = 75.0f;
   other.visible_winter = 0.45f;
@@ -138,7 +140,7 @@ int main() {
           assert(context.valid);
           for (float cap : {0.0f, 1.0f, 59.0f, 60.0f, 100.0f}) {
             const auto expected = legacy_targets(
-                state.controller_time.value, context, cap, cap);
+                state.controller_time.value, state.topology_seasonal_settings[context_index], cap, cap);
             for (int role = 0; role < 2; ++role) {
               const lumineze_topology::ConversionInput input{
                   lumineze_topology::AUTOMATIC, cap, context.desired[role],

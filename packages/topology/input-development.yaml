@@ -1,3 +1,5 @@
+substitutions:
+  topology_simulation_name: Seasonal Simulation Input
 time:
   - platform: sntp
     id: controller_time
@@ -6,7 +8,7 @@ time:
 switch:
   - platform: template
     id: topology_simulation_enabled
-    name: Seasonal Simulation Input
+    name: ${topology_simulation_name}
     icon: mdi:test-tube
     entity_category: config
     optimistic: true

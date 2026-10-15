@@ -1,15 +1,19 @@
 # T10 — Specify the daily schedule contract
 
 **Entry:** documentation and test-vector design can proceed while Gate A is
-pending. Finalize the contract after reviewing T09 hardware findings; no
-schedule firmware changes before Gate A passes.
-**Dependencies:** T09/Gate A. **Delivery:** an unambiguous specification and
+pending. The owner requested completion of the specification before those
+findings on 5 October 2026. Contract is finalized for T11 handoff; review any
+subsequent T09 findings as explicit amendments. No schedule firmware changes
+before Gate A passes.
+**Dependencies:** T09 software baseline; review subsequent Gate A findings before
+T11 firmware work. Owner-authorized T10 documentation completion precedes the
+physical gate. **Delivery:** an unambiguous specification and
 independent expected results for T11; no firmware implementation.
 
-## Recommended bounded design for the specification
+## Settled design summary
 
-These are proposed decisions for T10 to settle and record, not existing product
-capabilities. Use the generic topology: up to two contexts, each with independent
+These decisions are settled in the [T10 contract](../schedule-behaviour.md);
+they describe future schedule behavior, not existing product capabilities. Use the generic topology: up to two contexts, each with independent
 `visible` and `uv` schedules, routed through up to four groups/fixtures. Product
 and physical slot do not select a schedule. Groups can share one context/role.
 
@@ -50,24 +54,24 @@ Temporary T23 controls retain their documented seasonal-only scope.
 
 ## Incremental deliveries
 
-- [ ] **T10.1 — Audit and decision record.** Inspect snapshot, output conversion,
+- [x] **T10.1 — Audit and decision record.** Inspect snapshot, output conversion,
   groups, preferences and existing HA entities. Record the choices above and
   alternatives in `docs/schedule-behaviour.md`, including capacity, units,
   interpolation, minimum-change and used/unused role rules. Map every existing
   T10 roadmap edge case to a section. Acceptance: no product-slot assumptions
   and no unresolved normal-output rule.
-- [ ] **T10.2 — Time and boundary specification.** Add before/at/between/after
+- [x] **T10.2 — Time and boundary specification.** Add before/at/between/after
   and midnight tables for step and linear schedules; specify seconds as a
   fraction of a minute, leap-day independence, DST, forward/backward corrections,
   invalid clock, disabled slots, missing points and startup. Acceptance: expected
   results are determinable from timestamp plus active snapshot alone.
-- [ ] **T10.3 — Editing, persistence and control contract.** Specify staged
+- [x] **T10.3 — Editing, persistence and control contract.** Specify staged
   entity IDs, atomic context Apply/Cancel, rejection messages, active revision,
   boot defaults, schema corruption handling and upgrade/rollback. Document
   fraction output, calibration once, manual/off/safety priority, and independent
   group effects. Acceptance: a failed edit never changes active output or
   persistence; a successful edit has an explicit application boundary.
-- [ ] **T10.4 — Independent golden cases and handoff.** Store hand-worked input
+- [x] **T10.4 — Independent golden cases and handoff.** Store hand-worked input
   and expected fractional/final-target vectors (proposed
   `tests/data/schedule-cases.json`) and explain calculations. Include 08:00=0,
   10:00=100, 18:00=100, 20:00=0: linear 09:00=50, step 09:00=0, midnight=0;
@@ -78,8 +82,9 @@ Temporary T23 controls retain their documented seasonal-only scope.
 
 ## Exit and scope control
 
-T10 is complete when all four records are reviewed against the roadmap and Gate A
-findings. Keep specification changes separate from engine code. Revision of a
+T10's specification delivery is complete against the roadmap and current source.
+Physical Gate A findings remain pending and must be reviewed before T11 firmware
+work; they are not claimed as completed evidence for this documentation task. Keep specification changes separate from engine code. Revision of a
 settled output rule requires updated vectors and an explicit compatibility note.
 Weekly calendars, dynamic topology and T23 schedule support are follow-up scope.
 
@@ -93,5 +98,55 @@ remaining work beside that increment. Proposed filenames may change; ownership
 and acceptance criteria may not silently change. Do not mark implementation or
 hardware increments complete because this plan exists.
 
-**Progress:** all increments planned; no implementation or hardware evidence
-is claimed by this document.
+**Progress:** T10.1–T10.4 complete as a specification delivery. Its original
+records claim no firmware or physical acceptance; subsequent T11 implementation
+is tracked separately in the [current delivery index](t10-t17-delivery-index.md).
+
+## Execution record
+
+### T10.1 — complete
+
+Source: development `e786bee`; branch `t10/schedule-specification`; CI pin
+ESPHome 2026.9.0. Audited generic schema/state, orchestrator, conversion,
+arbitration, preferences and T23 seams. [Contract section 1](../schedule-behaviour.md)
+settles capacity, units, topology, validation and alternatives, with explicit
+entity/storage estimates. Verification: matched owner paths to the checkout,
+reviewed roadmap T10 decisions and ran `git diff --check`. No firmware change;
+Gate A remains pending and gates T11.
+
+### T10.2 — complete
+
+[Contract section 2](../schedule-behaviour.md) specifies cyclic point evaluation,
+separate visible/UV tables, fractional minutes, wrap, disabled/out-of-order
+points, DST/corrections, startup, invalid clocks and transition filtering.
+Verification: manually checked 09:00=50, UV 09:30=40, wrap midnight=20 and
+fractional-minute expectations against their documented segments; `git diff
+--check` passes. No time events are replayed and no firmware changed.
+
+### T10.3 — complete
+
+[Contract section 3](../schedule-behaviour.md) freezes entity IDs, staged/active
+separation, context-atomic Apply, rejection/Cancel, revision and schema-1 two-bank
+persistence, including uncertain writes, corruption and rollback. Common
+calibration/manual/safety/authorization behavior is preserved. Verification:
+record arithmetic is 4+2+2+4+4+1+33+33+4=87 bytes; checked controls against current
+policy and reviewed invalid-edit/power-loss paths. `git diff --check` passes.
+Storage and hardware implementation proofs belong to T11/T15, not this task.
+
+### T10.4 — complete
+
+Added [schedule-cases.json](../../tests/data/schedule-cases.json) with independently
+recorded numerical expectations and named validation/control/persistence cases.
+Contract section 4 maps acceptance to the future evaluator/policy/storage tests.
+README and roadmap link the settled contract. Verification: strict JSON parsing,
+120 unique case IDs and fixture references; 56 independent rational checks of
+numerical shape examples; eight exact current fixture-conversion checks compiled
+with `g++ -std=c++17 -Wall -Wextra -Werror`; local documentation links and
+`git diff --check`. These validate the specification/corpus, not an
+unimplemented schedule engine. Gate A/T23 remain open; T11–T17 stay unchecked.
+
+**Configuration/rollback impact:** none on deployed firmware. Schema and entity
+patterns are requirements for T11, with explicit migration/unknown-write rules.
+Each T10 increment was committed independently; inspect branch history for SHAs.
+**Remaining for T10:** none. **External gates:** Gate A before T11; T23 physical
+acceptance before declaring that capability verified.

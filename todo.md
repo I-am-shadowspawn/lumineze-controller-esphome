@@ -88,7 +88,10 @@ Work in the listed order by default. Dependencies identify prerequisites, not pe
 - [x] T08 — Separate operational diagnostics from verbose development diagnostics. PR #11 passed both CI validation runs; see [diagnostic profile inventories](docs/diagnostic-profiles.md).
 - [ ] T09 — Assemble and verify both seasonal profiles. PR #13's remote CI passed both seasonal ESP32-C3 profile builds, provider-isolation and snapshot-parity checks; the physical seasonal bench smoke test and settings capture/restore remain outstanding for Gate A.
 
-**Gate A:** the modular seasonal build matches the recorded baseline, and seasonal production builds with all development test facilities omitted. Do not add schedule behaviour to shared code before this boundary is demonstrated.
+**Gate A:** the modular seasonal build matches the recorded baseline, and seasonal production builds with all development test facilities omitted. The original plan required this boundary before shared schedule changes.
+The owner subsequently authorized isolated T11–T14 software work while keeping
+Gate A open; development integration does not waive physical acceptance,
+release or deployment gates.
 
 ### Independent feature after Gate A
 
@@ -96,13 +99,13 @@ Work in the listed order by default. Dependencies identify prerequisites, not pe
 
 ### B — Add schedule mode and establish a stable release
 
-Implementation planning reviewed on 5 October 2026: see the [T10–T17 delivery index](docs/plans/t10-t17-delivery-index.md) for 42 canonical incremental tasks, readiness and evidence gates. Documentation/preparation can proceed during Gate A/T23 bench testing; schedule firmware changes still wait for Gate A.
+Implementation planning reviewed on 5 October 2026: see the [T10–T17 delivery index](docs/plans/t10-t17-delivery-index.md) for 42 canonical incremental tasks, readiness and evidence gates. The owner authorized isolated T11–T14 software work while Gate A/T23 bench testing proceeds; physical acceptance, release and deployment remain gated.
 
-- [ ] T10 — Specify configurable schedule behaviour and edge cases. [Implementation plan and incremental tracker](docs/plans/t10-schedule-specification.md).
-- [ ] T11 — Implement schedule mode behind the same control contract. [Implementation plan and incremental tracker](docs/plans/t11-schedule-engine.md).
-- [ ] T12 — Enforce the four-profile build and regression matrix. [Implementation plan and incremental tracker](docs/plans/t12-profile-ci.md).
+- [x] T10 — Specify configurable schedule behaviour and edge cases. Completed specification and independent acceptance corpus: [schedule contract](docs/schedule-behaviour.md). Gate A hardware evidence remains open; isolated T11–T14 software work was explicitly authorized. [Implementation plan and incremental tracker](docs/plans/t10-schedule-specification.md).
+- [x] T11 — Implement schedule mode behind the same control contract. Software acceptance recorded; Gate A/T23/T15 physical gates remain open. [Implementation plan and incremental tracker](docs/plans/t11-schedule-engine.md).
+- [x] T12 — Enforce the four-profile build and regression matrix. Local matrix and gate-fault evidence pass; current GitHub checks remain required before merge. [Implementation plan and incremental tracker](docs/plans/t12-profile-ci.md).
 - [ ] T13 — Add project identity, compatibility policy and release metadata. [Implementation plan and incremental tracker](docs/plans/t13-release-metadata.md).
-- [ ] T14 — Create minimal device examples and installation documentation. [Implementation plan and incremental tracker](docs/plans/t14-user-installation.md).
+- [x] T14 — Create minimal device examples and installation documentation. All four pinned public wrappers validate and compile from empty consumer directories; physical commissioning remains T15. [Implementation plan and incremental tracker](docs/plans/t14-user-installation.md); [software evidence](docs/evidence/t14-installation.md).
 - [ ] T15 — Validate hardware behaviour, resource headroom and upgrade compatibility. [Implementation plan and incremental tracker](docs/plans/t15-hardware-compatibility.md).
 - [ ] T16 — Publish the first verified modular release. [Implementation plan and incremental tracker](docs/plans/t16-verified-release.md).
 - [ ] T17 — Migrate the existing controller and provision a second controller. [Implementation plan and incremental tracker](docs/plans/t17-deployment-proof.md).
@@ -326,6 +329,8 @@ Do not commit private live-device YAML or raw backups merely to fit this layout.
 - Specify how common maximums, manual overrides, automatic disable and invalid-clock policy apply without duplication or double scaling.
 
 **Done when:** expected outputs can be determined from the specification without guessing. All boundary cases have an explicit policy and test examples; the scope fits the agreed configuration interface.
+
+**Evidence (5 October 2026):** [schedule contract](docs/schedule-behaviour.md), [acceptance corpus](tests/data/schedule-cases.json), and completed T10.1–T10.4 records define topology, eight-point roles, cyclic step/linear time semantics, HA atomic edits, versioned persistence, common control and independent expectations. The owner authorized specification completion during ongoing hardware testing. No schedule firmware was added; Gate A findings must be reviewed before T11, and Gate A/T23 remain open.
 
 ### T11 — Implement schedule mode behind the same control contract
 

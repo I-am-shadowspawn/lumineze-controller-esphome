@@ -28,17 +28,6 @@ enum TemporaryStatus : uint8_t {
 // The external component defines storage types and immutable bindings only.
 // The seasonal engine, policy and transaction sequencing live in YAML packages.
 struct ContextState {
-  float latitude = -28.5f;
-  float noon_minutes = 750.0f;
-  float phase_days = 182.6f;
-  float visible_winter = 0.75f;
-  float visible_summer = 1.0f;
-  float visible_exponent = 1.0f;
-  float uv_start_minutes = 90.0f;
-  float uv_end_minutes = 90.0f;
-  float uv_winter = 0.8f;
-  float uv_summer = 1.0f;
-  float uv_exponent = 1.0f;
   float desired[2] = {0.0f, 0.0f};
   float peak[2] = {0.0f, 0.0f};
   float curve[2] = {0.0f, 0.0f};
@@ -46,6 +35,7 @@ struct ContextState {
   bool simulated = false;
   bool simulated_output_enabled = false;
   uint32_t revision = 0;
+  uint32_t transition_revision[2] = {0, 0};
 };
 
 struct EvaluationSnapshot {
@@ -98,6 +88,7 @@ struct FixtureState {
   int consecutive_failures = 0;
   uint32_t completed_count = 0;
   uint32_t failure_count = 0;
+  uint32_t engine_transition_revision = 0;
   bool automatic_queued = false;
   int last_automatic = -1;
   bool invalid_output = false;

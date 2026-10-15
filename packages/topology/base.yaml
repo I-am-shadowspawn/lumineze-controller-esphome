@@ -1,9 +1,13 @@
+packages:
+  project_metadata: !include ../core/project.yaml
+
 substitutions:
   device_name: lumineze-topology
   friendly_name: LuminEZE Topology Controller
   area_name: Vivarium
   timezone: Europe/London
   logger_level: INFO
+  controller_source_expression: lumineze_topology::build_source_revision
   ble_connection_slots: '2'
 
 lumineze_topology:

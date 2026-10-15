@@ -1,8 +1,10 @@
 # Static fixture topology controller
 
-The generic seasonal production entry point is
-`packages/seasonal-production.yaml`; development uses
-`packages/seasonal-development.yaml`. The older
+The generic seasonal entry points are `packages/seasonal-production.yaml` and
+`packages/seasonal-development.yaml`. The schedule equivalents are
+`packages/schedule-production.yaml` and
+`packages/schedule-development.yaml`; all four have software build evidence,
+while Gate A and T15 physical evidence remain open. The older
 `packages/lumineze-topology.yaml` and `packages/lumineze-topology-development.yaml`
 paths remain compatibility aliases. The existing
 `packages/lumineze-controller.yaml` path still resolves to the v1 two-product
@@ -23,16 +25,22 @@ transaction, retry and safety timers remain monotonic real-time clocks.
 
 ## Device Builder composition
 
-Copy `example/topology-two-lamps.yaml` and provide its secrets. Pin
+Choose one of the four profile-named wrappers in `example/` and provide its
+private secrets. Pin
 `controller_ref` to the same tested Git commit or release tag for both the
 package and `lumineze_topology` external component. The example deliberately
 places ProT5 in slot 0 and JungleDawn in slot 1. Slot is storage/arbiter order,
 not a product or role. The remote `files` list includes:
 
 1. One common controller package.
-2. One `context-seasonal.yaml` instance per context (one or two).
+2. One `context-seasonal.yaml` or `context-schedule.yaml` instance per context
+   (one or two). Schedule builds also include one role editor for each used
+   visible/UV role.
 3. One `group.yaml` instance per group (one to four).
-4. One `fixture-luminize.yaml` instance per **enabled** fixture (one to four).
+4. One `fixture-luminize.yaml` (seasonal) or
+   `fixture-luminize-schedule.yaml` (schedule) instance per **enabled** fixture
+   (one to four). Development builds add one matching fixture diagnostic
+   fragment per enabled fixture.
 
 Repeat a fragment with distinct `vars` as needed. Disabled/reserved descriptors
 stay in `lumineze_topology.fixtures` with only `id`, `slot`, `enabled: false` and

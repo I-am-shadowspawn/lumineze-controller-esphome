@@ -6,7 +6,7 @@ import re
 
 ROOT = Path(__file__).resolve().parents[1]
 legacy = (ROOT / "packages/lamps/protocol.yaml").read_text()
-generic = (ROOT / "packages/topology/fixture-luminize.yaml").read_text()
+generic = (ROOT / "packages/topology/fixture-luminize-common.yaml").read_text()
 generic_adapter = generic.split("\nscript:", 1)[1]
 
 

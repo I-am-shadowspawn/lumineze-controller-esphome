@@ -14,26 +14,26 @@ compilation; preserve those outcomes. Hardware reports remain separate gates.
 
 ## Incremental deliveries
 
-- [ ] **T12.1 — Explicit coverage manifest.** Record profile, fixture, provider,
+- [x] **T12.1 — Explicit coverage manifest.** Record profile, fixture, provider,
   engine, temporary capability, expected entities/state, toolchain and checks in
   a machine-readable manifest. Include repeated products, swapped/sparse slots,
   shared/independent groups, up to four experimental fixtures and negative
   configurations. Acceptance: each supported profile has a full-build job and
   each topology case declares config-only, compiled or hardware-verified status.
-- [ ] **T12.2 — Deterministic fast gates.** Run schema failures, T10 vectors,
+- [x] **T12.2 — Deterministic fast gates.** Run schema failures, T10 vectors,
   actual policy transitions, transport/generation/T23 tests, seasonal parity,
   safe-off and timeout checks against the checkout. Acceptance: expected-invalid
   cases fail for the intended reason; a deliberately broken schedule case and
   stale-generation case each fail their named check. Remove injected faults
   before commit. No network package reference may hide a checkout change.
-- [ ] **T12.3 — Isolated profile builds and inventories.** Compile all four
+- [x] **T12.3 — Isolated profile builds and inventories.** Compile all four
   profiles on `requirements-ci.txt`'s pin with distinct job/build directories.
   Assert exactly one provider/orchestrator/engine and one common output path.
   Compare production/development inventories; reject production test state and
   cross-engine private settings/state. Acceptance: remove one profile entry or
   inject an unwanted seasonal symbol in schedule and demonstrate detection;
   compiled-source evidence proves omission rather than hidden HA entities.
-- [ ] **T12.4 — Resilience, size and artifacts.** Retain bounded retry/backoff
+- [x] **T12.4 — Resilience, size and artifacts.** Retain bounded retry/backoff
   for transient external downloads, cache by toolchain/profile/source inputs,
   and retain per-attempt logs without masking the final error. Record flash/RAM
   static sizes and warnings, with explicit reviewed budgets (aligned with T15).
@@ -41,7 +41,7 @@ compilation; preserve those outcomes. Hardware reports remain separate gates.
   dummy secrets. Acceptance: final failed compilation fails CI; threshold breach
   fails its profile; artifacts cannot contain live credentials. Runtime heap
   headroom is not claimed from linker output.
-- [ ] **T12.5 — Remote consumption and release gate.** Add a distinct clean
+- [x] **T12.5 — Remote consumption and release gate.** Add a distinct clean
   consumer check against an immutable candidate SHA with package and component
   on that same SHA. Run all profiles remotely at release time; use a representative
   consumer on implementation PRs. Document required check names for repository
@@ -70,5 +70,111 @@ remaining work beside that increment. Proposed filenames may change; ownership
 and acceptance criteria may not silently change. Do not mark implementation or
 hardware increments complete because this plan exists.
 
-**Progress:** all increments planned; no implementation or hardware evidence
-is claimed by this document.
+**Progress:** all software increments complete. Current GitHub execution remains a review gate; hardware/release gates remain open.
+
+
+### T12.1 — complete
+
+Source `b3bc3bd`. `ci/profile-matrix.json` declares all four full-build profiles,
+providers/capabilities/build directories, pin, dummy compatibility fixtures,
+negative/fast checks and ten topology cases with separate software/physical
+status. Dedicated `Profile / <profile>` jobs use the manifest fixture. The
+manifest checker rejects missing entries, mismatched workflow matrix, pin or
+capabilities. Static budgets are 180,000 RAM / 1,600,000 flash bytes, chosen above
+all four T11 baselines while retaining 141,296 static RAM / 235,008 flash bytes
+against the current partition; these do not certify runtime heap. Topology matrix
+full compile remains required CI coverage, not a claim of physical validation.
+Local manifest check passes. Next: deterministic gates and fault injection.
+
+
+### T12.2 — complete
+
+`check_fast_gates.py` runs the manifest-declared checkout-only harnesses and fixture
+C++ tests with named failures. It requires executable PASS coverage for every
+T10 transition ID. Nine real schedule schema cases and both engine topology
+matrices are added to CI alongside existing failures and inventory checks.
+`check_gate_faults.py` copies only source/test assets into a disposable directory
+and proves a changed oracle expectation fails `check_schedule_cases` and an
+obsolete completion that clears pending state fails `check_schedule_policy`.
+Both failed by assertions, not setup/compile errors; no injected fault touched
+the checkout. All unmodified fast gates pass (`/tmp/t12-fast.log`), as do the nine
+schedule and 17 existing schema cases. Next: isolated build inventory gates.
+
+
+### T12.3 — complete
+
+Each profile has its own matrix job/checkout/build directory with fail-fast off.
+Generated-source gates require the selected provider/engine/common policy and
+forbid the alternative provider, engine-private state and unsupported capability
+entities. Production test symbols are absent. All four current-source checks pass.
+`check_build_gate_faults.py` proves deleting schedule-development is rejected by
+manifest validation and injecting cross-engine state into each real generated
+source is rejected by its named isolation check. CI runs these checks after each
+profile build. T11 records local pinned full builds; the complete experimental
+matrix is additionally running and will be recorded under T12.4. No hardware
+or HA runtime outcome is inferred from these checks.
+
+
+### T12.4 — complete
+
+- [x] **T12.4a — Bounded retries, budgets and artifact boundary.** The shared
+  `build_profile.py` retains each attempt and propagates the final failure,
+  validates dummy inputs before logging, checks the reviewed RAM/flash budgets,
+  and records exact source/toolchain/size/warnings without claiming hardware proof.
+  Per-profile/source/toolchain cache keys and 14-day sanitized log/summary artifacts
+  are configured. Artifact upload requires its boundary check to succeed.
+  `check_build_resilience.py` proves three failures propagate exit 23, waits are
+  20/40 seconds, all three logs remain, a RAM breach fails and private input fails
+  before build logging. A real schedule-production run passes its budget and
+  artifact scan (`/tmp/t12-build-artifacts`, `/tmp/t12-profile-build.log`).
+- [x] **T12.4b — Complete topology matrix build record.** Both ten-case engine
+  matrices passed local configuration and full compilation; the complete
+  record and source boundaries are below. Static RAM does not certify free/minimum heap.
+
+
+### T12.5 — complete
+
+`check_remote_consumer.py` writes only an ordinary installation wrapper in an
+empty temporary directory, pins packages/component to the same full SHA, rejects
+wrong/missing helper refs, and validates/compiles without local assets or a
+consumer generator requirement. Representative schedule production succeeds at
+remote `78075b90d47e9b856efa11b3a6b7bbbfca37e499`
+(`/tmp/t12-remote-consumer.log`); dispatch release rehearsals compile all four.
+Remote compile also uses the bounded retry helper while retaining the empty
+consumer working directory.
+Always-triggered Change scope and Required validation replace path-ignore.
+Disposable real Git event tests prove docs-only skip and firmware full-check
+selection. The actual final gate script accepts documented skips/all-pass and
+rejects a failed profile or scope job. `docs/ci-validation.md` names required
+checks; repository branch protection is not changed. Both engine topology
+compile matrices are required. At this T12.5 checkpoint, T12.4b's matrix record was still pending; its
+completed record follows below.
+
+
+T12.4b complete: both ten-case topology matrices pass config and full compile on
+ESPHome 2026.9.0, including swapped/sparse/repeated products, independent groups,
+one/two contexts, four experimental fixtures and development input. Declaration
+reordering retains slot/calibration identities for both engines. Logs:
+`/tmp/t12-seasonal-matrix-build.log`, `/tmp/t12-schedule-matrix-build.log`.
+Manifest statuses now record actual compile evidence and retain physical pending.
+New commits supersede previous same-ref workflow runs. All five T12 increments
+are complete locally. GitHub's current candidate checks still need review after
+runner scheduling; completed/cancelled obsolete runs are not acceptance evidence.
+Next: T13 identity/compatibility decisions; no hardware promotion.
+
+
+T12.5 follow-up: docs-only success now inherits the preceding source commit's
+successful Required validation check. Heavy-job concurrency applies only when
+code jobs run, so docs do not cancel their baseline. Local tests reject failed,
+missing and pending baseline checks; the gate waits up to 30 minutes then remains
+failed/retryable if infrastructure has not completed. This closes the possibility
+of a doc edit hiding an unverified or failed firmware revision.
+
+
+7 October 2026 CI correction: job-level concurrency caused queued jobs from older
+runs to cancel newer candidates out of order. Removed cancellation so every pushed
+commit retains independent checks. GitHub run `37370474599` had successful validate,
+remote consumer and two profile jobs; two later profile jobs were cancelled,
+causing its required check to fail. Run `37370843854` was wholly cancelled.
+Those outcomes are not firmware validation failures and are not acceptance
+proof. Re-run complete checks on the next candidate SHA before merge.

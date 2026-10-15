@@ -1,10 +1,11 @@
 # Copy into ESPHome Device Builder and provide the named secrets locally.
-# Pin controller_ref to a tested release tag or commit for a real controller.
+# Candidate software pin. Physical release remains gated; see docs/installation.md.
 substitutions:
   device_name: my-vivarium-topology
   friendly_name: My Vivarium
   area_name: Vivarium
-  controller_ref: master
+  controller_ref: e3bdc2b81c325379be456c0d1ac2acc8d0e16e8a
+  timezone: Europe/London
   uv_mac: !secret my_vivarium_prot5_mac
   visible_mac: !secret my_vivarium_jungle_dawn_mac
 

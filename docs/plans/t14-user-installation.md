@@ -21,29 +21,29 @@ change MACs, routing or engine selection.
 
 ## Incremental deliveries
 
-- [ ] **T14.1 — Public wrapper contract.** Inventory required/optional variables
+- [x] **T14.1 — Public wrapper contract.** Inventory required/optional variables
   and fragments for each profile, plus legacy adapter compatibility. Document
   timezone, IDs, enabled/disabled descriptors, connection allocation and
   experimental topology. Acceptance: every field is explained; no missing-MAC
   convention, slot/product assumption or unsupported topology is recommended.
-- [ ] **T14.2 — Four minimal examples and private boundary.** Provide four
+- [x] **T14.2 — Four minimal examples and private boundary.** Provide four
   wrappers or one unambiguous template with fully validated alternatives. Use
   obvious explanatory placeholders and a valid dummy-secret CI copy; document
   generation of unique encryption/access credentials. Acceptance: examples
   contain only installation data/profile selection, never duplicated engine,
   policy or dispatcher code; secret values are excluded from commits/artifacts.
-- [ ] **T14.3 — End-user installation and commissioning.** Document validate,
+- [x] **T14.3 — End-user installation and commissioning.** Document validate,
   compile, USB installation, HA integration, fixture identification, initial
   automatic-off state, ProT5 zero default, calibration, manual low/off readback
   checks, then deliberate automatic enable. Include schedule Apply/edit rejection
   and seasonal T23 workflows with capability/support status. Acceptance: physical
   confirmation is distinct from a successful upload or requested off value.
-- [ ] **T14.4 — Upgrade, profile switch and recovery guides.** Provide a field
+- [x] **T14.4 — Upgrade, profile switch and recovery guides.** Provide a field
   mapping for v1→generic and seasonal↔schedule, capture/export of settings,
   incompatible preference handling, HA automation updates and pinned rollback.
   Document development→production removal of test state. Acceptance: no claim of
   automatic settings migration or preservation without T15 evidence.
-- [ ] **T14.5 — Clean remote consumer rehearsal.** Build from an empty consumer
+- [x] **T14.5 — Clean remote consumer rehearsal.** Build from an empty consumer
   directory outside the checkout with candidate SHA references and dummy secrets.
   Validate/compile all supported alternatives without local helper assets or
   generation scripts. Record exact files/commands and resolved references.
@@ -67,5 +67,15 @@ remaining work beside that increment. Proposed filenames may change; ownership
 and acceptance criteria may not silently change. Do not mark implementation or
 hardware increments complete because this plan exists.
 
-**Progress:** all increments planned; no implementation or hardware evidence
-is claimed by this document.
+**Progress:** T14.1 documented in `docs/installation-contract.md` from the
+actual package fragments and component schema. T14.2 added the four
+`example/{seasonal,schedule}-{production,development}.yaml` wrappers and
+synthetic-secret `scripts/check_public_examples.py`. All four passed `esphome
+config` in separate empty directories at candidate source
+`e3bdc2b81c325379be456c0d1ac2acc8d0e16e8a` on ESPHome 2026.9.0.
+T14.3 provides the end-user sequence and outcome distinctions in
+`docs/installation.md`. T14.4 records explicit mapping, profile switches and
+pinned rollback in `docs/upgrade-recovery.md`. T14.5 compiled all four actual
+public wrappers from empty directories; exact command, revision and sizes are
+in `docs/evidence/t14-installation.md`. T14 software delivery is complete.
+Gate A, T13.4, T15 and stable release remain open.

@@ -16,3 +16,4 @@ __pycache__/
 *.elf
 *.map
 *.uf2
+/ci/artifacts/
