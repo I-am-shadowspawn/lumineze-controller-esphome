@@ -6,13 +6,14 @@ Hardware, stable release and live deployment gates remain unchanged.
 **Dependencies:** T10, T09/Gate A. **Delivery:** schedule production/development
 profiles using the existing generic fixture policy and BLE path.
 
-## Observed seams and intended boundaries
+## Baseline seams and delivered boundaries
 
-`topology/controller-core.yaml` currently includes the seasonal engine; that
-engine owns `evaluate_topology` and its 10-second interval. `ContextState` and
-`topology_contexts` mix seasonal settings with shared outputs, and topology
-validation currently accepts only `engine_family: seasonal`. These are actual
-couplings to address, not an invitation to reuse seasonal entity IDs for schedules.
+At the T10 baseline, `topology/controller-core.yaml` included the seasonal
+engine, which owned `evaluate_topology` and its interval. Shared context state
+contained seasonal settings, and schema validation accepted only seasonal.
+T11.1–T11.5 resolved those couplings through the common orchestrator, separate
+engine state and validated profile composition. The following design contract
+is implemented; execution records below identify its incremental evidence.
 
 Separate a shared output envelope from engine-owned state. Preserve desired,
 peak, curve, validity and simulation provenance used by conversion. For schedule
@@ -28,9 +29,8 @@ agree with that selection. Do not embed schedules, MACs or interpolation in BLE.
 Use fixed-size point records, pure bounded evaluation, and transactional active
 snapshot storage. No host generator is required for Device Builder consumers.
 
-T23 is merged but its UI is currently in the shared fixture fragment. Compose
-seasonal temporary controls as an explicit capability rather than accidentally
-exposing them in schedule profiles. Preserve seasonal entity IDs and behavior;
+At the baseline T23 UI lived in the shared fixture fragment. T11.5 extracted
+it as an explicit seasonal capability; schedule profiles omit those controls. Preserve seasonal entity IDs and behavior;
 shared revocation/transport helpers remain common. Schedule support for temporary
 lighting is a separate contract change, not implicit T11 scope.
 
@@ -130,14 +130,14 @@ policy/HA and 13 persistence scenarios are intentionally deferred to their
 owning increments, not counted as passed from JSON parsing. `git diff --check`
 passes. Next: T11.3 editor, two-bank durable storage and fault-injection coverage.
 
-### T11.3 — in progress
+### T11.3 — complete
 
 - [x] **T11.3a — Durable record/storage core.** `schedule_store.h` implements
   the specified packed schema, independent two-bank restore, modulo revisions,
   context-atomic validation, Unchanged/Cancel, deferred activation and uncertain
   storage locking. `schedule_preferences.h` allocates each backend once and
   requires flush/readback before success. No restoring per-field editor values.
-- [x] **T11.3b — HA editor and lifecycle composition.** Next: context/role/point
+- [x] **T11.3b — HA editor and lifecycle composition.** Implemented: context/role/point
   fragments, stable entity IDs, Apply/Cancel/status and boot publication. Validate
   and compile a schedule composition and prove UI rejection/restore behavior.
 
@@ -150,7 +150,8 @@ A temporary compile-only dummy topology included the real ESPHome adapter and
 restore call; the ESP32-C3 firmware compiled successfully (log:
 `/tmp/t11-3-storage-adapter-build.log`). The temporary fixture was removed and
 never flashed. CI now runs the fault harness. No hardware persistence proof is
-claimed; that remains T15. T11.3 stays unchecked until editor integration passes.
+claimed; that remains T15. At this storage-only checkpoint, T11.3 awaited editor integration; the
+completed T11.3b record follows.
 
 
 T11.3b complete: added the fixed eight-slot used-role editor, context Apply/Cancel,

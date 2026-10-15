@@ -115,7 +115,7 @@ matrix is additionally running and will be recorded under T12.4. No hardware
 or HA runtime outcome is inferred from these checks.
 
 
-### T12.4 — in progress
+### T12.4 — complete
 
 - [x] **T12.4a — Bounded retries, budgets and artifact boundary.** The shared
   `build_profile.py` retains each attempt and propagates the final failure,
@@ -128,8 +128,8 @@ or HA runtime outcome is inferred from these checks.
   before build logging. A real schedule-production run passes its budget and
   artifact scan (`/tmp/t12-build-artifacts`, `/tmp/t12-profile-build.log`).
 - [x] **T12.4b — Complete topology matrix build record.** Both ten-case engine
-  matrices are running locally; record their complete results before closing
-  this increment. Static RAM does not certify free/minimum heap.
+  matrices passed local configuration and full compilation; the complete
+  record and source boundaries are below. Static RAM does not certify free/minimum heap.
 
 
 ### T12.5 — complete
@@ -147,8 +147,8 @@ Disposable real Git event tests prove docs-only skip and firmware full-check
 selection. The actual final gate script accepts documented skips/all-pass and
 rejects a failed profile or scope job. `docs/ci-validation.md` names required
 checks; repository branch protection is not changed. Both engine topology
-compile matrices are required. T12.4b's local complete matrix record remains
-pending before closing the parent task.
+compile matrices are required. At this T12.5 checkpoint, T12.4b's matrix record was still pending; its
+completed record follows below.
 
 
 T12.4b complete: both ten-case topology matrices pass config and full compile on

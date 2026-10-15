@@ -98,8 +98,9 @@ remaining work beside that increment. Proposed filenames may change; ownership
 and acceptance criteria may not silently change. Do not mark implementation or
 hardware increments complete because this plan exists.
 
-**Progress:** T10.1–T10.4 complete as a specification delivery. No schedule
-firmware implementation or physical acceptance is claimed.
+**Progress:** T10.1–T10.4 complete as a specification delivery. Its original
+records claim no firmware or physical acceptance; subsequent T11 implementation
+is tracked separately in the [current delivery index](t10-t17-delivery-index.md).
 
 ## Execution record
 

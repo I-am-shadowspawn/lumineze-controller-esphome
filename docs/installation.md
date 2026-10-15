@@ -5,6 +5,13 @@ board. It replaces proxy firmware with dedicated LuminEZE firmware. The four
 candidate wrappers are software validated; Gate A and T15 physical evidence are
 still open. Use a controlled bench setup before relying on automatic output.
 
+For testing the development integration, choose its exact full commit SHA
+and set `controller_ref` to that value in your private wrapper. Package and
+component refs must both use it. The checked-in example pin records an older
+build rehearsal, not a moving reference to the latest development commit.
+Record profile, source SHA and results using the
+[development handoff](development-integration.md).
+
 ## 1. Prepare the private device file
 
 Have Home Assistant, its ESPHome Device Builder, a data-capable USB connection,

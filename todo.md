@@ -88,7 +88,10 @@ Work in the listed order by default. Dependencies identify prerequisites, not pe
 - [x] T08 — Separate operational diagnostics from verbose development diagnostics. PR #11 passed both CI validation runs; see [diagnostic profile inventories](docs/diagnostic-profiles.md).
 - [ ] T09 — Assemble and verify both seasonal profiles. PR #13's remote CI passed both seasonal ESP32-C3 profile builds, provider-isolation and snapshot-parity checks; the physical seasonal bench smoke test and settings capture/restore remain outstanding for Gate A.
 
-**Gate A:** the modular seasonal build matches the recorded baseline, and seasonal production builds with all development test facilities omitted. Do not add schedule behaviour to shared code before this boundary is demonstrated.
+**Gate A:** the modular seasonal build matches the recorded baseline, and seasonal production builds with all development test facilities omitted. The original plan required this boundary before shared schedule changes.
+The owner subsequently authorized isolated T11–T14 software work while keeping
+Gate A open; development integration does not waive physical acceptance,
+release or deployment gates.
 
 ### Independent feature after Gate A
 

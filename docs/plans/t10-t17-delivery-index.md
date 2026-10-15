@@ -1,93 +1,82 @@
 # T10–T17 incremental delivery plan
 
-Reviewed against `master` at `ab985a4` on 5 October 2026. This is documentation
-work only; no firmware, workflow, settings, tag or device change is implemented
-by these plans. Reinspect current master and instructions before implementation.
+Originally planned against `master` at `ab985a4` on 5 October 2026. Status
+reviewed on **15 October 2026** against `implementation/t11-t17` at `73f9092`.
+T10 and T11–T14 software deliveries now exist; this index distinguishes their
+implementation evidence from outstanding physical acceptance. The
+[integration handoff](../development-integration.md) records the review and
+merge boundary for `implementation/t11-t17` -> `development`.
 
 ## Current evidence and start conditions
 
-- T09 seasonal profiles have software build/parity/isolation evidence. Gate A's
+- T09 seasonal software build/parity/isolation evidence exists. Gate A's
   seasonal hardware smoke test and settings capture/restore remain open.
 - T23 is merged through PR #14 (`038f78e` software hardening); its physical
-  acceptance remains open. Use its [bench plan](t23-bench-validation.md) for
-  traces; do not infer bench success from a PR merge.
-- The repository currently has generic seasonal and legacy compatibility
-  profiles. Schedule profiles are planned, not implemented or supported.
-- CI pins ESPHome `2026.9.0` in `requirements-ci.txt`. The established board is
-  the Pi Hut ESP32-C3 with ESP-IDF. Actual generated toolchain/partition versions
-  must be recorded per implementation/build; do not change dependencies as part
-  of this documentation delivery.
-- The `v1.9.0-rc` tag currently resolves to `fad8c4b`. It does not close Gate A,
-  T23, or Gate B. T13/T16 must inspect existing version history before choosing
-  any next version; recovery tags remain immutable.
-
-Documentation, independent expected vectors, compatibility inventories and bench
-preparation can proceed now. The roadmap's Gate A still blocks schedule behavior
-changes to shared firmware. T23 physical acceptance is not a new prerequisite
-for writing T10–T17 plans or an automatic dependency for schedule mode; it is a
-release gate for claiming that capability verified. T11 must retain its software
-regressions and explicitly compose its seasonal-only capability.
+  acceptance remains open. Use its [bench plan](t23-bench-validation.md).
+- Four generic seasonal/schedule × production/development profiles and legacy
+  compatibility wrappers are implemented and have recorded software evidence.
+  Schedule profiles remain unverified candidates for device testing, not
+  physically supported stable releases.
+- CI pins ESPHome `2026.9.0`; observed ESP-IDF is `5.5.5` on ESP32-C3.
+  Only that pin is qualified by the recorded software builds. Toolchain
+  changes need a separate review and applicable regression/hardware reruns.
+- `v1.9.0-rc` resolves to `fad8c4b`; `v1.0.0` remains the recovery/stable
+  release tag. Neither proves the new `2.0.0-dev` candidate passed Gate B.
+  Keep both tags immutable.
+- The owner authorized isolated T11–T14 software work while Gate A remained
+  open (5 October). Integration into development carries that authorization
+  forward for device testing; hardware acceptance, release promotion and live
+  deployment remain gated. No pending gate is closed by this merge.
 
 ## Plans and canonical task trackers
 
-T10.1–T10.4 are complete as a specification delivery on `t10/schedule-specification`.
-T11–T17 increments remain planned and unchecked. A checked parent in `todo.md`
-requires its complete software and physical exit evidence, not just all code
-committed. Each linked plan owns its incremental checkboxes; do not maintain a
-second contradictory copy of those checkboxes in an issue or another file.
+Each linked plan owns its incremental checkboxes. `todo.md` summarizes parent
+tasks; software completion must not imply physical acceptance. Historical
+execution records retain their original source SHAs and results.
 
-| Task / implementation plan | Increment IDs | Delivery / exit |
+| Task / implementation plan | Increment IDs | Current status / remaining exit |
 | --- | --- | --- |
-| [T10: schedule specification](t10-schedule-specification.md) | T10.1–T10.4 | Settled behavior, editing/storage contract and independent expected vectors |
-| [T11: schedule engine](t11-schedule-engine.md) | T11.1–T11.6 | Two schedule profiles, shared contract and seasonal/T23 regression evidence |
-| [T12: profile CI](t12-profile-ci.md) | T12.1–T12.5 | Four-profile required builds, isolation, behavior and consumer gates |
-| [T13: release identity](t13-release-metadata.md) | T13.1–T13.5 | Version/profile/toolchain correlation and compatibility policy |
-| [T14: user installation](t14-user-installation.md) | T14.1–T14.5 | Minimal examples, commissioning/migration guides and clean remote builds |
-| [T15: hardware/compatibility](t15-hardware-compatibility.md) | T15.1–T15.6 | Measured per-profile behavior/resources and demonstrated recovery |
-| [T16: verified release](t16-verified-release.md) | T16.1–T16.5 | Immutable release with traceable evidence and verified pinned consumption |
-| [T17: deployment proof](t17-deployment-proof.md) | T17.1–T17.6 | Existing-device upgrade and independent second-controller operation |
+| [T10: schedule specification](t10-schedule-specification.md) | T10.1–T10.4 | Complete; contract and independent vectors included in the implementation branch |
+| [T11: schedule engine](t11-schedule-engine.md) | T11.1–T11.6 | Software complete; [evidence](../evidence/t11-software.md); physical results remain Gate A/T23/T15 |
+| [T12: profile CI](t12-profile-ci.md) | T12.1–T12.5 | Software complete, including 20 topology builds; current integration PR checks required before merge |
+| [T13: release identity](t13-release-metadata.md) | T13.1–T13.5 | Software complete; T13.4 HA/device identity and update observations pending; parent remains open |
+| [T14: user installation](t14-user-installation.md) | T14.1–T14.5 | Software complete; four pinned remote examples compile; physical commissioning remains T15 |
+| [T15: hardware/compatibility](t15-hardware-compatibility.md) | T15.1–T15.6 | Protocol draft prepared; runtime budgets, bench measurements, migration and recovery pending |
+| [T16: verified release](t16-verified-release.md) | T16.1–T16.5 | Planned; waits for accepted hardware evidence and frozen candidate |
+| [T17: deployment proof](t17-deployment-proof.md) | T17.1–T17.6 | Planned; waits for verified release and authorized physical deployment |
 
 ## Dependency and readiness map
 
-| Work | Can prepare while physical testing proceeds | Implementation/completion gate |
+| Work | Available now | Remaining completion gate |
 | --- | --- | --- |
-| T10 | Completed contract, edge-case tables and acceptance corpus | Review later T09/Gate A findings as amendments before T11 |
-| T11 | Seam inventory, entity/persistence mapping and evaluator design | Gate A passed and T10 finalized before firmware edits |
-| T12 | Coverage manifest, CI architecture and size/report design | T11 profiles exist and software acceptance passes |
-| T13 | Namespace/version/compatibility decisions, release checklist | T12 evidence; runtime identity observations for completion |
-| T14 | Example shape and user/migration journeys | T13 settled contract; actual candidate remote builds |
-| T15 | Freeze bench protocol, budgets, recovery and trace format | T12–T14 accepted and Gate A evidence recorded |
-| T16 | Release scope, notes and manifest template | T15 evidence on final candidate; publication authorized |
-| T17 | Private backups, wrappers, rollout and second-device setup | T16 verified release; physical deployment authorized |
+| T10–T12 | Specification, implemented engines and software gates | Current full integration PR checks; no physical support claim |
+| T13 | Shared identity, compatibility policy, metadata checks and release checklist | T13.4 runtime identity, retained settings and update observations |
+| T14 | Minimal examples and installation/upgrade guides with remote build evidence | T15 physical commissioning; T16 final stable example refs |
+| T15 | Draft [hardware protocol](../hardware-validation.md) and software baselines | Recorded Gate A results, frozen numeric runtime budgets and actual per-profile traces |
+| T16 | Release checklist and candidate manifest | T15 acceptance at the final candidate; release publication authorized |
+| T17 | Migration/second-controller plan | T16 verified release and authorized physical deployment |
 
-Default execution order remains T10→T11→T12→T13→T14→T15→T16→T17.
-Preparation may overlap, but a blocked prerequisite is recorded explicitly and
-cannot be bypassed by ticking a software-only task. If Gate A reveals a shared
-policy defect, fix it separately and rerun applicable seasonal/T23 baselines
-before schedule implementation begins.
+Continue with T15.1 budget/protocol preparation and T13.4/T15 bench evidence.
+If Gate A reveals a shared-code defect, fix it separately and rerun applicable
+seasonal/T23/schedule regressions before accepting affected hardware results.
 
-## Review findings that the plans resolve
+## Architectural changes delivered since the planning baseline
 
-1. Original T10/T11 language refers to two lamp targets. The new plans define
-   independent context/role schedules routed through groups to fixtures; slot
-   numbers have no product or role meaning.
-2. `packages/topology/controller-core.yaml` includes the seasonal engine.
-   `seasonal-engine.yaml` owns the orchestrator/interval, while `ContextState`
-   mixes seasonal settings and shared outputs. T11.1 separates these mechanically
-   before schedule behavior; schedule builds must omit seasonal private state.
-3. `lumineze_topology` validation allows only seasonal engine family today.
-   T11.4 must validate the selected engine/context fragments, not just permit a
-   new string while retaining a seasonal-only composition.
-4. T23 controls live in `fixture-luminize.yaml`, and its software transitions
-   rely on shared authorization helpers. T11.5 makes UI/capability composition
-   explicit without weakening common stale-request protections or extending
-   seasonal-only behavior accidentally.
-5. Current CI covers seasonal generic and legacy fixtures. T12 adds actual
-   schedule builds, manifest-based inventory checks and independent vectors,
-   retaining doc-only skip behavior and bounded download retries.
-6. Compiled topology support is broader than physical evidence. T15 keeps
-   experimental three/four-fixture results separate and sets budgets before
-   candidate measurements. T16/T17 require release and real-install evidence.
+1. Context/role schedules route through explicit groups and fixture identities;
+   physical slots have no product meaning.
+2. The common orchestrator owns one input snapshot and tick. Seasonal settings
+   are separate from shared context outputs; schedule builds omit seasonal
+   private state.
+3. Topology validation accepts the selected seasonal or schedule engine and
+   rejects mismatched engine/context/editor/provider composition.
+4. Seasonal temporary controls are composed separately from the common fixture
+   path; schedule profiles do not expose T23. Shared authorization and stale-write
+   revocation remain common.
+5. CI covers the four profiles, legacy compatibility, both topology matrices,
+   independent behavioral vectors, inventory isolation and immutable consumers.
+   Documentation-only updates inherit successful source validation.
+6. Compiled three/four-fixture support remains experimental. Physical support,
+   runtime resource measurements, release and deployment require their own gates.
 
 ## Increment execution record
 
@@ -112,19 +101,16 @@ trace locations; keep device secrets and MACs private. Mark a parent task comple
 only when every required increment and exit condition has evidence. A gate cannot
 be closed by an expected result, successful compilation or a plan document.
 
-## Completion boundary of this planning delivery
+## Integration checkpoint — 15 October 2026
 
-Eight implementation plans and their incremental trackers are documented and
-linked from the roadmap. T10 specification work is complete; actual T11–T17
-implementation remains unstarted. No live controller
-is flashed, no release is promoted, and no hardware gate is marked complete.
+T10 and the incremental T11–T14 software commits are ready for review into
+`development` as one integration PR, preserving their history with a merge
+commit. No separate T10 merge is needed because its commits are ancestors of
+`implementation/t11-t17`. Current software checks must pass before merging.
 
-## Active implementation checkpoint — 5 October 2026
-
-Owner authorized T11–T14 isolated software work while hardware gates remain open.
-Branch: `implementation/t11-t17`, based on completed T10 `c250604` (development
-contains the planning baseline). T11 software implementation is complete through six verified increments;
-see `t11-schedule-engine.md` and `../evidence/t11-software.md`. T12 software gates and 20 topology builds are complete. Next: T13.1
-identity/compatibility decision record. Gate A/T23/T15 hardware, release and deployment remain open.
-Commit each increment and update its canonical plan before proceeding. If usage
-ends, resume the first unchecked increment in the active plan; do not restart the extraction.
+After integration, use development for controlled device testing, with private
+wrappers pinned to the exact source SHA being tested. Gate A, T23, T13.4 and
+T15 remain open; T16 release and T17 live deployment remain gated. Keep
+`doc/ble-testing` independent, and leave `release`, `master` and published tags
+unchanged. Resume from the first unchecked physical increment rather than
+reimplementing completed software deliveries.

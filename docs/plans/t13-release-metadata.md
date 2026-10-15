@@ -64,8 +64,9 @@ remaining work beside that increment. Proposed filenames may change; ownership
 and acceptance criteria may not silently change. Do not mark implementation or
 hardware increments complete because this plan exists.
 
-**Progress:** all increments planned; no implementation or hardware evidence
-is claimed by this document.
+**Progress:** T13.1–T13.3 and T13.5 software deliveries are complete.
+T13.4 software checks pass; actual HA/device identity and update/retention
+observations remain pending, so T13 stays open. No hardware gate is closed.
 
 
 ### T13.1 — complete
@@ -80,7 +81,7 @@ not automatic. Only ESPHome 2026.9.0 / observed IDF 5.5.5 is initially qualified
 No tags or installed devices changed. Next: metadata composition and checks.
 
 
-### T13.2 — in progress
+### T13.2 — complete
 
 - [x] **T13.2a — Shared metadata and read-only diagnostics.**
   `core/project.yaml` holds the namespace/version/minimum and four read-only

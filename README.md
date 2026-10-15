@@ -18,6 +18,25 @@ Proxy service at the same time. Home Assistant communicates with the controller
 through the ESPHome integration; the controller communicates with each lamp
 directly over BLE.
 
+## Current status and testing branches
+
+The four seasonal/schedule production/development profiles are implemented
+as the **unreleased `2.0.0-dev` candidate**. After the implementation integration
+PR is merged, `development` is the source for controlled on-device testing.
+A production profile omits development facilities; its name does not certify
+that the candidate has passed hardware acceptance. Gate A, T23, T13.4 and T15
+physical evidence remain pending.
+
+For a bench build, pin both package and external-component references to the
+same full commit SHA from development and record that SHA with your results.
+The examples retain their previously build-tested candidate pin; change
+`controller_ref` explicitly when testing a newer integration. Do not silently
+follow a moving branch for an existing installation. `release` and `master`
+are not advanced by development integration; existing release tags stay intact.
+See the [integration and bench handoff](docs/development-integration.md) and
+[current delivery status](docs/plans/t10-t17-delivery-index.md). BLE research
+continues independently on `doc/ble-testing`.
+
 ## Before you start
 
 This is a configurable ESPHome project, rather than a one-click lamp pairing
