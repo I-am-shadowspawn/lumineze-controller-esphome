@@ -154,6 +154,11 @@ CONFIG_SCHEMA = cv.All(
 )
 
 
+def _entities_by_id(full, domain):
+    # Grouped platforms such as debug define child entities, not a row ID.
+    return {str(item["id"]): item for item in full.get(domain, []) if "id" in item}
+
+
 def _final_validate(config):
     full = fv.full_config.get()
     enabled = [fixture for fixture in config["fixtures"] if fixture["enabled"]]
@@ -205,9 +210,9 @@ def _final_validate(config):
             raise cv.Invalid(
                 "lumineze_topology.input_provider: exactly the selected snapshot provider must be included"
             )
-        switches = {str(item["id"]) for item in full.get("switch", [])}
-        numbers = {str(item["id"]): item for item in full.get("number", [])}
-        text_sensors = {str(item["id"]) for item in full.get("text_sensor", [])}
+        switches = _entities_by_id(full, "switch")
+        numbers = _entities_by_id(full, "number")
+        text_sensors = _entities_by_id(full, "text_sensor")
         test_entity_ids = {
             "topology_simulation_enabled",
             "topology_simulated_output_enable",
@@ -215,12 +220,10 @@ def _final_validate(config):
             "topology_simulation_day",
             "topology_simulation_time",
         }
-        all_ids = set()
-        for key in (
-            "globals", "switch", "number", "button", "sensor", "binary_sensor",
-            "text_sensor", "script",
-        ):
-            all_ids.update(str(item["id"]) for item in full.get(key, []))
+        all_ids = globals_ids | scripts | switches.keys() | numbers.keys()
+        all_ids.update(text_sensors)
+        for key in ("button", "sensor", "binary_sensor"):
+            all_ids.update(_entities_by_id(full, key))
         if config["input_provider"] == "real" and all_ids & test_entity_ids:
             raise cv.Invalid(
                 "lumineze_topology.input_provider: production cannot contain development simulation entities"
@@ -234,11 +237,8 @@ def _final_validate(config):
                 "topology_simulation_enabled",
                 "topology_simulated_output_enable",
             ):
-                switch = next(
-                    item for item in full.get("switch", [])
-                    if str(item["id"]) == entity
-                )
-                if switch.get("restore_mode") != "ALWAYS_OFF":
+                switch = switches.get(entity)
+                if switch is None or switch.get("restore_mode") != "ALWAYS_OFF":
                     raise cv.Invalid(
                         f"lumineze_topology.input_provider.{entity}: must reset off at boot"
                     )
@@ -247,8 +247,8 @@ def _final_validate(config):
                 "topology_simulation_day",
                 "topology_simulation_time",
             ):
-                number = numbers[entity]
-                if number["restore_value"]:
+                number = numbers.get(entity)
+                if number is None or number["restore_value"]:
                     raise cv.Invalid(
                         f"lumineze_topology.input_provider.{entity}: simulation values must not restore"
                     )
