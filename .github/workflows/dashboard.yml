@@ -1,0 +1,53 @@
+name: Dashboard companion
+on:
+  push:
+    paths:
+      - dashboard-companion/**
+      - dist/lumineze-dashboard.js
+      - hacs.json
+      - .github/workflows/dashboard.yml
+  pull_request:
+    paths:
+      - dashboard-companion/**
+      - dist/lumineze-dashboard.js
+      - hacs.json
+      - .github/workflows/dashboard.yml
+  release:
+    types: [published]
+jobs:
+  dashboard:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm test
+        working-directory: dashboard-companion
+      - run: npm run build
+        working-directory: dashboard-companion
+      - run: git diff --exit-code -- dist/lumineze-dashboard.js
+      - uses: hacs/action@main
+        with:
+          category: plugin
+          # Catalog presentation follows the later repository split/layout work.
+          ignore: description images topics
+          comment: false
+  release-asset:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm run build
+        working-directory: dashboard-companion
+      - run: git diff --exit-code -- dist/lumineze-dashboard.js
+      - run: gh release upload "$GITHUB_REF_NAME" dist/lumineze-dashboard.js --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
