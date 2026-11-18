@@ -6,6 +6,9 @@ lights to Home Assistant over Wi-Fi, where you can choose a seasonal curve or
 editable daily schedule,
 automatic and manual levels, fixture calibration, and diagnostics.
 
+The optional [Dashboard Companion](dashboard-companion/README.md) is a single
+Marketplace/HACS plugin that creates one controller dashboard per vivarium.
+
 The established hardware platform for this project is [The Pi Hut Bluetooth
 Proxy for Home Assistant](https://thepihut.com/products/bluetooth-proxy-for-home-assistant),
 which uses an **ESP32-C3**. Its USB connection is used to install firmware and
