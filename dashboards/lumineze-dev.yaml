@@ -1,0 +1,523 @@
+title: Lumineze Dev
+config_template_card_vars:
+  CONTROLLER: $! vivarium_lumineze_dev
+  ILLUMINANCE: $! sensor.vivarium_lamp_light_meter_jungle_dawn_illuminance
+  UV_ILLUMINANCE: $! sensor.vivarium_lamp_light_meter_uv_lamp_illuminance
+  UV_INDEX: $! sensor.vivarium_lamp_light_meter_uv_lamp_estimated_uv_index
+views:
+  - title: Overview
+    path: overview
+    icon: mdi:view-dashboard
+    cards:
+      - type: markdown
+        content: >-
+          # Vivarium lighting
+          Live state and everyday controls for the selected Lumineze controller.
+          A requested level is not necessarily at the lamp; check the reported
+          level and readback status before treating a change as confirmed.
+      - type: custom:config-template-card
+        entities: []
+        card:
+          type: entities
+          title: At a glance
+          show_header_toggle: false
+          color: state
+          entities:
+            - entity: binary_sensor.${CONTROLLER}_controller_time_valid
+              name: Controller time valid
+            - entity: sensor.${CONTROLLER}_vivarium_evaluation_status
+              name: Schedule evaluation
+            - entity: sensor.${CONTROLLER}_vivarium_visible_delivery
+              name: Visible delivery
+            - entity: sensor.${CONTROLLER}_vivarium_uv_delivery
+              name: UV delivery
+            - entity: ${ILLUMINANCE}
+              name: Jungle Dawn illuminance (lx)
+            - entity: ${UV_ILLUMINANCE}
+              name: UV Lamp illuminance (lx)
+            - entity: ${UV_INDEX}
+              name: Estimated UV index
+      - type: custom:config-template-card
+        entities: []
+        card:
+          type: grid
+          columns: 2
+          square: false
+          cards:
+            - type: gauge
+              entity: sensor.${CONTROLLER}_jungledawn_lamp_reported_level
+              name: JungleDawn reported
+              min: 0
+              max: 100
+            - type: gauge
+              entity: sensor.${CONTROLLER}_jungledawn_requested_level
+              name: JungleDawn requested
+              min: 0
+              max: 100
+      - type: custom:config-template-card
+        entities: []
+        card:
+          type: entities
+          title: JungleDawn status
+          show_header_toggle: false
+          color: state
+          entities:
+            - entity: sensor.${CONTROLLER}_jungledawn_temporary_lighting_status
+              name: Temporary lighting
+            - entity: sensor.${CONTROLLER}_jungledawn_temporary_time_remaining
+              name: Time remaining
+            - entity: sensor.${CONTROLLER}_jungledawn_dispatch_status
+              name: Dispatch
+            - entity: sensor.${CONTROLLER}_jungledawn_readback_status
+              name: Readback
+            - entity: binary_sensor.${CONTROLLER}_jungledawn_request_pending
+              name: Command pending
+      - type: custom:config-template-card
+        entities: []
+        card:
+          type: entities
+          title: Quick controls
+          show_header_toggle: false
+          color: state
+          entities:
+            - entity: switch.${CONTROLLER}_visible_automatic_control
+              name: Visible automatic control
+            - entity: switch.${CONTROLLER}_uv_automatic_control
+              name: UV automatic control
+            - entity: number.${CONTROLLER}_jungledawn_fixed_level
+              name: Fixed level (%)
+            - entity: number.${CONTROLLER}_jungledawn_fixed_duration
+              name: Fixed duration (hours)
+            - entity: button.${CONTROLLER}_jungledawn_start_fixed_level
+              name: Start fixed level
+            - entity: button.${CONTROLLER}_jungledawn_cancel_temporary_lighting
+              name: Cancel temporary lighting
+      - type: custom:config-template-card
+        entities: []
+        card:
+          type: entities
+          title: Stop controls
+          show_header_toggle: false
+          entities:
+            - entity: button.${CONTROLLER}_jungledawn_request_off
+              name: Request JungleDawn off
+            - entity: button.${CONTROLLER}_vivarium_uv_request_off
+              name: Request UV group off
+            - entity: button.${CONTROLLER}_request_all_fixtures_off
+              name: Request all fixtures off
+
+  - title: JungleDawn
+    path: jungledawn
+    icon: mdi:lightbulb-on-outline
+    cards:
+      - type: markdown
+        content: >-
+          ## Fixed level
+          Turn on **Visible Automatic Control**, choose a level and duration,
+          then press **Start Fixed Level**. The level is temporary; confirm
+          delivery using the reported level and readback status below.
+      - type: custom:config-template-card
+        entities: []
+        card:
+          type: entities
+          title: Temporary lighting
+          show_header_toggle: false
+          color: state
+          entities:
+            - entity: switch.${CONTROLLER}_visible_automatic_control
+            - entity: number.${CONTROLLER}_jungledawn_fixed_level
+            - entity: number.${CONTROLLER}_jungledawn_fixed_duration
+            - entity: button.${CONTROLLER}_jungledawn_start_fixed_level
+            - entity: button.${CONTROLLER}_jungledawn_cancel_temporary_lighting
+            - entity: binary_sensor.${CONTROLLER}_jungledawn_fixed_level_active
+            - entity: sensor.${CONTROLLER}_jungledawn_temporary_time_remaining
+            - entity: sensor.${CONTROLLER}_jungledawn_temporary_lighting_status
+      - type: custom:config-template-card
+        entities: []
+        card:
+          type: entities
+          title: Today's automatic maximum
+          show_header_toggle: false
+          entities:
+            - entity: number.${CONTROLLER}_jungledawn_today_s_automatic_maximum
+            - entity: button.${CONTROLLER}_jungledawn_apply_today_s_maximum
+            - entity: binary_sensor.${CONTROLLER}_jungledawn_temporary_maximum_active
+      - type: custom:config-template-card
+        entities: []
+        card:
+          type: entities
+          title: Manual control
+          show_header_toggle: false
+          entities:
+            - entity: switch.${CONTROLLER}_jungledawn_manual_override
+            - entity: number.${CONTROLLER}_jungledawn_manual_absolute_level
+            - entity: button.${CONTROLLER}_jungledawn_request_off
+      - type: custom:config-template-card
+        entities: []
+        card:
+          type: history-graph
+          title: Requested and reported level
+          hours_to_show: 24
+          entities:
+            - entity: sensor.${CONTROLLER}_jungledawn_requested_level
+            - entity: sensor.${CONTROLLER}_jungledawn_lamp_reported_level
+      - type: custom:config-template-card
+        entities: []
+        card:
+          type: entities
+          title: Delivery and confirmation
+          show_header_toggle: false
+          color: state
+          entities:
+            - entity: sensor.${CONTROLLER}_jungledawn_requested_level
+            - entity: sensor.${CONTROLLER}_jungledawn_lamp_reported_level
+            - entity: sensor.${CONTROLLER}_jungledawn_last_completed_level
+            - entity: sensor.${CONTROLLER}_jungledawn_dispatch_status
+            - entity: sensor.${CONTROLLER}_jungledawn_readback_status
+            - entity: binary_sensor.${CONTROLLER}_jungledawn_ble_connected
+            - entity: binary_sensor.${CONTROLLER}_jungledawn_request_pending
+            - entity: binary_sensor.${CONTROLLER}_jungledawn_readback_fresh
+            - entity: binary_sensor.${CONTROLLER}_jungledawn_readback_mismatch
+      - type: custom:config-template-card
+        entities: []
+        card:
+          type: entities
+          title: Fixture settings
+          show_header_toggle: false
+          entities:
+            - entity: number.${CONTROLLER}_jungledawn_calibrated_maximum
+            - entity: number.${CONTROLLER}_jungle_dawn_minimum_automatic_change
+
+  - title: Light calibration
+    path: light-calibration
+    icon: mdi:chart-scatter-plot
+    cards:
+      - type: markdown
+        content: >-
+          ## JungleDawn level to illuminance
+          The two Lamp Light Meter illuminance sensors currently observe the
+          JungleDawn setup. For a calibration sweep, keep the meter in one
+          position and other lights and daylight as steady as possible.
+          Record 0% with JungleDawn off as the ambient baseline for each sensor,
+          then hold each requested level for at least two minutes. The plot uses
+          lamp-reported power and excludes the first two one-minute samples
+          after each reported-level change.
+          Readback status should be fresh before trusting a point.
+      - type: custom:config-template-card
+        entities: []
+        card:
+          type: entities
+          title: Current measurement
+          show_header_toggle: false
+          entities:
+            - entity: sensor.${CONTROLLER}_jungledawn_requested_level
+              name: Requested level (%)
+            - entity: sensor.${CONTROLLER}_jungledawn_lamp_reported_level
+              name: Lamp-reported level (%)
+            - entity: ${ILLUMINANCE}
+              name: Jungle Dawn illuminance (lx)
+            - entity: ${UV_ILLUMINANCE}
+              name: UV Lamp illuminance (lx)
+            - entity: ${UV_INDEX}
+              name: Estimated UV index
+            - entity: sensor.${CONTROLLER}_jungledawn_readback_status
+              name: Readback status
+            - entity: binary_sensor.${CONTROLLER}_jungledawn_readback_fresh
+              name: Readback fresh
+      - type: custom:config-template-card
+        entities: []
+        card:
+          type: custom:plotly-graph
+          title: Level and illuminance over time
+          hours_to_show: 24
+          refresh_interval: 60
+          entities:
+            - entity: sensor.${CONTROLLER}_jungledawn_requested_level
+              name: Requested (%)
+              yaxis: y
+              line:
+                dash: dot
+            - entity: sensor.${CONTROLLER}_jungledawn_lamp_reported_level
+              name: Reported (%)
+              yaxis: y
+            - entity: ${ILLUMINANCE}
+              name: Jungle Dawn illuminance (lx)
+              yaxis: y2
+            - entity: ${UV_ILLUMINANCE}
+              name: UV Lamp illuminance (lx)
+              yaxis: y2
+          layout:
+            height: 360
+            yaxis:
+              title: Level (%)
+              range: [0, 100]
+            yaxis2:
+              title: Illuminance (lx)
+              overlaying: y
+              side: right
+      - type: custom:config-template-card
+        entities: []
+        card:
+          type: history-graph
+          title: Estimated UV index
+          hours_to_show: 24
+          entities:
+            - entity: ${UV_INDEX}
+      - type: custom:config-template-card
+        entities: []
+        card:
+          type: custom:plotly-graph
+          title: Measured lux by lamp-reported level
+          hours_to_show: 6
+          refresh_interval: 60
+          raw_plotly_config: true
+          entities:
+            - entity: sensor.${CONTROLLER}_jungledawn_lamp_reported_level
+              internal: true
+              extend_to_present: false
+              filters:
+                - resample: 1m
+                - store_var: reported_power
+                - fn: |-
+                    ({ vars }) => {
+                      vars.calibrate = (xs, ys, power) => {
+                        const points = [];
+                        for (let i = 2; i < xs.length; i++) {
+                          const pct = Number(power[i]);
+                          const lx = Number(ys[i]);
+                          if (power[i] == null || power[i - 1] == null ||
+                              power[i - 2] == null || ys[i] == null ||
+                              !Number.isFinite(pct) || !Number.isFinite(lx) ||
+                              pct < 0 || pct > 100 || lx < 0 ||
+                              Number(power[i - 1]) !== pct ||
+                              Number(power[i - 2]) !== pct) continue;
+                          points.push({ pct, lx, time: new Date(xs[i]).toLocaleString() });
+                        }
+                        const median = values => {
+                          const sorted = [...values].sort((a, b) => a - b);
+                          const mid = Math.floor(sorted.length / 2);
+                          return sorted.length % 2 ? sorted[mid] :
+                            (sorted[mid - 1] + sorted[mid]) / 2;
+                        };
+                        const ambient = points.filter(p => p.pct === 0).map(p => p.lx);
+                        const baseline = ambient.length ? median(ambient) : null;
+                        const samples = points.map(p => ({
+                          ...p,
+                          delta: baseline == null ? 'No 0% baseline' :
+                            (p.lx - baseline).toFixed(1) + ' lx'
+                        }));
+                        const byLevel = new Map();
+                        for (const point of points) {
+                          if (!byLevel.has(point.pct)) byLevel.set(point.pct, []);
+                          byLevel.get(point.pct).push(point.lx);
+                        }
+                        const curve = [...byLevel].sort((a, b) => a[0] - b[0])
+                          .map(([pct, values]) => ({
+                            pct,
+                            lx: median(values),
+                            count: values.length,
+                            delta: baseline == null ? 'No 0% baseline' :
+                              (median(values) - baseline).toFixed(1) + ' lx'
+                          }));
+                        return { samples, curve };
+                      };
+                    }
+            - entity: ${ILLUMINANCE}
+              internal: true
+              extend_to_present: false
+              filters:
+                - resample: 1m
+                - align_timestamps: reported_power
+                - fn: |-
+                    ({ xs, ys, vars }) => {
+                      vars.jungle = vars.calibrate(
+                        xs, ys, vars.aligned.reported_power.ys);
+                    }
+            - entity: ${UV_ILLUMINANCE}
+              internal: true
+              extend_to_present: false
+              filters:
+                - resample: 1m
+                - align_timestamps: reported_power
+                - fn: |-
+                    ({ xs, ys, vars }) => {
+                      vars.uv = vars.calibrate(
+                        xs, ys, vars.aligned.reported_power.ys);
+                    }
+            - entity: ''
+              name: Jungle Dawn samples
+              type: scatter
+              mode: markers
+              x: $fn ({ vars }) => vars.jungle.samples.map(p => p.pct)
+              'y': $fn ({ vars }) => vars.jungle.samples.map(p => p.lx)
+              customdata: $fn ({ vars }) => vars.jungle.samples
+              hovertemplate: >-
+                Reported %{x:.0f}%<br>Measured %{y:.1f} lx<br>
+                Above 0%: %{customdata.delta}<br>%{customdata.time}<extra></extra>
+              marker:
+                size: 6
+                opacity: 0.45
+                color: orange
+            - entity: ''
+              name: Jungle Dawn median
+              type: scatter
+              mode: lines+markers
+              x: $fn ({ vars }) => vars.jungle.curve.map(p => p.pct)
+              'y': $fn ({ vars }) => vars.jungle.curve.map(p => p.lx)
+              customdata: $fn ({ vars }) => vars.jungle.curve
+              hovertemplate: >-
+                Reported %{x:.0f}%<br>Median %{y:.1f} lx<br>
+                Above 0%: %{customdata.delta}<br>
+                %{customdata.count} samples<extra></extra>
+              line:
+                width: 2
+                color: orange
+            - entity: ''
+              name: UV Lamp samples
+              type: scatter
+              mode: markers
+              x: $fn ({ vars }) => vars.uv.samples.map(p => p.pct)
+              'y': $fn ({ vars }) => vars.uv.samples.map(p => p.lx)
+              customdata: $fn ({ vars }) => vars.uv.samples
+              hovertemplate: >-
+                Reported %{x:.0f}%<br>Measured %{y:.1f} lx<br>
+                Above 0%: %{customdata.delta}<br>%{customdata.time}<extra></extra>
+              marker:
+                size: 6
+                opacity: 0.45
+                color: purple
+            - entity: ''
+              name: UV Lamp median
+              type: scatter
+              mode: lines+markers
+              x: $fn ({ vars }) => vars.uv.curve.map(p => p.pct)
+              'y': $fn ({ vars }) => vars.uv.curve.map(p => p.lx)
+              customdata: $fn ({ vars }) => vars.uv.curve
+              hovertemplate: >-
+                Reported %{x:.0f}%<br>Median %{y:.1f} lx<br>
+                Above 0%: %{customdata.delta}<br>
+                %{customdata.count} samples<extra></extra>
+              line:
+                width: 2
+                color: purple
+          layout:
+            height: 430
+            xaxis:
+              title: Lamp-reported level (%)
+              range: [0, 100]
+            yaxis:
+              title: Measured illuminance (lx)
+              rangemode: tozero
+
+  - title: Groups & Schedule
+    path: groups-schedule
+    icon: mdi:weather-sunset
+    cards:
+      - type: custom:config-template-card
+        entities: []
+        card:
+          type: entities
+          title: Visible group
+          show_header_toggle: false
+          color: state
+          entities:
+            - entity: switch.${CONTROLLER}_visible_automatic_control
+            - entity: switch.${CONTROLLER}_vivarium_visible_manual_override
+            - entity: number.${CONTROLLER}_vivarium_visible_manual_of_fixture_maximum
+            - entity: sensor.${CONTROLLER}_vivarium_visible_demand
+            - entity: sensor.${CONTROLLER}_vivarium_visible_delivery
+            - entity: button.${CONTROLLER}_vivarium_visible_request_off
+      - type: custom:config-template-card
+        entities: []
+        card:
+          type: entities
+          title: UV group
+          show_header_toggle: false
+          color: state
+          entities:
+            - entity: switch.${CONTROLLER}_uv_automatic_control
+            - entity: switch.${CONTROLLER}_vivarium_uv_manual_override
+            - entity: number.${CONTROLLER}_vivarium_uv_manual_of_fixture_maximum
+            - entity: sensor.${CONTROLLER}_vivarium_uv_demand
+            - entity: sensor.${CONTROLLER}_vivarium_uv_delivery
+            - entity: button.${CONTROLLER}_vivarium_uv_request_off
+      - type: custom:config-template-card
+        entities: []
+        card:
+          type: entities
+          title: Vivarium clock and location
+          show_header_toggle: false
+          entities:
+            - entity: number.${CONTROLLER}_vivarium_latitude
+            - entity: number.${CONTROLLER}_vivarium_solar_noon
+            - entity: number.${CONTROLLER}_vivarium_season_phase_offset
+            - entity: binary_sensor.${CONTROLLER}_controller_time_valid
+            - entity: sensor.${CONTROLLER}_vivarium_evaluation_status
+      - type: custom:config-template-card
+        entities: []
+        card:
+          type: entities
+          title: Visible seasonal curve
+          show_header_toggle: false
+          entities:
+            - entity: number.${CONTROLLER}_vivarium_visible_winter_peak
+            - entity: number.${CONTROLLER}_vivarium_visible_summer_peak
+            - entity: number.${CONTROLLER}_vivarium_visible_curve_exponent
+      - type: custom:config-template-card
+        entities: []
+        card:
+          type: entities
+          title: UV timing and seasonal curve
+          show_header_toggle: false
+          entities:
+            - entity: number.${CONTROLLER}_vivarium_uv_start_after_sunrise
+            - entity: number.${CONTROLLER}_vivarium_uv_end_before_sunset
+            - entity: number.${CONTROLLER}_vivarium_uv_winter_peak
+            - entity: number.${CONTROLLER}_vivarium_uv_summer_peak
+            - entity: number.${CONTROLLER}_vivarium_uv_curve_exponent
+
+  - title: Diagnostics
+    path: diagnostics
+    icon: mdi:stethoscope
+    cards:
+      - type: custom:config-template-card
+        entities: []
+        card:
+          type: entities
+          title: Controller safety
+          show_header_toggle: false
+          color: state
+          entities:
+            - entity: binary_sensor.${CONTROLLER}_controller_time_valid
+            - entity: switch.${CONTROLLER}_invalid_time_fail_safe
+            - entity: number.${CONTROLLER}_invalid_time_grace_period
+            - entity: number.${CONTROLLER}_automatic_recovery_interval
+            - entity: sensor.${CONTROLLER}_vivarium_evaluation_status
+      - type: custom:config-template-card
+        entities: []
+        card:
+          type: entities
+          title: JungleDawn communication
+          show_header_toggle: false
+          color: state
+          entities:
+            - entity: binary_sensor.${CONTROLLER}_jungledawn_ble_connected
+            - entity: binary_sensor.${CONTROLLER}_jungledawn_request_pending
+            - entity: binary_sensor.${CONTROLLER}_jungledawn_readback_fresh
+            - entity: binary_sensor.${CONTROLLER}_jungledawn_readback_mismatch
+            - entity: sensor.${CONTROLLER}_jungledawn_dispatch_status
+            - entity: sensor.${CONTROLLER}_jungledawn_readback_status
+            - entity: sensor.${CONTROLLER}_jungledawn_completed_transactions
+            - entity: sensor.${CONTROLLER}_jungledawn_failed_transactions
+      - type: custom:config-template-card
+        entities: []
+        card:
+          type: entities
+          title: BLE dispatch tuning
+          show_header_toggle: false
+          entities:
+            - entity: number.${CONTROLLER}_ble_maximum_attempts
+            - entity: number.${CONTROLLER}_ble_minimum_same_fixture_interval
+            - entity: number.${CONTROLLER}_ble_inter_fixture_quiet_time
+            - entity: number.${CONTROLLER}_ble_retry_base_delay
+            - entity: number.${CONTROLLER}_ble_transaction_timeout

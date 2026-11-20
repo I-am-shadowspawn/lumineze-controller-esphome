@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "project_name": "shadowspawn.lumineze",
+  "project_version": "2.0.0-dev",
+  "support_status": "unverified-candidate",
+  "source_sha": null,
+  "stable_tag": null,
+  "profiles": [
+    "seasonal-production",
+    "seasonal-development",
+    "schedule-production",
+    "schedule-development"
+  ],
+  "hardware_gates": {
+    "Gate A": "pending",
+    "T23": "pending",
+    "T15": "pending"
+  }
+}

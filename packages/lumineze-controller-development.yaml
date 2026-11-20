@@ -1,4 +1,5 @@
 substitutions:
+  controller_profile: legacy-seasonal-development
   evaluation_snapshot_provider: capture_development_evaluation_snapshot
   logger_level: DEBUG
 packages:

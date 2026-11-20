@@ -1,0 +1,165 @@
+# Seasonal-only T23 capability. Include alongside the common fixture.
+number:
+  - platform: template
+    id: ${fixture_id}_daily_maximum_value
+    name: ${fixture_name} Today's Automatic Maximum
+    entity_category: config
+    unit_of_measurement: '%'
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 60
+    restore_value: false
+    optimistic: true
+  - platform: template
+    id: ${fixture_id}_fixed_level_value
+    name: ${fixture_name} Fixed Level
+    entity_category: config
+    unit_of_measurement: '%'
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 35
+    restore_value: false
+    optimistic: true
+  - platform: template
+    id: ${fixture_id}_fixed_duration_hours
+    name: ${fixture_name} Fixed Duration
+    entity_category: config
+    unit_of_measurement: h
+    min_value: 0.25
+    max_value: 24
+    step: 0.25
+    initial_value: 2
+    restore_value: false
+    optimistic: true
+
+button:
+  - platform: template
+    id: ${fixture_id}_apply_daily_maximum
+    name: ${fixture_name} Apply Today's Maximum
+    on_press:
+      - script.execute: evaluate_topology
+      - lambda: |-
+          using namespace lumineze_topology;
+          const int slot = fixture_slot("${fixture_id}");
+          auto &fixture = id(topology_fixtures)[slot];
+          const int group_index_value = group_for_slot(slot);
+          const auto &group = id(topology_groups)[group_index_value];
+          const auto &group_binding = groups[group_index_value];
+          const auto &context = id(topology_contexts)[group_binding.context];
+          const float staged = id(${fixture_id}_daily_maximum_value).state;
+          if (!std::isfinite(staged) || staged < 0.0f || staged > 100.0f ||
+              !id(topology_snapshot_valid) || id(topology_snapshot).simulated ||
+              !context.valid || !fixture.calibration_ready ||
+              !std::isfinite(fixture.maximum) || fixture.maximum < 0.0f ||
+              fixture.maximum > 100.0f ||
+              !group.automatic || group.manual || fixture.manual ||
+              !group.valid) {
+            fixture.temporary_rejection = 1;
+            return;
+          }
+          fixture.temporary_rejection = 0;
+          if (!apply_daily_maximum(fixture, static_cast<int>(std::lround(staged)),
+                  id(topology_snapshot).year, id(topology_snapshot).day_of_year))
+            fixture.temporary_rejection = 1;
+      - script.execute: evaluate_topology
+  - platform: template
+    id: ${fixture_id}_start_fixed_level
+    name: ${fixture_name} Start Fixed Level
+    on_press:
+      - script.execute: evaluate_topology
+      - lambda: |-
+          using namespace lumineze_topology;
+          const int slot = fixture_slot("${fixture_id}");
+          auto &fixture = id(topology_fixtures)[slot];
+          const int group_index_value = group_for_slot(slot);
+          const auto &group = id(topology_groups)[group_index_value];
+          const auto &group_binding = groups[group_index_value];
+          const auto &context = id(topology_contexts)[group_binding.context];
+          const float staged_level = id(${fixture_id}_fixed_level_value).state;
+          const float staged_hours = id(${fixture_id}_fixed_duration_hours).state;
+          const bool valid_duration = valid_fixed_duration_hours(staged_hours);
+          if (!std::isfinite(staged_level) || staged_level < 0.0f ||
+              staged_level > 100.0f || !valid_duration ||
+              !id(topology_snapshot_valid) || !context.valid ||
+              !fixture.calibration_ready || !std::isfinite(fixture.maximum) ||
+              fixture.maximum < 0.0f || fixture.maximum > 100.0f ||
+              !group.automatic || group.manual ||
+              fixture.manual || !group.valid ||
+              !automatic_output_allowed(context.simulated,
+                                        context.simulated_output_enabled)) {
+            fixture.temporary_rejection = 2;
+            return;
+          }
+          fixture.temporary_rejection = 0;
+          const auto duration = static_cast<uint32_t>(std::lround(
+              staged_hours * 3600000.0f));
+          if (!start_timed_fixed_level(fixture,
+                  static_cast<int>(std::lround(staged_level)), duration, millis()))
+            fixture.temporary_rejection = 2;
+      - script.execute: evaluate_topology
+  - platform: template
+    id: ${fixture_id}_cancel_temporary
+    name: ${fixture_name} Cancel Temporary Lighting
+    on_press:
+      - lambda: |-
+          const int slot = lumineze_topology::fixture_slot("${fixture_id}");
+          auto &fixture = id(topology_fixtures)[slot];
+          const bool was_active = fixture.temporary_mode !=
+              lumineze_topology::TEMPORARY_NONE;
+          lumineze_topology::cancel_temporary(fixture);
+          if (was_active) fixture.temporary_status =
+              lumineze_topology::TEMP_STATUS_RETURNING;
+          fixture.temporary_force_reevaluation = true;
+          fixture.temporary_rejection = 0;
+      - script.execute: evaluate_topology
+
+binary_sensor:
+  - platform: template
+    id: ${fixture_id}_daily_maximum_active
+    name: ${fixture_name} Temporary Maximum Active
+    lambda: return id(topology_fixtures)[lumineze_topology::fixture_slot("${fixture_id}")].temporary_mode == lumineze_topology::DAILY_MAXIMUM;
+  - platform: template
+    id: ${fixture_id}_fixed_level_active
+    name: ${fixture_name} Fixed Level Active
+    lambda: return id(topology_fixtures)[lumineze_topology::fixture_slot("${fixture_id}")].temporary_mode == lumineze_topology::TIMED_FIXED_LEVEL;
+
+sensor:
+  - platform: template
+    id: ${fixture_id}_temporary_time_remaining
+    name: ${fixture_name} Temporary Time Remaining
+    entity_category: diagnostic
+    unit_of_measurement: min
+    accuracy_decimals: 0
+    lambda: |-
+      const auto &fixture = id(topology_fixtures)[
+          lumineze_topology::fixture_slot("${fixture_id}")];
+      if (fixture.temporary_mode != lumineze_topology::TIMED_FIXED_LEVEL)
+        return 0.0f;
+      const uint32_t elapsed_ms = millis() - fixture.temporary_started_ms;
+      if (elapsed_ms >= fixture.temporary_duration_ms) return 0.0f;
+      return static_cast<float>(fixture.temporary_duration_ms - elapsed_ms) / 60000.0f;
+    update_interval: 10s
+
+text_sensor:
+  - platform: template
+    id: ${fixture_id}_temporary_status
+    name: ${fixture_name} Temporary Lighting Status
+    lambda: |-
+      const auto &fixture = id(topology_fixtures)[
+          lumineze_topology::fixture_slot("${fixture_id}")];
+      if (fixture.temporary_rejection == 1)
+        return {"Rejected: daily maximum needs live date, calibration and automatic control"};
+      if (fixture.temporary_rejection == 2)
+        return {"Rejected: fixed level needs valid duration, calibration and automatic control"};
+      switch (fixture.temporary_status) {
+        case lumineze_topology::TEMP_STATUS_ARMED: return {"Armed"};
+        case lumineze_topology::TEMP_STATUS_HOLDING: return {"Above-maximum automatic targets held; check readback"};
+        case lumineze_topology::TEMP_STATUS_ENFORCING: return {"Enforcing temporary maximum; awaiting confirmation"};
+        case lumineze_topology::TEMP_STATUS_FIXED: return {"Fixed level active"};
+        case lumineze_topology::TEMP_STATUS_RETURNING: return {"Returning to current automatic curve"};
+        default: return {"Inactive"};
+      }
+    update_interval: 5s
+

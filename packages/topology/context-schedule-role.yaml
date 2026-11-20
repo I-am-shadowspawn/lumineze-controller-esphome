@@ -1,0 +1,42 @@
+# One used output role; eight fixed editor slots, all initially disabled.
+packages:
+  point_1: !include
+    file: schedule-point.yaml
+    vars: {context_id: "${context_id}", schedule_role: "${schedule_role}", point_slot: "1"}
+  point_2: !include
+    file: schedule-point.yaml
+    vars: {context_id: "${context_id}", schedule_role: "${schedule_role}", point_slot: "2"}
+  point_3: !include
+    file: schedule-point.yaml
+    vars: {context_id: "${context_id}", schedule_role: "${schedule_role}", point_slot: "3"}
+  point_4: !include
+    file: schedule-point.yaml
+    vars: {context_id: "${context_id}", schedule_role: "${schedule_role}", point_slot: "4"}
+  point_5: !include
+    file: schedule-point.yaml
+    vars: {context_id: "${context_id}", schedule_role: "${schedule_role}", point_slot: "5"}
+  point_6: !include
+    file: schedule-point.yaml
+    vars: {context_id: "${context_id}", schedule_role: "${schedule_role}", point_slot: "6"}
+  point_7: !include
+    file: schedule-point.yaml
+    vars: {context_id: "${context_id}", schedule_role: "${schedule_role}", point_slot: "7"}
+  point_8: !include
+    file: schedule-point.yaml
+    vars: {context_id: "${context_id}", schedule_role: "${schedule_role}", point_slot: "8"}
+
+select:
+  - platform: template
+    id: ${context_id}_${schedule_role}_schedule_mode
+    name: ${context_id.replace('_', ' ').title()} ${schedule_role.title()} Schedule Interpolation
+    entity_category: config
+    optimistic: true
+    restore_value: false
+    initial_option: step
+    options: [step, linear]
+    on_value:
+      - lambda: |-
+          const int context = lumineze_topology::context_index("${context_id}");
+          const int role = lumineze_topology::schedule_role("${schedule_role}");
+          id(topology_schedule_contexts)[context].staged[role].mode =
+              lumineze_topology::schedule_mode(x.c_str());
