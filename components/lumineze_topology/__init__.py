@@ -155,8 +155,14 @@ CONFIG_SCHEMA = cv.All(
 
 
 def _entities_by_id(full, domain):
-    # Grouped platforms such as debug define child entities, not a row ID.
-    return {str(item["id"]): item for item in full.get(domain, []) if "id" in item}
+    entities = {}
+    for item in full.get(domain, []):
+        if "id" in item:
+            entities[str(item["id"])] = item
+        for child in item.values():
+            if isinstance(child, dict) and "id" in child:
+                entities[str(child["id"])] = child
+    return entities
 
 
 def _final_validate(config):
