@@ -216,7 +216,8 @@ def _final_validate(config):
             raise cv.Invalid(
                 "lumineze_topology.input_provider: exactly the selected snapshot provider must be included"
             )
-        switches = _entities_by_id(full, "switch")
+        switches_by_id = _entities_by_id(full, "switch")
+        switches = set(switches_by_id)
         numbers = _entities_by_id(full, "number")
         text_sensors = _entities_by_id(full, "text_sensor")
         test_entity_ids = {
@@ -226,7 +227,7 @@ def _final_validate(config):
             "topology_simulation_day",
             "topology_simulation_time",
         }
-        all_ids = globals_ids | scripts | switches.keys() | numbers.keys()
+        all_ids = globals_ids | scripts | switches | numbers.keys()
         all_ids.update(text_sensors)
         for key in ("button", "sensor", "binary_sensor"):
             all_ids.update(_entities_by_id(full, key))
@@ -243,7 +244,7 @@ def _final_validate(config):
                 "topology_simulation_enabled",
                 "topology_simulated_output_enable",
             ):
-                switch = switches.get(entity)
+                switch = switches_by_id.get(entity)
                 if switch is None or switch.get("restore_mode") != "ALWAYS_OFF":
                     raise cv.Invalid(
                         f"lumineze_topology.input_provider.{entity}: must reset off at boot"
