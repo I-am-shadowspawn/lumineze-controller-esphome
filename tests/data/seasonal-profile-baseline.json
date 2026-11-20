@@ -1,6 +1,6 @@
 {
   "source_sha": "c250604",
-  "scope": "Resolved seasonal entity/settings contracts before T11.1; dummy CI configurations only",
+  "scope": "Resolved seasonal entity/settings contracts before T11.1 plus development restart diagnostics; dummy CI configurations only",
   "profiles": {
     "production": {
       "number": [
@@ -1476,6 +1476,48 @@
           "entity_category": "diagnostic",
           "disabled_by_default": "false",
           "unit_of_measurement": "% of fixture maximum"
+        },
+        {
+          "name": "Heap Fragmentation",
+          "platform": "debug",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "%"
+        },
+        {
+          "name": "Heap Free",
+          "platform": "debug",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "B"
+        },
+        {
+          "name": "Heap Max Block",
+          "platform": "debug",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "B"
+        },
+        {
+          "name": "Heap Min Free",
+          "platform": "debug",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "B"
+        },
+        {
+          "name": "Loop Time",
+          "platform": "debug",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "ms"
+        },
+        {
+          "name": "Uptime",
+          "platform": "uptime",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false",
+          "unit_of_measurement": "s"
         }
       ],
       "binary_sensor": [
@@ -1619,6 +1661,12 @@
           "id": "visible_group_delivery",
           "name": "Shared Visible Delivery",
           "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "name": "Reset Reason",
+          "platform": "debug",
+          "entity_category": "diagnostic",
           "disabled_by_default": "false"
         }
       ]

@@ -1,4 +1,4 @@
-"""Compare seasonal entity/settings contracts with the pre-T11 extraction baseline."""
+"""Compare seasonal entity/settings contracts with the compatibility baseline."""
 import json
 from pathlib import Path
 import subprocess
@@ -16,10 +16,24 @@ PROFILES = {'production': 'ci/topology-generic.yaml',
             'development': 'ci/topology-generic-development.yaml'}
 
 
+def resolved_entities(entries):
+    for item in entries:
+        # Platforms such as debug put their entities inside a platform entry.
+        if 'id' not in item and 'name' not in item:
+            children = [dict(child, platform=item['platform']) for child in item.values()
+                        if isinstance(child, dict) and ('id' in child or 'name' in child)]
+            if children:
+                yield from children
+                continue
+        yield item
+
+
 def inventory(text):
     config = yaml.load(text, Loader=yaml.BaseLoader)
     return {kind: sorted(({key: item[key] for key in FIELDS if key in item}
-                         for item in config.get(kind, []) if item['id'] not in METADATA_IDS), key=lambda item: item['id'])
+                         for item in resolved_entities(config.get(kind, []))
+                         if item.get('id') not in METADATA_IDS),
+                        key=lambda item: ('id' not in item, item.get('id', item.get('name', ''))))
             for kind in KINDS}
 
 
@@ -32,7 +46,7 @@ def main():
         actual = inventory(result.stdout)
         if actual != baseline['profiles'][name]:
             raise AssertionError(f'{name} entity/settings contract changed; review baseline migration')
-        print(f'PASS {name} entity identities, defaults and restore contract match pre-T11 baseline')
+        print(f'PASS {name} entity identities, defaults and restore contract match compatibility baseline')
 
 
 if __name__ == '__main__':

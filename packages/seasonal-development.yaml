@@ -8,3 +8,4 @@ packages:
   seasonal_engine: !include topology/seasonal-engine.yaml
   controller: !include topology/controller-core.yaml
   input_provider: !include topology/input-development.yaml
+  restart_diagnostics: !include topology/restart-diagnostics.yaml

@@ -195,6 +195,17 @@ CONFIG_SCHEMA = cv.All(
 )
 
 
+def _entities_by_id(full, domain):
+    entities = {}
+    for item in full.get(domain, []):
+        if "id" in item:
+            entities[str(item["id"])] = item
+        for child in item.values():
+            if isinstance(child, dict) and "id" in child:
+                entities[str(child["id"])] = child
+    return entities
+
+
 def _final_validate(config):
     full = fv.full_config.get()
     enabled = [fixture for fixture in config["fixtures"] if fixture["enabled"]]
@@ -246,9 +257,11 @@ def _final_validate(config):
             raise cv.Invalid(
                 "lumineze_topology.input_provider: exactly the selected snapshot provider must be included"
             )
-        switches = {str(item["id"]) for item in full.get("switch", [])}
-        numbers = {str(item["id"]): item for item in full.get("number", [])}
-        text_sensors = {str(item["id"]) for item in full.get("text_sensor", [])}
+        switches_by_id = _entities_by_id(full, "switch")
+        switches = set(switches_by_id)
+        number_entities = _entities_by_id(full, "number")
+        numbers = set(number_entities)
+        text_sensors = _entities_by_id(full, "text_sensor")
         test_entity_ids = {
             "topology_simulation_enabled",
             "topology_simulated_output_enable",
@@ -256,12 +269,10 @@ def _final_validate(config):
             "topology_simulation_day",
             "topology_simulation_time",
         }
-        all_ids = set()
-        for key in (
-            "globals", "switch", "number", "button", "sensor", "binary_sensor",
-            "text_sensor", "script",
-        ):
-            all_ids.update(str(item["id"]) for item in full.get(key, []))
+        all_ids = globals_ids | scripts | switches | numbers
+        all_ids.update(text_sensors)
+        for key in ("button", "sensor", "binary_sensor"):
+            all_ids.update(_entities_by_id(full, key))
         if config["input_provider"] == "real" and all_ids & test_entity_ids:
             raise cv.Invalid(
                 "lumineze_topology.input_provider: production cannot contain development simulation entities"
@@ -275,11 +286,8 @@ def _final_validate(config):
                 "topology_simulation_enabled",
                 "topology_simulated_output_enable",
             ):
-                switch = next(
-                    item for item in full.get("switch", [])
-                    if str(item["id"]) == entity
-                )
-                if switch.get("restore_mode") != "ALWAYS_OFF":
+                switch = switches_by_id.get(entity)
+                if switch is None or switch.get("restore_mode") != "ALWAYS_OFF":
                     raise cv.Invalid(
                         f"lumineze_topology.input_provider.{entity}: must reset off at boot"
                     )
@@ -288,8 +296,8 @@ def _final_validate(config):
                 "topology_simulation_day",
                 "topology_simulation_time",
             ):
-                number = numbers[entity]
-                if number["restore_value"]:
+                number = number_entities.get(entity)
+                if number is None or number["restore_value"]:
                     raise cv.Invalid(
                         f"lumineze_topology.input_provider.{entity}: simulation values must not restore"
                     )
@@ -371,7 +379,7 @@ def _final_validate(config):
                 raise cv.Invalid(
                     f"lumineze_topology.fixtures.{identity}: missing manual control"
                 )
-            maximum = numbers.get(f"{identity}_maximum")
+            maximum = number_entities.get(f"{identity}_maximum")
             default = 100.0 if fixture["type"] == "jungle_dawn" else 0.0
             if maximum is None or maximum["initial_value"] != default:
                 raise cv.Invalid(

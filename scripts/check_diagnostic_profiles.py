@@ -86,6 +86,13 @@ def main():
         "Seasonal Simulation Input",
         "Allow Simulated Automatic Output",
         "Simulation Calendar Year",
+        "Reset Reason",
+        "Uptime",
+        "Heap Free",
+        "Heap Min Free",
+        "Heap Max Block",
+        "Heap Fragmentation",
+        "Loop Time",
     ):
         forbid(topology_prod, "topology production", entity)
         require(topology_dev, "topology development", entity)

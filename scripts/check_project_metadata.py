@@ -11,7 +11,7 @@ IDS={'controller_project_version','controller_build_profile','controller_esphome
 def verify(config, profile, truth, pin):
     assert config['esphome']['project']==truth,'project namespace/version differs from shared truth'
     assert config['esphome']['min_version']==pin,'unsupported minimum version claim'
-    sensors={s['id']:s for s in config['text_sensor']}
+    sensors={s['id']:s for s in config['text_sensor'] if 'id' in s}
     assert IDS<=set(sensors),'identity diagnostics incomplete'
     assert sensors['controller_build_profile']['lambda']==f'return {{"{profile}"}};','profile metadata mismatch'
     assert sensors['controller_project_version']['lambda']=='return {ESPHOME_PROJECT_VERSION};'

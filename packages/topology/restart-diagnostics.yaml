@@ -1,0 +1,23 @@
+debug:
+  update_interval: 60s
+
+text_sensor:
+  - platform: debug
+    reset_reason:
+      name: Reset Reason
+
+sensor:
+  - platform: uptime
+    name: Uptime
+    update_interval: 60s
+  - platform: debug
+    free:
+      name: Heap Free
+    min_free:
+      name: Heap Min Free
+    block:
+      name: Heap Max Block
+    fragmentation:
+      name: Heap Fragmentation
+    loop_time:
+      name: Loop Time

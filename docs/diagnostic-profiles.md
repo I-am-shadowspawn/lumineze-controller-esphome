@@ -70,11 +70,41 @@ per fixture. This adds that fixture's Automatic Preview sensor, updated every
 controls supplied by its development input provider. They are not present in
 the production input provider.
 
+### Restart diagnostics (seasonal development)
+
+The seasonal development entry point includes ESPHome's reset reason, uptime,
+free heap, minimum free heap since boot, largest free heap block, fragmentation,
+and main-loop timing. Uptime and periodic debug readings update every 60 seconds;
+the reset reason describes the most recent boot. Remove any copied top-level
+`debug:` block, standalone `platform: uptime` sensor, or `platform: debug`
+sensor/text sensor entries added for this investigation when moving to this
+package. Keep unrelated entries, distinct controller hostnames, per-device
+addresses and secrets, and `lumineze_topology.input_provider: development`.
+
+For a two-controller comparison, capture timestamped serial logs continuously
+on both units, including boot output, and correlate them with Home Assistant
+uptime, reset reason, availability, and BLE transaction timestamps. Confirm on
+each board that the selected serial transport captures startup output. Start
+with matching firmware refs, board settings, log levels, stable power, no live
+log-stream clients, and automatic and manual output off. Repeat using preview
+only (simulated output authorization off), then repeat with physical traffic.
+Connect only one controller to a given fixture at a time; use separate isolated
+fixtures or move the same fixture between controllers. Swap the power supply or
+fixture one at a time and repeat beyond the previous failure window.
+
+An API dropout without an uptime reset is not evidence of a reboot. A failure
+that follows one controller suggests board or power differences; a failure that
+follows active fixture traffic motivates a closer look at BLE and transaction
+logs, but does not by itself identify a protocol fault. Capture the panic or
+watchdog trace if present. A 60-second diagnostic sample can miss brief events,
+so keep the serial capture even when Home Assistant history is available.
+
 ## CI inventory checks
 
 The workflow compiles the legacy and generic production/development examples.
 `scripts/check_diagnostic_profiles.py` then checks generated source for
 representative shared operational entities and asserts that the legacy solar
-calculation details and generic automatic preview appear only in development.
+calculation details, generic automatic preview, and restart diagnostics appear
+only in their respective development profiles.
 The source check intentionally samples the profile boundary; the inventories
 above document the full intended entity groups.
