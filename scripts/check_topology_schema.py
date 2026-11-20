@@ -79,7 +79,7 @@ def main():
         + "    free:\n"
         + "      id: heap_free\n"
         + "      on_value:\n"
-        + "        - id: topology_simulation_year\n"
+        + "        - automation_id: topology_simulation_year\n"
         + "          then:\n"
         + "            - lambda: ESP_LOGI(\"test\", \"value\");\n",
         source_dir=ROOT / "ci",
