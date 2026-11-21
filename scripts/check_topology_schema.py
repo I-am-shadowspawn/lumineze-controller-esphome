@@ -15,14 +15,16 @@ PROOF = ROOT / "ci/topology-proof/controller.yaml"
 FOUR = ROOT / "ci/topology-proof/four.yaml"
 
 
-def run_case(command, title, source, old=None, new=None, expected=None):
+def run_case(
+    command, title, source, old=None, new=None, expected=None, source_dir=PROOF.parent
+):
     if old is not None:
         count = source.count(old)
         if count != 1:
             raise AssertionError(f"{title}: mutation matches {count} times")
         source = source.replace(old, new)
     with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".yaml", prefix="topology-check-", dir=PROOF.parent
+        mode="w", suffix=".yaml", prefix="topology-check-", dir=source_dir
     ) as temporary:
         temporary.write(source)
         temporary.flush()
@@ -50,8 +52,38 @@ def main():
         raise SystemExit("pass an ESPHome command, e.g. uvx ... esphome")
     two = PROOF.read_text()
     four = FOUR.read_text()
+    generic = (ROOT / "ci/topology-generic.yaml").read_text()
     run_case(command, "two repeated products and sparse slots", two)
     run_case(command, "four fixtures and two contexts", four)
+    run_case(
+        command,
+        "grouped child entities respect production ID reservations",
+        generic
+        + "\ndebug:\n"
+        + "  update_interval: 60s\n"
+        + "\nsensor:\n"
+        + "  - platform: debug\n"
+        + "    free:\n"
+        + "      id: topology_simulation_year\n",
+        expected="production cannot contain development simulation entities",
+        source_dir=ROOT / "ci",
+    )
+    run_case(
+        command,
+        "automation IDs are excluded from production entity reservations",
+        generic
+        + "\ndebug:\n"
+        + "  update_interval: 60s\n"
+        + "\nsensor:\n"
+        + "  - platform: debug\n"
+        + "    free:\n"
+        + "      id: heap_free\n"
+        + "      on_value:\n"
+        + "        - automation_id: topology_simulation_year\n"
+        + "          then:\n"
+        + "            - lambda: ESP_LOGI(\"test\", \"value\");\n",
+        source_dir=ROOT / "ci",
+    )
     cases = [
         (
             "duplicate MAC",
@@ -119,7 +151,7 @@ def main():
         "unsupported engine family",
         two,
         "engine_family: seasonal",
-        "engine_family: schedule",
+        "engine_family: weekly",
         "engine_family",
     )
     run_case(

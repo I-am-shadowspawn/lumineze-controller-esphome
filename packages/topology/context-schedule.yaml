@@ -1,0 +1,80 @@
+# Include once per context. Include a role editor separately for each used role.
+button:
+  - platform: template
+    id: ${context_id}_apply_schedule
+    name: ${context_id.replace('_', ' ').title()} Apply Schedule
+    on_press:
+      - lambda: |-
+          using namespace lumineze_topology;
+          const int index = context_index("${context_id}");
+          auto &state = id(topology_schedule_contexts)[index];
+          const auto result = apply_schedule(state, id(topology_schedule_preferences)[index],
+              schedule_fingerprints[index], schedule_masks[index]);
+          if (result == APPLIED) id(evaluate_topology).execute();
+  - platform: template
+    id: ${context_id}_cancel_schedule_edits
+    name: ${context_id.replace('_', ' ').title()} Cancel Schedule Edits
+    on_press:
+      - lambda: |-
+          using namespace lumineze_topology;
+          const int index = context_index("${context_id}");
+          cancel_schedule_edits(id(topology_schedule_contexts)[index]);
+          publish_schedule_staging(index);
+
+binary_sensor:
+  - platform: template
+    id: ${context_id}_schedule_valid
+    name: ${context_id.replace('_', ' ').title()} Active Schedule Valid
+    lambda: return id(topology_schedule_contexts)[lumineze_topology::context_index("${context_id}")].configured;
+  - platform: template
+    id: ${context_id}_schedule_dirty
+    name: ${context_id.replace('_', ' ').title()} Schedule Edits Pending
+    lambda: |-
+      const int index = lumineze_topology::context_index("${context_id}");
+      return lumineze_topology::schedule_dirty(id(topology_schedule_contexts)[index],
+          lumineze_topology::schedule_masks[index]);
+
+text_sensor:
+  - platform: template
+    id: ${context_id}_schedule_revision
+    name: ${context_id.replace('_', ' ').title()} Active Schedule Revision
+    lambda: |-
+      const auto &state = id(topology_schedule_contexts)[lumineze_topology::context_index("${context_id}")];
+      return {std::to_string(state.active.revision)};
+    update_interval: 5s
+  - platform: template
+    id: ${context_id}_schedule_status
+    name: ${context_id.replace('_', ' ').title()} Schedule Status
+    lambda: |-
+      using namespace lumineze_topology;
+      const int index = context_index("${context_id}");
+      const auto &state = id(topology_schedule_contexts)[index];
+      if (state.storage_locked)
+        return {"Storage outcome unknown; reboot/reload before Apply"};
+      const std::string active = state.configured ?
+          "Active revision " + std::to_string(state.active.revision) : "Unconfigured";
+      if (state.last_apply == WRITE_FAILED) return {active + "; storage write failed"};
+      if (state.last_apply == INVALID_EDIT) {
+        const char *errors[] = {"valid", "point capacity", "interpolation mode",
+            "minute must be an integer 0-1439", "level must be an integer 0-100",
+            "duplicate enabled minute", "at least two enabled points required"};
+        const std::string role = state.error_role == 0 ? "visible" : "uv";
+        const std::string point = state.error_point < 0 ? "" :
+            " point " + std::to_string(state.error_point + 1);
+        return {active + "; rejected " + role + point + ": " + errors[state.error]};
+      }
+      return {active + (schedule_dirty(state, schedule_masks[index]) ? "; editing" : "")};
+    update_interval: 5s
+
+esphome:
+  on_boot:
+    - priority: -100
+      then:
+        - lambda: |-
+            using namespace lumineze_topology;
+            const int index = context_index("${context_id}");
+            auto &backend = id(topology_schedule_preferences)[index];
+            backend.initialize(schedule_keys[index][0], schedule_keys[index][1]);
+            restore_schedule(id(topology_schedule_contexts)[index], backend,
+                schedule_fingerprints[index], schedule_masks[index]);
+            publish_schedule_staging(index);
