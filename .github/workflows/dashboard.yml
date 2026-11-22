@@ -68,15 +68,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
           ref: refs/tags/${{ inputs.release_tag }}
+          path: release-source
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
       - run: npm run build
-        working-directory: dashboard-companion
-      - run: git diff --exit-code -- dist/lumineze-dashboard.js
+        working-directory: release-source/dashboard-companion
+      - run: git -C release-source diff --exit-code -- dist/lumineze-dashboard.js
       - name: Prepare draft asset
-        run: bash dashboard-companion/scripts/release-asset.sh prepare
+        run: bash ../dashboard-companion/scripts/release-asset.sh prepare
+        working-directory: release-source
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.release_tag }}
