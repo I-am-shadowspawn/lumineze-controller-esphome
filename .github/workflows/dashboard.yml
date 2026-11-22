@@ -14,8 +14,15 @@ on:
       - .github/workflows/dashboard.yml
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing tag of the draft release to prepare
+        required: true
+        type: string
 jobs:
   dashboard:
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -49,9 +56,27 @@ jobs:
         working-directory: dashboard-companion
       - run: git diff --exit-code -- dist/lumineze-dashboard.js
       - name: Verify published asset
-        run: |
-          expected="sha256:$(sha256sum dist/lumineze-dashboard.js | cut -d' ' -f1)"
-          actual="$(gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[] | select(.name == "lumineze-dashboard.js") | .digest')"
-          test "$actual" = "$expected"
+        run: bash dashboard-companion/scripts/release-asset.sh verify
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+  prepare-release-asset:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ inputs.release_tag }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm run build
+        working-directory: dashboard-companion
+      - run: git diff --exit-code -- dist/lumineze-dashboard.js
+      - name: Prepare draft asset
+        run: bash dashboard-companion/scripts/release-asset.sh prepare
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
