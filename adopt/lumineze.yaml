@@ -1,0 +1,33 @@
+# Adoption entry point for ESPHome Device Builder.
+# This file is imported with import_full_config: false so the user receives a
+# small local wrapper. The generated wrapper selects one of the four supported
+# profiles, supplies real fixture MAC addresses, and provides Wi-Fi/API secrets.
+# No shared production credentials are included here.
+
+dashboard_import:
+  # The ref must be a full 40-character SHA that contains this file.
+  # Replace with the release SHA before promoting a stable candidate.
+  package_import_url: github://I-am-shadowspawn/lumineze-controller-esphome/adopt/lumineze.yaml@e3bdc2b81c325379be456c0d1ac2acc8d0e16e8a
+  import_full_config: false
+
+substitutions:
+  device_name: my-lumineze
+  friendly_name: My LuminEZE
+  area_name: Vivarium
+  timezone: Europe/London
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  area: ${area_name}
+
+esp32:
+  variant: esp32c3
+  framework:
+    type: esp-idf
+
+logger:
+  level: INFO
+
+# Wi-Fi, API, OTA, project metadata, selected engine and commissioning interlock
+# come from the chosen profile package in the generated local YAML.

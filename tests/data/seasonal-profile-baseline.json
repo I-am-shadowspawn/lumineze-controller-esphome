@@ -1,6 +1,6 @@
 {
   "source_sha": "c250604",
-  "scope": "Resolved seasonal entity/settings contracts before T11.1 plus development restart diagnostics; dummy CI configurations only",
+  "scope": "Resolved seasonal entity/settings contracts before T11.1 plus T18 commissioning interlock and development restart diagnostics; dummy CI configurations only",
   "profiles": {
     "production": {
       "number": [
@@ -423,6 +423,14 @@
           "restore_mode": "ALWAYS_OFF"
         },
         {
+          "id": "topology_commissioned",
+          "name": "Controller Commissioned",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_mode": "RESTORE_DEFAULT_OFF"
+        },
+        {
           "id": "topology_invalid_time_safety",
           "name": "Invalid Time Fail-Safe",
           "platform": "template",
@@ -500,6 +508,20 @@
           "id": "topology_all_off",
           "name": "Request All Fixtures Off",
           "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "topology_commission",
+          "name": "Commission Controller",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "topology_decommission",
+          "name": "Decommission Controller",
+          "platform": "template",
+          "entity_category": "config",
           "disabled_by_default": "false"
         },
         {
@@ -766,6 +788,13 @@
         {
           "id": "shared_status",
           "name": "Shared Evaluation Status",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "topology_commissioning_status",
+          "name": "Commissioning Status",
           "platform": "template",
           "entity_category": "diagnostic",
           "disabled_by_default": "false"
@@ -1236,6 +1265,14 @@
           "restore_mode": "ALWAYS_OFF"
         },
         {
+          "id": "topology_commissioned",
+          "name": "Controller Commissioned",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false",
+          "restore_mode": "RESTORE_DEFAULT_OFF"
+        },
+        {
           "id": "topology_invalid_time_safety",
           "name": "Invalid Time Fail-Safe",
           "platform": "template",
@@ -1329,6 +1366,20 @@
           "id": "topology_all_off",
           "name": "Request All Fixtures Off",
           "platform": "template",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "topology_commission",
+          "name": "Commission Controller",
+          "platform": "template",
+          "entity_category": "config",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "topology_decommission",
+          "name": "Decommission Controller",
+          "platform": "template",
+          "entity_category": "config",
           "disabled_by_default": "false"
         },
         {
@@ -1653,6 +1704,13 @@
         {
           "id": "shared_status",
           "name": "Shared Evaluation Status",
+          "platform": "template",
+          "entity_category": "diagnostic",
+          "disabled_by_default": "false"
+        },
+        {
+          "id": "topology_commissioning_status",
+          "name": "Commissioning Status",
           "platform": "template",
           "entity_category": "diagnostic",
           "disabled_by_default": "false"

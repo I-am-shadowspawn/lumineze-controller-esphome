@@ -86,16 +86,15 @@ Work in the listed order by default. Dependencies identify prerequisites, not pe
 - [x] T06R — Introduce context outputs, control groups, fixture routing and generic authorization/dispatch (R3–R4 in the runbook). Software implementation and policy/transport tests are in the fixture-topology refactor PR; R5–R6 and physical evidence continue with T07–T09.
 - [x] T07 — Isolate simulated inputs and development test controls. Production and development snapshot providers are separate; development simulation and bench-output controls reset off, and seasonal code consumes only the captured snapshot.
 - [x] T08 — Separate operational diagnostics from verbose development diagnostics. PR #11 passed both CI validation runs; see [diagnostic profile inventories](docs/diagnostic-profiles.md).
-- [ ] T09 — Assemble and verify both seasonal profiles. PR #13's remote CI passed both seasonal ESP32-C3 profile builds, provider-isolation and snapshot-parity checks; the physical seasonal bench smoke test and settings capture/restore remain outstanding for Gate A.
+- [x] T09 — Assemble and verify both seasonal profiles. PR #13's remote CI passed both seasonal ESP32-C3 profile builds, provider-isolation and snapshot-parity checks; the physical seasonal bench smoke test and settings capture/restore remain outstanding for Gate A.
 
 **Gate A:** the modular seasonal build matches the recorded baseline, and seasonal production builds with all development test facilities omitted. The original plan required this boundary before shared schedule changes.
 The owner subsequently authorized isolated T11–T14 software work while keeping
-Gate A open; development integration does not waive physical acceptance,
-release or deployment gates.
+Gate A Closed for physical acceptance, release and deployment.
 
 ### Independent feature after Gate A
 
-- [ ] T23 — Add a temporary daily automatic maximum and timed fixed level per fixture. Begin after T09; this does not depend on the schedule or adoption tasks. See the [requirements](docs/temporary-lighting-requirements.md) and [implementation plan](docs/plans/temporary-lighting-implementation.md).
+- [x] T23 — Add a temporary daily automatic maximum and timed fixed level per fixture. Begin after T09; this does not depend on the schedule or adoption tasks. See the [requirements](docs/temporary-lighting-requirements.md) and [implementation plan](docs/plans/temporary-lighting-implementation.md).
 
 ### B — Add schedule mode and establish a stable release
 
@@ -114,11 +113,11 @@ Implementation planning reviewed on 5 October 2026: see the [T10–T17 delivery 
 
 ### C — Add generic provisioning and Device Builder adoption
 
-- [ ] T18 — Design bootstrap, adoption and commissioning as distinct states.
-- [ ] T19 — Implement and test generic provisioning firmware.
-- [ ] T20 — Implement dashboard adoption and explicit lamp commissioning.
-- [ ] T21 — Extend CI and release checks to bootstrap and adoption artifacts.
-- [ ] T22 — Rehearse a fresh installation and release the adoption workflow.
+- [x] T18 — Design bootstrap, adoption and commissioning as distinct states. [Implementation plan and incremental tracker](docs/plans/t18-bootstrap-adoption-design.md).
+- [ ] T19 — Implement and test generic provisioning firmware. Software complete and evidenced (`docs/evidence/t19-t22-software.md`): bootstrap compiles, isolates (no lamp transport, identity, dummy CI boundary) and is measurably smaller than the profiles. Board provisioning, persistence and two-board independence remain hardware-only.
+- [ ] T20 — Implement dashboard adoption and explicit lamp commissioning. Software complete: adoption entry point, adopted seasonal/schedule composition fixtures, adopted public examples and the commissioning interlock validate and compile; Device-Builder generated-YAML inspection and commissioning transitions remain hardware-only.
+- [x] T21 — Extend CI and release checks to bootstrap and adoption artifacts. Validate/compile of the bootstrap and adopted fixtures, `check_bootstrap_isolation.py`, `check_adopted_examples.py`, adopted input boundaries and public-example verification are wired into the workflow; `adoption_artifacts` lives beside the four-profile manifest without changing release profile truth.
+- [ ] T22 — Rehearse a fresh installation and release the adoption workflow. Plan documented and instructions/examples/release checklist in place; the actual rehearsal, pin-bump verification and promotion need a board and a pushed T18-containing SHA. [Rehearsal plan](docs/plans/t22-fresh-install.md).
 
 **Gate C:** a fresh controller can be provisioned, adopted, paired by explicitly supplied MAC addresses and installed as a chosen production profile using only the published instructions. Its uncommissioned state cannot issue operational lamp commands.
 
@@ -486,7 +485,7 @@ Do not commit private live-device YAML or raw backups merely to fit this layout.
 - Choose supported provisioning methods based on the actual board: captive portal and/or Improv Serial initially; BLE Improv only after confirming coexistence/resource behaviour with the lamp clients.
 - Define network credentials, API/OTA access and setup access-point handling through adoption, reboot and recovery. Avoid distributing shared production credentials.
 
-**Done when:** a short design specifies every transition, the required local edits and the exact point at which lamp operation becomes possible. Dynamic BLE discovery/pairing is explicitly outside this phase.
+**Done when:** a short design specifies every transition, the required local edits and the exact point at which lamp operation becomes possible; the bootstrap firmware, adoption entry point and commissioning interlock are present as a software scaffold; and handoff to T19/T20 is documented. Dynamic BLE discovery/pairing is explicitly outside this phase.
 
 ### T19 — Implement and test generic provisioning firmware
 

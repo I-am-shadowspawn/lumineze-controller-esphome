@@ -29,10 +29,21 @@ def check_artifacts(directory):
             assert mac.upper().startswith('AA:BB:CC:DD:EE:'),'artifact contains non-dummy address'
     print('PASS retained artifact boundary '+str(directory))
 
+def resolve_entry(manifest, profile):
+    for section in ("profiles", "adoption_artifacts"):
+        entry = manifest.get(section, {}).get(profile)
+        if entry:
+            return entry
+    raise AssertionError(f"unknown CI fixture {profile}")
+
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(); parser.add_argument('profile');parser.add_argument('--esphome',default='esphome');parser.add_argument('--artifacts',type=Path,default=ROOT/'ci/artifacts');args=parser.parse_args()
-    entry=json.loads((ROOT/'ci/profile-matrix.json').read_text())['profiles'][args.profile]
+    parser=argparse.ArgumentParser(); parser.add_argument('profile');parser.add_argument('--esphome',default='esphome');parser.add_argument('--artifacts',type=Path,default=ROOT/'ci/artifacts');parser.add_argument('--skip-artifacts',action='store_true',help='validate inputs only; use when retained artifacts are not produced in this job')
+    args=parser.parse_args()
+    manifest=json.loads((ROOT/'ci/profile-matrix.json').read_text())
+    entry=resolve_entry(manifest,args.profile)
     result=subprocess.run([args.esphome,'config',entry['fixture']],cwd=ROOT,capture_output=True,text=True,check=True)
     check_config(yaml.load(result.stdout,Loader=yaml.BaseLoader))
-    check_artifacts(args.artifacts/args.profile)
     print('PASS dummy CI input boundary '+args.profile)
+    if not args.skip_artifacts:
+        check_artifacts(args.artifacts/args.profile)
+        print('PASS retained artifact boundary '+args.profile)

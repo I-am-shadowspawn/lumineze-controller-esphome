@@ -7,6 +7,7 @@ private/
 .esphome/
 /ci/.gitignore
 build/
+.idea/
 .venv/
 .uv-cache/
 .uv-tools/

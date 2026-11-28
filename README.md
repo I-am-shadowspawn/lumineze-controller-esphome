@@ -102,11 +102,25 @@ Choose a package path:
 | You are creating a generic seasonal controller | [`example/seasonal-production.yaml`](example/seasonal-production.yaml) |
 | You are creating a generic daily schedule controller | [`example/schedule-production.yaml`](example/schedule-production.yaml) |
 | You are doing controlled bench simulation | [`example/seasonal-development.yaml`](example/seasonal-development.yaml) or [`example/schedule-development.yaml`](example/schedule-development.yaml) |
+| You provision the board first with the bootstrap firmware, then adopt in Device Builder | [`example/bootstrap.yaml`](example/bootstrap.yaml), then [`example/adopted-seasonal-production.yaml`](example/adopted-seasonal-production.yaml) or [`example/adopted-schedule-production.yaml`](example/adopted-schedule-production.yaml) |
 
 Production profiles use real time; development profiles include simulation and
 additional diagnostics. The selected engine is fixed at build time. See the
 [wrapper contract](docs/installation-contract.md) and
 [seasonal profile details](docs/seasonal-profiles.md).
+
+### Bootstrap then adopt (new boards)
+
+For a fresh board you can instead flash the [bootstrap firmware](example/bootstrap.yaml)
+over USB: it provisions Wi-Fi (captive portal or Improv Serial) and OTA/API access
+but contains no lamp transport, so it cannot drive a lamp. After the board is
+online, adopt it in ESPHome Device Builder using the `dashboard_import` entry
+point, select one profile, and supply real lamp MACs in the generated wrapper;
+the adopted example then validates, installs and starts
+**uncommissioned** — the `Controller Commissioned` switch defaults off and no
+lamp commands are issued until you commission after verifying identity and
+readback. The flow, decision history and test status are described in
+[bootstrap and adoption](docs/bootstrap-adoption.md).
 
 The generic topology is the recommended starting point for a new installation.
 The examples define one context and two groups: `visible` for

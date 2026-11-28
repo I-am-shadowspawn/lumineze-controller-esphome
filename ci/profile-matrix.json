@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "toolchain": {
-    "esphome": "2026.9.0",
+    "esphome": "2026.11.0",
     "python": "3.12",
     "variant": "esp32c3",
     "framework": "esp-idf",
-    "idf_observed": "5.5.5"
+    "idf_observed": "5.5.6"
   },
   "profiles": {
     "seasonal-production": {
@@ -74,6 +74,26 @@
     "flash_bytes": 1600000
   },
   "hardware_evidence": "pending Gate A/T23/T15; no physical support inferred",
+  "adoption_artifacts": {
+    "bootstrap": {
+      "fixture": "ci/bootstrap.yaml",
+      "build_directory": "lumineze-bootstrap-ci",
+      "support": "bootstrap candidate; hardware pending",
+      "checks": ["config", "full-compile", "isolation"]
+    },
+    "adopted-seasonal": {
+      "fixture": "ci/adopted-seasonal.yaml",
+      "build_directory": "lumineze-adopted-ci",
+      "support": "adopted seasonal candidate; hardware pending",
+      "checks": ["config", "full-compile"]
+    },
+    "adopted-schedule": {
+      "fixture": "ci/adopted-schedule.yaml",
+      "build_directory": "lumineze-adopted-schedule-ci",
+      "support": "adopted schedule candidate; hardware pending",
+      "checks": ["config", "full-compile"]
+    }
+  },
   "topology_cases": [
     {
       "id": "visible-sparse",
@@ -81,7 +101,7 @@
         "seasonal",
         "schedule"
       ],
-      "software_status": "config-and-full-compile-validated; ESPHome 2026.9.0",
+      "software_status": "config-and-full-compile-validated; ESPHome 2026.11.0",
       "ci_coverage": "full-compile",
       "hardware_status": "pending",
       "experimental": false
@@ -92,7 +112,7 @@
         "seasonal",
         "schedule"
       ],
-      "software_status": "config-and-full-compile-validated; ESPHome 2026.9.0",
+      "software_status": "config-and-full-compile-validated; ESPHome 2026.11.0",
       "ci_coverage": "full-compile",
       "hardware_status": "pending",
       "experimental": false
@@ -103,7 +123,7 @@
         "seasonal",
         "schedule"
       ],
-      "software_status": "config-and-full-compile-validated; ESPHome 2026.9.0",
+      "software_status": "config-and-full-compile-validated; ESPHome 2026.11.0",
       "ci_coverage": "full-compile",
       "hardware_status": "pending",
       "experimental": false
@@ -114,7 +134,7 @@
         "seasonal",
         "schedule"
       ],
-      "software_status": "config-and-full-compile-validated; ESPHome 2026.9.0",
+      "software_status": "config-and-full-compile-validated; ESPHome 2026.11.0",
       "ci_coverage": "full-compile",
       "hardware_status": "pending",
       "experimental": false
@@ -125,7 +145,7 @@
         "seasonal",
         "schedule"
       ],
-      "software_status": "config-and-full-compile-validated; ESPHome 2026.9.0",
+      "software_status": "config-and-full-compile-validated; ESPHome 2026.11.0",
       "ci_coverage": "full-compile",
       "hardware_status": "pending",
       "experimental": false
@@ -136,7 +156,7 @@
         "seasonal",
         "schedule"
       ],
-      "software_status": "config-and-full-compile-validated; ESPHome 2026.9.0",
+      "software_status": "config-and-full-compile-validated; ESPHome 2026.11.0",
       "ci_coverage": "full-compile",
       "hardware_status": "pending",
       "experimental": false
@@ -147,7 +167,7 @@
         "seasonal",
         "schedule"
       ],
-      "software_status": "config-and-full-compile-validated; ESPHome 2026.9.0",
+      "software_status": "config-and-full-compile-validated; ESPHome 2026.11.0",
       "ci_coverage": "full-compile",
       "hardware_status": "pending",
       "experimental": false
@@ -158,7 +178,7 @@
         "seasonal",
         "schedule"
       ],
-      "software_status": "config-and-full-compile-validated; ESPHome 2026.9.0",
+      "software_status": "config-and-full-compile-validated; ESPHome 2026.11.0",
       "ci_coverage": "full-compile",
       "hardware_status": "pending",
       "experimental": true
@@ -169,7 +189,7 @@
         "seasonal",
         "schedule"
       ],
-      "software_status": "config-and-full-compile-validated; ESPHome 2026.9.0",
+      "software_status": "config-and-full-compile-validated; ESPHome 2026.11.0",
       "ci_coverage": "full-compile",
       "hardware_status": "pending",
       "experimental": true
@@ -180,7 +200,7 @@
         "seasonal",
         "schedule"
       ],
-      "software_status": "config-and-full-compile-validated; ESPHome 2026.9.0",
+      "software_status": "config-and-full-compile-validated; ESPHome 2026.11.0",
       "ci_coverage": "full-compile",
       "hardware_status": "pending",
       "experimental": false

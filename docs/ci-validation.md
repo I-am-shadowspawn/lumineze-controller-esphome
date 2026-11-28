@@ -9,14 +9,26 @@
   an unknown comparison conservatively requests full checks. Manual and merge
   queue runs always validate firmware.
 - **validate:** checkout-local behavioral/schema/compatibility regressions,
-  legacy build regressions and topology builds.
+  legacy build regressions and topology builds. The validate job also
+  validates and compiles the bootstrap fixture and the adopted
+  (`adopt/lumineze.yaml` + profile) fixtures, asserts bootstrap isolation and
+  its dummy-credential boundary, runs the adopted example contract with
+  offline end-to-end resolution, and re-checks the four advertised profiles
+  remain the only `profiles` manifest entries.
 - **Profile / seasonal-production**, **Profile / seasonal-development**,
   **Profile / schedule-production**, **Profile / schedule-development**:
   independent build jobs, selected-engine/provider/capability inventories,
-  source fault detection, static budgets and retained attempt logs.
+  source fault detection, static budgets and retained attempt logs. Only the
+  four advertised runtime profiles appear in the build matrix;
+  bootstrap/adoption artifacts are tracked separately under
+  `adoption_artifacts` in `ci/profile-matrix.json`.
 - **Immutable remote consumer:** ordinary Git package and component references
   on exactly the same candidate SHA, from an empty directory. PR/push checks
   compile schedule production; workflow dispatch rehearses all four profiles.
+  The four classic public examples are re-validated against their pinned SHA
+  first. Adopted public examples are verified offline in `validate`; after a
+  T18-containing SHA is pushed, their `--remote` mode re-verifies them against
+  the pinned GitHub SHAs during release rehearsal.
 - **Required validation:** always reports. It succeeds for a verified docs-only
   skip or when every required software job succeeds; a failure/cancellation or
   failed change-scope job cannot become success.

@@ -1,0 +1,14 @@
+# CI fixture: validate that the bootstrap firmware compiles and contains no
+# operational lamp transport or topology engine.
+substitutions:
+  device_name: lumineze-bootstrap-ci
+  friendly_name: LuminEZE Bootstrap CI
+  controller_ref: local
+  bootstrap_ap_password: ci-password
+
+packages:
+  bootstrap: !include ../firmware/bootstrap.yaml
+
+wifi:
+  ssid: ci-network
+  password: ci-password

@@ -1,0 +1,19 @@
+# Bootstrap firmware for first USB install. After flashing, provision Wi-Fi via
+# captive portal or Improv Serial, then adopt the board in ESPHome Device Builder
+# and install one of the adopted production/development profile examples.
+substitutions:
+  device_name: my-lumineze
+  friendly_name: My LuminEZE
+  area_name: Vivarium
+  timezone: Europe/London
+
+packages:
+  bootstrap: github://I-am-shadowspawn/lumineze-controller-esphome/firmware/bootstrap.yaml@e3bdc2b81c325379be456c0d1ac2acc8d0e16e8a
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+api:
+  encryption:
+    key: !secret my_vivarium_encryption_key

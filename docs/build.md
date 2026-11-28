@@ -4,8 +4,8 @@ Repository: public `I-am-shadowspawn/lumineze-controller-esphome`, default branc
 
 ## Supported checkpoint
 
-- Python 3.12 and `esphome==2026.9.0` (single pin in `requirements-ci.txt`).
-- The checked-in `esp32` configuration selects ESP-IDF on an ESP32-C3. The validated ESPHome version resolved ESP-IDF **5.5.5** and RISC-V GCC **14.2.0** locally. The deployed controller's toolchain remains unknown; this is a reproducible repository checkpoint, not a claim of upgrade compatibility.
+- Python 3.12 and `esphome==2026.11.0` (single pin in `requirements-ci.txt`).
+- The checked-in `esp32` configuration selects ESP-IDF on an ESP32-C3. The validated ESPHome version resolved ESP-IDF **5.5.6** and RISC-V GCC **14.2.0** locally. The deployed controller's toolchain remains unknown; this is a reproducible repository checkpoint, not a claim of upgrade compatibility.
 - The `ci/controller.yaml` fixture includes `../packages/lumineze-controller.yaml` from the current checkout. Its name, MACs, Wi-Fi and API key are public dummy values. Never flash it to an animal enclosure.
 - CI validates four enable-flag combinations and compiles the two-light fixture from the checked-out source.
 
@@ -43,9 +43,9 @@ To recover a live device, use a privately saved known-good YAML/secrets/settings
 ## T13 candidate toolchain policy (unreleased)
 
 The four generic profiles and both legacy compatibility builds now resolve
-`esphome.min_version: 2026.9.0` from the shared project fragment. The only
-qualified software toolchain is the CI pin `esphome==2026.9.0`; its ESP32-C3
-builds resolve ESP-IDF 5.5.5. The minimum rejects older Device Builders but does
+`esphome.min_version: 2026.11.0` from the shared project fragment. The only
+qualified software toolchain is the CI pin `esphome==2026.11.0`; its ESP32-C3
+builds resolve ESP-IDF 5.5.6. The minimum rejects older Device Builders but does
 not certify newer ones. Static build estimates are recorded in
 `docs/evidence/t11-software.md` and the T13 plan. Actual runtime memory, OTA and
 migration still require T15 bench evidence.
@@ -56,3 +56,29 @@ policy, transport and seasonal parity gates, and the remote SHA consumer. Record
 framework/compiler versions and RAM/flash changes. Then repeat affected T15
 hardware and recovery cases before changing the advertised minimum or stable
 support policy. Keep the previous immutable ref available for rollback.
+
+## T22 adoption release checklist
+
+Promoting the bootstrap/adoption workflow follows the same immutable-version
+discipline. Before promotion, with one pushed T18-or-later full SHA:
+
+1. **Bump every public pin together** to the promotion SHA: the four classic
+   examples' `controller_ref`, both adopted examples, the bootstrap example and
+   the `dashboard_import` URL in `adopt/lumineze.yaml`.
+   `scripts/check_adopted_examples.py` rejects pin drift across all wrappers.
+2. **Release rehearsal (network):** `check_public_examples.py`,
+   `check_adopted_examples.py --remote`, and
+   `check_remote_consumer.py --ref <sha> --all --compile` must pass from empty
+   consumer directories.
+3. **CI adoption coverage:** the validate job must pass the bootstrap and
+   adopted fixture config/compile, `check_bootstrap_isolation.py`, the adopted
+   input boundaries and `check_profile_manifest.py` (four advertised profiles
+   unchanged).
+4. **Hardware evidence:** T19.2–T19.5 (provisioning, persistence,
+   two-board), T20.1 (Device Builder generated YAML), T20.3–T20.5
+   (commissioning transitions) and T22.1–T22.5 (fresh-install rehearsal,
+   update/rollback) remain explicit promotion requirements; a green CI run
+   cannot substitute for them.
+5. **Record evidence** (commands, SHAs, sizes, Device Builder observations) in
+   `docs/evidence/` with secrets and MACs removed, then tag using the T16
+   process.

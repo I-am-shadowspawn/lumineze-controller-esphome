@@ -1,7 +1,7 @@
 """Exercise the real ESPHome config validator against topology mutations.
 
 Usage: python3 scripts/check_topology_schema.py uvx --python 3.14 --from
-       esphome==2026.9.0 esphome
+       esphome==2026.11.0 esphome
 """
 
 from pathlib import Path

@@ -17,7 +17,7 @@ merge boundary for `implementation/t11-t17` -> `development`.
   compatibility wrappers are implemented and have recorded software evidence.
   Schedule profiles remain unverified candidates for device testing, not
   physically supported stable releases.
-- CI pins ESPHome `2026.9.0`; observed ESP-IDF is `5.5.5` on ESP32-C3.
+- CI pins ESPHome `2026.11.0`; observed ESP-IDF is `5.5.6` on ESP32-C3.
   Only that pin is qualified by the recorded software builds. Toolchain
   changes need a separate review and applicable regression/hardware reruns.
 - `v1.9.0-rc` resolves to `fad8c4b`; `v1.0.0` remains the recovery/stable

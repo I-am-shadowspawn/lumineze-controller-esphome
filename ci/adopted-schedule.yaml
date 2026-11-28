@@ -1,0 +1,59 @@
+# CI fixture: adopted schedule production wrapper using local adoption entry point
+# and local profile package.
+substitutions:
+  device_name: lumineze-adopted-schedule-ci
+  friendly_name: LuminEZE Adopted Schedule CI
+  ble_connection_slots: '2'
+
+packages:
+  adopt: !include ../adopt/lumineze.yaml
+  controller: !include ../packages/schedule-production.yaml
+  context: !include
+    file: ../packages/topology/context-schedule.yaml
+    vars: {context_id: shared, context_name: Shared}
+  editor_visible: !include
+    file: ../packages/topology/context-schedule-role.yaml
+    vars: {context_id: shared, schedule_role: visible}
+  editor_uv: !include
+    file: ../packages/topology/context-schedule-role.yaml
+    vars: {context_id: shared, schedule_role: uv}
+  group_visible: !include
+    file: ../packages/topology/group.yaml
+    vars: {group_id: visible_group, group_name: Shared Visible}
+  group_uv: !include
+    file: ../packages/topology/group.yaml
+    vars: {group_id: uv_group, group_name: Shared UV}
+  first: !include
+    file: ../packages/topology/fixture-luminize-schedule.yaml
+    vars:
+      fixture_id: fixture_a
+      fixture_name: Fixture A
+      fixture_mac: 'AA:BB:CC:DD:EE:01'
+      fixture_default_maximum: 100
+  second: !include
+    file: ../packages/topology/fixture-luminize-schedule.yaml
+    vars:
+      fixture_id: fixture_b
+      fixture_name: Fixture B
+      fixture_mac: 'AA:BB:CC:DD:EE:02'
+      fixture_default_maximum: 0
+
+external_components:
+  - source: {type: local, path: ../components}
+    components: [lumineze_topology]
+
+lumineze_topology:
+  topology_version: 1
+  engine_family: schedule
+  input_provider: real
+  contexts: [{id: shared}]
+  groups:
+    - {id: visible_group, context: shared, output: visible}
+    - {id: uv_group, context: shared, output: uv}
+  fixtures:
+    - {id: fixture_a, slot: 0, type: jungle_dawn, group: visible_group, mac: 'AA:BB:CC:DD:EE:01'}
+    - {id: fixture_b, slot: 1, type: prot5, group: uv_group, mac: 'AA:BB:CC:DD:EE:02'}
+
+wifi:
+  ssid: ci-network
+  password: ci-password

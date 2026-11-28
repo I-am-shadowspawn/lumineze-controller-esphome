@@ -28,6 +28,7 @@ struct Backend {
 };
 struct State {
  bool topology_snapshot_valid = true, topology_grace_expired = false;
+ Toggle topology_commissioned{true};
  EvaluationSnapshot topology_snapshot{2026,100,365,720,true,false,false};
  Number topology_invalid_time_grace{60}, topology_recovery_interval{300}, topology_max_attempts{3};
  Toggle topology_invalid_time_safety{true};

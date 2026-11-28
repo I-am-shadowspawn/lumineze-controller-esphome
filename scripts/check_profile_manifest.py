@@ -20,6 +20,9 @@ def check(manifest, workflow):
         assert p['temporary_lighting']==(p['engine']=='seasonal'),name+' capability mismatch'
         assert p['simulation_entities']==(p['provider']=='development'),name+' provider capability mismatch'
         assert 'full-compile' in p['checks'],name+' full-build coverage missing'
+    for name,p in manifest.get('adoption_artifacts',{}).items():
+        assert (ROOT/p['fixture']).is_file(),name+' adoption fixture missing'
+        assert 'full-compile' in p['checks'] or 'config' in p['checks'],name+' adoption checks missing'
     for script in manifest['fast_checks']:
         assert (ROOT/'scripts'/script).is_file(),script
     print('PASS complete profile/CI coverage manifest')

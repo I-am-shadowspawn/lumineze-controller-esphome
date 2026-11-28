@@ -45,7 +45,7 @@ change those independent preferences and HA entities. Keep an export before edit
 
 ## Supported toolchain policy
 
-Initially the only verified toolchain is **ESPHome 2026.9.0**, ESP-IDF **5.5.5** as
+Initially the only verified toolchain is **ESPHome 2026.11.0**, ESP-IDF **5.5.6** as
 resolved by that pin, on **ESP32-C3**. The supported minimum is the tested pin;
 older versions have not been qualified. Newer Device Builder versions require
 all four profiles, compatibility gates and affected bench checks before being

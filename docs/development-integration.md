@@ -36,7 +36,7 @@ roadmap and installation entry points with the completed software records.
 Historical evidence keeps its original SHA: an older successful build does not
 become a build of the new documentation commit.
 
-Local review runs use the pinned ESPHome 2026.9.0 environment:
+Local review runs use the pinned ESPHome 2026.11.0 environment:
 
 - `scripts/check_fast_gates.py`: declared C++/behavioral regressions, including
   schedule numeric, storage, editor, policy and seasonal/T23 regressions.

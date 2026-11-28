@@ -4,7 +4,7 @@ substitutions:
   controller_ref: unrecorded
   controller_source_expression: '"Unverified legacy reference: ${controller_ref}"'
 esphome:
-  min_version: 2026.9.0
+  min_version: 2026.11.0
   project:
     name: shadowspawn.lumineze
     version: 2.0.0-dev

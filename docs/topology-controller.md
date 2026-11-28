@@ -53,7 +53,7 @@ Device Builder remote imports. The MAC value is never included in a custom
 validation error.
 
 Three or four enabled fixtures require `allow_experimental_topology: true` and
-`ble_connection_slots` equal to the fixture count. ESPHome 2026.9.0 reserves a
+`ble_connection_slots` equal to the fixture count. ESPHome 2026.11.0 reserves a
 connection slot for every declared BLE client even though the controller sends
 one transaction at a time. This opt-in allows a software build; it does not
 establish reliable four-lamp operation on ESP32-C3 hardware.
@@ -121,7 +121,7 @@ was byte-for-byte identical before and after the compatibility wrapper change.
 
 ## Software evidence and external gate
 
-ESPHome is pinned in `requirements-ci.txt` to 2026.9.0. Local package
+ESPHome is pinned in `requirements-ci.txt` to 2026.11.0. Local package
 composition, repeated remote Git package files and same-ref remote external
 component loading all passed `esphome config` and firmware compilation. The
 topology validator is exercised by `scripts/check_topology_schema.py`; nine
@@ -134,7 +134,7 @@ matches 1,600 integer targets against the v1 formula across dates, times,
 contexts and fixture maxima. `scripts/check_protocol_trace.py` compares both
 v1 adapter frames/UUIDs/delays with the generic adapter.
 
-Representative local compile footprints (ESP32-C3, ESP-IDF 5.5.5, same
+Representative local compile footprints (ESP32-C3, ESP-IDF 5.5.6, same
 application partition):
 
 | Build | Image | Static RAM | Flash use |

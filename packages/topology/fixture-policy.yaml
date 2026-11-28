@@ -55,6 +55,11 @@ script:
             // A deliberate manual/automatic request replaces it unless clock safety is active.
             Source source = resolve_source(
                 safety_active, fixture.manual, group.source);
+            if (!id(topology_commissioned).state) {
+                if (fixture.pending) revoke_pending(fixture);
+                status(slot, "Controller not commissioned; output held");
+                continue;
+            }
             const bool temporary_expired = expire_temporary(
                 fixture, id(topology_snapshot_valid), context.simulated,
                 id(topology_snapshot).year, id(topology_snapshot).day_of_year,

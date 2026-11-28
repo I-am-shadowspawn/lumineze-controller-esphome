@@ -43,6 +43,9 @@ jobs:
           esphome config ci/topology-generic-development.yaml
           esphome -s enable_jungle_dawn false -s enable_prot5 true -s prot5_mac AA:BB:CC:DD:EE:02 config ci/controller.yaml > /dev/null
           esphome -s enable_prot5 true -s prot5_mac AA:BB:CC:DD:EE:02 config ci/controller.yaml > /dev/null
+          esphome config ci/bootstrap.yaml > /dev/null
+          esphome config ci/adopted-seasonal.yaml > /dev/null
+          esphome config ci/adopted-schedule.yaml > /dev/null
       - name: Check declared software regressions
         run: |
           python scripts/check_fast_gates.py
@@ -61,10 +64,12 @@ jobs:
         run: |
           python scripts/check_topology_matrix.py esphome
           python scripts/check_topology_matrix.py --schedule esphome
-      - name: Check project metadata across six profiles
+      - name: Check project metadata across six profiles and bootstrap identity
         run: |
           python scripts/check_project_metadata.py
           python scripts/check_update_identity.py
+          python scripts/check_bootstrap_isolation.py
+          python scripts/check_adopted_examples.py
       - name: Check seasonal entity and settings compatibility
         run: python scripts/check_seasonal_inventory.py esphome
       - name: Check real and development input isolation
@@ -99,6 +104,9 @@ jobs:
                esphome compile ci/controller-development.yaml && \
                esphome compile ci/topology-generic.yaml && \
                esphome compile ci/topology-generic-development.yaml && \
+               esphome compile ci/bootstrap.yaml && \
+               esphome compile ci/adopted-seasonal.yaml && \
+               esphome compile ci/adopted-schedule.yaml && \
                python scripts/check_topology_matrix.py --compile esphome && \
                python scripts/check_topology_matrix.py --schedule --compile esphome; then
               echo "::endgroup::"
@@ -120,6 +128,8 @@ jobs:
 
           python scripts/check_generated_input_isolation.py
           python scripts/check_diagnostic_profiles.py
+          python scripts/check_ci_artifacts.py adopted-seasonal --skip-artifacts
+          python scripts/check_ci_artifacts.py adopted-schedule --skip-artifacts
           for profile in legacy-seasonal-production legacy-seasonal-development seasonal-production seasonal-development; do
             python scripts/check_project_metadata.py --profile "$profile" --compiled --require-clean
           done
@@ -190,6 +200,7 @@ jobs:
           CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           ALL_PROFILES: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
+          python scripts/check_public_examples.py
           if [ "$ALL_PROFILES" = "true" ]; then
             python scripts/check_remote_consumer.py --ref "$CANDIDATE_SHA" --all --compile
           else

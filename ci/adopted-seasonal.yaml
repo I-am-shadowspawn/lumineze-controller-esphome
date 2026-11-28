@@ -1,0 +1,40 @@
+# CI fixture: adopted seasonal production wrapper using local adoption entry point
+# and local profile package. Confirms the adoption entry point composes safely
+# with a full profile and commissioning interlock.
+substitutions:
+  device_name: lumineze-adopted-ci
+  friendly_name: LuminEZE Adopted CI
+
+packages:
+  adopt: !include ../adopt/lumineze.yaml
+  controller: !include ../packages/seasonal-production.yaml
+  context: !include
+    file: ../packages/topology/context-seasonal.yaml
+    vars: {context_id: shared, context_name: Shared}
+  group: !include
+    file: ../packages/topology/group.yaml
+    vars: {group_id: visible_group, group_name: Shared Visible}
+  first: !include
+    file: ../packages/topology/fixture-luminize.yaml
+    vars:
+      fixture_id: fixture_a
+      fixture_name: Fixture A
+      fixture_mac: 'AA:BB:CC:DD:EE:01'
+      fixture_default_maximum: 100
+
+external_components:
+  - source: {type: local, path: ../components}
+    components: [lumineze_topology]
+
+lumineze_topology:
+  topology_version: 1
+  engine_family: seasonal
+  input_provider: real
+  contexts: [{id: shared}]
+  groups: [{id: visible_group, context: shared, output: visible}]
+  fixtures:
+    - {id: fixture_a, slot: 0, type: jungle_dawn, group: visible_group, mac: 'AA:BB:CC:DD:EE:01'}
+
+wifi:
+  ssid: ci-network
+  password: ci-password

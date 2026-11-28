@@ -4,7 +4,7 @@ This is a CI-only fixture writer. Device Builder installations use ordinary
 package includes; they never run this script.
 
 Usage: python3 scripts/check_topology_matrix.py [--compile] uvx --python 3.14
-       --from esphome==2026.9.0 esphome
+       --from esphome==2026.11.0 esphome
 """
 
 from pathlib import Path

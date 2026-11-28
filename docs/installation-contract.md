@@ -1,7 +1,7 @@
 # Remote installation contract (candidate 2.0)
 
 This is the public YAML boundary for the generic controller. It targets an
-ESP32-C3 running ESP-IDF with ESPHome 2026.9.0. Software validation is recorded
+ESP32-C3 running ESP-IDF with ESPHome 2026.11.0. Software validation is recorded
 in `docs/evidence/`; physical release remains subject to Gate A and T15.
 Choose exactly one profile at build time:
 
@@ -19,6 +19,22 @@ used by the real clock, for example `Europe/London`. The wrapper supplies Wi-Fi
 SSID/password, a unique Home Assistant API encryption key, and the actual MAC
 address of every enabled lamp from a private `secrets.yaml`. OTA can use a
 private password if configured. Keep real secrets out of Git.
+
+## Adoption route (bootstrap first)
+
+Instead of composing the wrapper by hand, a board provisioned with the
+bootstrap firmware is adopted in ESPHome Device Builder. The generated local
+YAML imports `adopt/lumineze.yaml` (with `import_full_config: false`) and must
+then select exactly one of the four profile packages above and declare the same
+topology (context, group, fixture fragments and `lumineze_topology`
+descriptors) — see [`example/adopted-seasonal-production.yaml`](../example/adopted-seasonal-production.yaml)
+and [`example/adopted-schedule-production.yaml`](../example/adopted-schedule-production.yaml).
+The same immutable SHA rule applies to the adoption entry point import, the
+profile package import and the external component; the adopted examples pin all
+three references to one shared `controller_ref`. The adopted controller ships
+**uncommissioned**: `Controller Commissioned` restores off, and the fixture
+policy holds all lamp output until commissioning is confirmed after identity
+and readback checks. See [bootstrap and adoption](bootstrap-adoption.md).
 
 ## Composition
 

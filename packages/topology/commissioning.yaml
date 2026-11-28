@@ -1,0 +1,61 @@
+# Commissioning interlock. A controller must be explicitly commissioned before
+# any operational lamp command is submitted. Decommissioning forces safe-off.
+# Bootstrap firmware has no fixtures/dispatcher, so the real safety there is the
+# absence of BLE lamp transport; this module is included only by full profiles.
+
+switch:
+  - platform: template
+    id: topology_commissioned
+    name: Controller Commissioned
+    entity_category: config
+    icon: mdi:shield-check-outline
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - lambda: id(topology_commissioning_status).publish_state("Commissioned; automatic control is still off by default");
+      - script.execute: evaluate_topology
+    on_turn_off:
+      - lambda: id(topology_commissioning_status).publish_state("Decommissioning; all operational output held");
+      - script.execute: topology_safe_off_all
+      - script.execute: evaluate_topology
+
+button:
+  - platform: template
+    id: topology_commission
+    name: Commission Controller
+    icon: mdi:shield-check
+    entity_category: config
+    on_press:
+      - if:
+          condition:
+            switch.is_on: topology_commissioned
+          then:
+            - lambda: id(topology_commissioning_status).publish_state("Already commissioned");
+          else:
+            - switch.turn_on: topology_commissioned
+            - lambda: id(topology_commissioning_status).publish_state("Commissioned; enable automatic control after verifying readback");
+  - platform: template
+    id: topology_decommission
+    name: Decommission Controller
+    icon: mdi:shield-off
+    entity_category: config
+    on_press:
+      - if:
+          condition:
+            switch.is_off: topology_commissioned
+          then:
+            - lambda: id(topology_commissioning_status).publish_state("Already decommissioned");
+          else:
+            - switch.turn_off: topology_commissioned
+
+text_sensor:
+  - platform: template
+    id: topology_commissioning_status
+    name: Commissioning Status
+    entity_category: diagnostic
+    update_interval: 60s
+    lambda: |-
+      if (id(topology_commissioned).state) {
+        return {"Commissioned; automatic control is off by default"};
+      }
+      return {"Uncommissioned; no operational lamp output permitted"};
